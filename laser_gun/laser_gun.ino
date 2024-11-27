@@ -14,7 +14,8 @@ void setup()
   servo2.attach(3);
   pinMode(8,OUTPUT);
   digitalWrite(8,HIGH);
- 
+  delay(1000);
+  digitalWrite(8,LOW);
 }
  
  
