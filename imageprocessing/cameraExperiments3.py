@@ -20,18 +20,34 @@ def showEdges(img):
     # cv2.imshow('Contours', black)
     cv2.imshow('Edges', edges)
 
+def differenceImage(img1, img2):
+    # Convert to grayscale
+    gray1 = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
+    gray2 = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
+    # Calculate difference
+    diff = cv2.absdiff(gray1, gray2)
+    # Threshold
+    _, diff = cv2.threshold(diff, 30, 255, cv2.THRESH_BINARY)
+    return diff
+
 def show_webcam():
     cam = cv2.VideoCapture(1)
     WINDOW_NAME = 'Camera Connection'
+    prev = None
     while True:
         ret_val, img = cam.read()
 
         # Downsize the image to better simulate IR camera
-        factor = 0.5
+        factor = .8
         img = cv2.resize(img, (0, 0), fx=factor, fy=factor)
 
         processed_image = processImage(img)
         showEdges(img)
+
+        if prev is not None:
+            diff = differenceImage(prev, img)
+            cv2.imshow('Difference', diff)
+        prev = img
 
         cv2.imshow(WINDOW_NAME, processed_image)
         # Press Escape or close the window to exit
