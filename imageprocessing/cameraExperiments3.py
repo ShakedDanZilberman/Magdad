@@ -2,6 +2,9 @@
 
 import cv2
 import numpy as np
+import matplotlib.pyplot as plt
+
+CAMERA_INDEX = 1
 
 def processImage(img):
     # Black and white image
@@ -30,15 +33,45 @@ def differenceImage(img1, img2):
     _, diff = cv2.threshold(diff, 30, 255, cv2.THRESH_BINARY)
     return diff
 
+def detectCameras():
+    # first try to connect to CAMERA_INDEX
+    cam = cv2.VideoCapture(CAMERA_INDEX)
+    if cam.isOpened():
+        print(f'Camera @ index {CAMERA_INDEX} is connected')
+        cam.release()
+        return
+    # Otherwise, try to connect to all
+    imgs = [None] * 10
+    for i in range(10):
+        cam = cv2.VideoCapture(i)
+        if cam.isOpened():
+            print(f'Camera @ index {i} is connected')
+            # Get a frame from the camera
+            ret_val, imgs[i] = cam.read()
+            cam.release()
+    # Show all images in matplotlib window
+    fig, axs = plt.subplots(2, 5)
+    for i in range(10):
+        ax = axs[i // 5, i % 5]
+        if imgs[i] is not None:
+            ax.imshow(cv2.cvtColor(imgs[i], cv2.COLOR_BGR2RGB))
+        ax.axis('off')
+        ax.set_title(f'Camera {i}')
+    plt.show()
+
+
 def show_webcam():
-    cam = cv2.VideoCapture(1)
+    detectCameras()
+    cam = cv2.VideoCapture(CAMERA_INDEX)
     WINDOW_NAME = 'Camera Connection'
     prev = None
     while True:
         ret_val, img = cam.read()
 
+        assert ret_val, 'Camera @ index 1 not connected'
+
         # Downsize the image to better simulate IR camera
-        factor = .8
+        factor = .5
         img = cv2.resize(img, (0, 0), fx=factor, fy=factor)
 
         processed_image = processImage(img)
