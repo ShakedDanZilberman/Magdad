@@ -1,104 +1,90 @@
-import cv2
 import numpy as np
+import cv2
 
 
-cam = cv2.VideoCapture(1)
+cap = cv2.VideoCapture(0)
+while(True):
+  # Capture frame-by-frame
+    ret, frame = cap.read()
 
-cv2.namedWindow("test")
+   # Our operations on the frame come here
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    blur = cv2.GaussianBlur(gray,(3,3),0)
+    ret, thresh_img = cv2.threshold(blur, 91, 255, cv2.THRESH_BINARY)
 
-img_counter = 4
+    contours =  cv2.findContours(thresh_img,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)[-2]
+    for c in contours:
+        cv2.drawContours(frame, [c], 0, (255,0,0), 3)
 
-while True:
-    ret, frame = cam.read()
-    if not ret:
-        print("failed to grab frame")
+     # Display the resulting frame
+    cv2.imshow('frame',frame)
+    if cv2.waitKey(1) & 0xFF == ord('q'):
         break
-    cv2.imshow("test", frame)
 
-    k = cv2.waitKey(1)
-    if k%256 == 27:
-        # ESC pressed
-        print("Escape hit, closing...")
-        break
-    elif k%256 == 32:
-        # SPACE pressed
-        img_name = "opencv_frame_{}.png".format(img_counter)
-        cv2.imwrite(img_name, frame)
-        print("{} written!".format(img_name))
-        img_counter += 1
-
-cam.release()
-
+# When everything done, release the capture
+cap.release()
 cv2.destroyAllWindows()
 
-before_change = cv2.imread('opencv_frame_2.png')
-cv2.imshow('image', before_change) 
-
-# To close the window 
-cv2.waitKey(0) 
-cv2.destroyAllWindows() 
-after_change = cv2.imread('opencv_frame_3.png')
-cv2.imshow('image', after_change) 
-
-# To close the window 
-cv2.waitKey(0) 
-cv2.destroyAllWindows() 
-
-background = cv2.imread('opencv_frame_4.png')
-
-change = cv2.subtract(after_change, before_change)
-displayed = cv2.add(background, change)
-cv2.imshow('image', displayed) 
-
-# To close the window 
-cv2.waitKey(0) 
-cv2.destroyAllWindows() 
 
 
+# import cv2
 # import numpy as np
-# import cv2 
-# import time
-# import os
+# import cv2 as cv
+# from matplotlib import pyplot as plt
+
+# def main(): 
+#     # Open the default webcam  
+#     cap = cv2.VideoCapture(0) 
+      
+#     while True: 
+#         # Read a frame from the webcam 
+#         ret, frame = cap.read() 
+#         if not ret: 
+#             print('Image not captured') 
+#             break
+          
+#         # Perform Canny edge detection on the frame 
+#         blurred, edges = canny_edge_detection(frame) 
+#         contour_detection(edges, blurred)
+#         # Display the original frame and the edge-detected frame 
+#         #cv2.imshow("Original", frame) 
+#         cv2.imshow("Blurred", blurred) 
+#         cv2.imshow("Edges", edges) 
+          
+#         # Exit the loop when 'q' key is pressed 
+#         if cv2.waitKey(1) & 0xFF == ord('q'): 
+#             break
+      
+#     # Release the webcam and close the windows 
+#     cap.release() 
+#     cv2.destroyAllWindows()
 
 
-# cam = cv2.VideoCapture(0)
-# if not cam.isOpened():
-#     print("Cannot open camera")
-#     exit()
-# while True:
-#     # Capture frame-by-frame
-#     ret, frame = cam.read()
- 
-#     # if frame is read correctly ret is True
-#     if not ret:
-#         print("Can't receive frame (stream end?). Exiting ...")
-#         break
-#     # Our operations on the frame come here
-#     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-#     # Display the resulting frame
-#     cv2.imshow('frame', gray)
-#     if cv2.waitKey(1) == ord('q'):
-#         break
- 
-# # When everything done, release the capture
-# cam.release()
-# cv2.destroyAllWindows()
+# def canny_edge_detection(frame): 
+#     # Convert the frame to grayscale for edge detection 
+#     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) 
+      
+#     # Apply Gaussian blur to reduce noise and smoothen edges 
+#     blurred = cv2.GaussianBlur(src=gray, ksize=(3, 5), sigmaX=0.5) 
+      
+#     # Perform Canny edge detection 
+#     edges = cv2.Canny(blurred, 70, 135) 
+      
+#     return blurred, edges
 
 
-# cam = cv2.VideoCapture(0)
+# def contour_detection(canny, img):
+#     contours, hierarchy = cv2.findContours(canny,
+#     cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+#     print("Number of Contours = " ,len(contours))
 
-# frameno = 0
-# while(True):
-#    ret,frame = cam.read()
-#    if ret:
-#       # if video is still left continue creating images
-#       name = str(frameno) + '.jpg'
-#       print ('new frame captured...' + name)
+#     cv2.drawContours(img, contours, -1, (0, 255, 0), 3)
 
-#       cv2.imwrite(name, frame)
-#       frameno += 1
-#    else:
-#       break
+#     cv2.imshow('Contours', img)
+#     cv2.waitKey(0)
+#     cv2.destroyAllWindows()
 
-# cam.release()
-# cv2.destroyAllWindows()
+
+# if __name__ == "__main__":
+#     main()
+
