@@ -73,12 +73,15 @@ class FirstNImagesHandler:
         return self.index == -1
     
     def displayDifference(self, img):
+        TITLE = 'Difference from Original'
+        LOADING_IMAGE = np.ones(img.shape, np.uint8) * 128
         if not self.isReady():
-            cv2.imshow('Difference from Original', np.ones(img.shape, np.uint8) * 128)
-        diff = differenceImage(img, self.getAverage())
-        diff = blurImage(diff, 20)
-        diff = aboveThreshold(diff, 30)
-        cv2.imshow('Difference from Original', diff)
+            cv2.imshow(TITLE, LOADING_IMAGE)
+        else:
+            diff = differenceImage(img, self.getAverage())
+            diff = blurImage(diff, 20)
+            diff = aboveThreshold(diff, 30)
+            cv2.imshow(TITLE, diff)
 
 def processImage(img):
     # Black and white image
@@ -107,12 +110,12 @@ def differenceImage(img1, img2):
     _, diff = cv2.threshold(diff, 30, 255, cv2.THRESH_BINARY)
     return diff
 
-def showMultipleFrames(imgs, titles=None):
+def showMultipleFrames(imgs, titles=None, title=None):
     N = len(imgs)
     # find the optimal p,q such that p*q >= N and p-q is minimized
     p = int(np.ceil(np.sqrt(N)))
     q = int(np.ceil(N / p))
-    fig, axs = plt.subplots(p, q, figsize=(20, 10))
+    fig, axs = plt.subplots(p, q, figsize=(10, 7))
     for ax in axs.flat:
         ax.axis('off')
     for i in range(N):
@@ -121,6 +124,8 @@ def showMultipleFrames(imgs, titles=None):
             ax.imshow(cv2.cvtColor(imgs[i], cv2.COLOR_BGR2RGB))
         if titles is not None:
             ax.set_title(titles[i])
+    if title is not None:
+        plt.suptitle(title)
     plt.show()
 
 def blurImage(img, factor=5):
@@ -148,7 +153,7 @@ def detectCameras():
             ret_val, imgs[i] = cam.read()
             cam.release()
     # Show all images in matplotlib window
-    showMultipleFrames(imgs, [f'Camera {i}' for i in range(MAX_CAMERAS)])
+    showMultipleFrames(imgs, [f'Camera {i}' for i in range(MAX_CAMERAS)], f'Failed to connect to camera #{CAMERA_INDEX}\nAll Available Cameras')
     plt.show()
 
 
@@ -163,7 +168,7 @@ def show_webcam():
 
         assert ret_val, 'Camera @ index 1 not connected'
 
-        # Downsize the image to better simulate IR camera
+        # Downsize the image to better simulate IR camera - Remove this when IR camera is connected
         img = cv2.resize(img, (0, 0), fx=.5, fy=.5)
 
         processed_image = processImage(img)
@@ -179,7 +184,6 @@ def show_webcam():
         firstFramesHandler.displayDifference(img)
         if cv2.waitKey(1) == 32: # Whitespace
             firstFramesHandler.clear()
-
 
         cv2.imshow(WINDOW_NAME, processed_image)
         # Press Escape or close the window to exit
