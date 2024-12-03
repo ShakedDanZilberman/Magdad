@@ -67,7 +67,7 @@ class FirstNImagesHandler:
         self.loading_img = np.ones(self.shape, np.uint8) * 128
 
         # Show the loading image
-        cv2.imshow(self.title, self.loading_img)
+        # cv2.imshow(self.title, self.loading_img)
 
     def isReady(self):
         return self.index == -1
