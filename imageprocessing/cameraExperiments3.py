@@ -157,7 +157,7 @@ def detectCameras():
     plt.show()
 
 
-def show_webcam():
+def main():
     detectCameras()
     cam = cv2.VideoCapture(CAMERA_INDEX)
     firstFramesHandler = FirstNImagesHandler(averageFirstNFrames)
@@ -194,10 +194,6 @@ def show_webcam():
         if cv2.getWindowProperty(WINDOW_NAME, cv2.WND_PROP_VISIBLE) < 1:
             break
     cv2.destroyAllWindows()
-
-
-def main():
-    show_webcam()
 
 
 if __name__ == '__main__':
