@@ -6,6 +6,59 @@ import matplotlib.pyplot as plt
 
 CAMERA_INDEX = 1
 averageFirstNFrames = 30
+WINDOW_NAME = 'Camera Connection'
+image_index = 0
+first_N_images = []
+
+class FirstNImagesHandler:
+    def __init__(self, N):
+        self.N = N
+        self.images = [None] * N
+        self.index = 0
+        self.BRIGHTNESS_THRESHOLD = 230
+
+    def addImage(self, img):
+        # Skip if index is -1
+        if self.index == -1:
+            return
+        
+        # Skip images that are too bright
+        if np.mean(img) > self.BRIGHTNESS_THRESHOLD:
+            return
+        
+        # Add image to the list
+        self.images[self.index] = img
+        self.index += 1
+
+        # Reset index if it exceeds N
+        if self.index == self.N:
+            self.index = -1
+            self.getAverage()
+            cv2.imshow(f'Average of First {self.N} Frames', self.avg)
+
+    def getAverage(self):
+        # Return the average if it has already been calculated
+        if hasattr(self, 'avg') and self.avg is not None:
+            return self.avg
+        
+        if len(self.images) < self.N:
+            return None
+        
+        # Calculate the average
+        self.avg = np.zeros_like(self.images[0])
+        for i in range(self.N):
+            # Add the image to the average with a weight of 1/N
+            self.avg = cv2.addWeighted(self.avg, 1, self.images[i], 1 / self.N, 0)
+        return self.avg
+
+    def clear(self):
+        # Clear the images and the average, and reset the index
+        self.images = [None] * self.N
+        self.avg = None
+        self.index = 0
+
+    def isReady(self):
+        return self.index == -1
 
 def processImage(img):
     # Black and white image
@@ -68,10 +121,9 @@ def detectCameras():
 def show_webcam():
     detectCameras()
     cam = cv2.VideoCapture(CAMERA_INDEX)
-    WINDOW_NAME = 'Camera Connection'
+    firstFramesHandler = FirstNImagesHandler(averageFirstNFrames)
     prev = None
-    image_index = 0
-    first_N_images = []
+
     while True:
         ret_val, img = cam.read()
 
@@ -84,30 +136,16 @@ def show_webcam():
         processed_image = processImage(img)
         showEdges(img)
 
-        if image_index == -1:
-            cv2.imshow("Difference from clear", differenceImage(clear_photo, processed_image))
-            pass
-        else:
-            # if the image is too bright, skip it
-            if np.mean(processed_image) > 230:
-                continue
-            image_index += 1
-            first_N_images.append(processed_image)
-            if image_index == averageFirstNFrames:
-                clear_photo = np.zeros_like(first_N_images[0])
-                for i in range(averageFirstNFrames):
-                    # clear_photo += first_N_images[i] * (1 / N)
-                    clear_photo = cv2.addWeighted(clear_photo, 1, first_N_images[i], 1 / averageFirstNFrames, 0)
-                # clear_photo = clear_photo / N
-                cv2.imshow('Average', clear_photo)
-                print('Average image computed')
-                image_index = -1
-            pass
+        firstFramesHandler.addImage(img)
 
         if prev is not None:
             diff = differenceImage(prev, img)
             cv2.imshow('Difference', diff)
         prev = img
+
+        if firstFramesHandler.isReady():
+            diff = differenceImage(img, firstFramesHandler.getAverage())
+            cv2.imshow('Difference from Original', diff)
 
 
         cv2.imshow(WINDOW_NAME, processed_image)
