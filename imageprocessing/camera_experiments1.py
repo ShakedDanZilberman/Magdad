@@ -72,9 +72,50 @@ def initialize_camera(camera_id=1):
     return mask
 
 
+def blob_detection(frame):
+    """Detect blobs in a frame using the SimpleBlobDetector.
+    blures the image and detects blobs in the image
+    does not detect edges that are not closed shapes
+    """
+    # Setup SimpleBlobDetector parameters
+    params = cv2.SimpleBlobDetector_Params()
+
+    # Change thresholds
+    params.minThreshold = 10
+    params.maxThreshold = 200
+
+    # Filter by Area.
+    params.filterByArea = True
+    params.minArea = 100
+
+    # Filter by Circularity
+    params.filterByCircularity = True
+    params.minCircularity = 0.1
+
+    # Filter by Convexity
+    params.filterByConvexity = True
+    params.minConvexity = 0.87
+
+    # Filter by Inertia
+    params.filterByInertia = True
+    params.minInertiaRatio = 0.01
+
+    # Create a detector with the parameters
+    detector = cv2.SimpleBlobDetector_create(params)
+
+    # Detect blobs
+    keypoints = detector.detect(frame)
+
+    # Draw detected blobs as red circles
+    output_frame = cv2.drawKeypoints(frame, keypoints, np.array([]), (0, 0, 255),
+                                     cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+
+    return output_frame
+
 def process_video_area(camera_id=1, mask=None):
     """Main function to capture video, detect objects, and display results."""
     cap = cv2.VideoCapture(camera_id)
+
 
     # Start the live video feed
     cv2.namedWindow("Object Detection")
@@ -91,19 +132,51 @@ def process_video_area(camera_id=1, mask=None):
 
         # Convert frame to grayscale and apply edge detection
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        edges = cv2.Canny(gray, 100, 200)
+        edges = cv2.Canny(gray, 150, 200)
+
+
+        #use dialiation to fill in the edges
+        kernel_small = np.ones((3, 3), np.uint8)
+        kernel = np.ones((5, 5), np.uint8)
+        kernel_big = np.ones((7, 7), np.uint8)
+
+        dilated_edges = cv2.dilate(edges, kernel, iterations=2)
+      #   gradient = cv2.morphologyEx(edges, cv2.MORPH_GRADIENT, kernel)
+      #   erode = cv2.erode(gradient, kernel, iterations=1)
+        closing = cv2.morphologyEx(dilated_edges, cv2.MORPH_CLOSE, kernel_big)
+        opening = cv2.morphologyEx(closing, cv2.MORPH_OPEN, kernel_small)
+        erode = cv2.erode(opening, kernel, iterations=4)
+
+        cv2.imshow("Dilated Edges", erode)
+
 
         # Mask edges to the user-defined area
-        masked_edges = cv2.bitwise_and(edges, mask)
+        masked_edges = cv2.bitwise_and(erode, mask)
 
         # Find contours of the edges
-        contours, _ = cv2.findContours(masked_edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        contours, _ = cv2.findContours(masked_edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+
+
+        # contours_poly = [None] * len(contours)
+        # boundRect = [None] * len(contours)
+        # for i, c in enumerate(contours):
+        #     contours_poly[i] = cv2.approxPolyDP(c, 3, True)
+        #     boundRect[i] = cv2.boundingRect(contours_poly[i])
+        # for i in range(len(contours)):
+        #     color = (0, 0, 255)
+        #     cv2.drawContours(frame, contours_poly, i, color)
+        #     cv2.rectangle(frame, (int(boundRect[i][0]), int(boundRect[i][1])), \
+        #                   (int(boundRect[i][0] + boundRect[i][2]), int(boundRect[i][1] + boundRect[i][3])), color, 2)
+
+
+
 
         # Draw detected objects and calculate centers
         output_frame = frame.copy()
         for contour in contours:
             if cv2.contourArea(contour) > 100:  # Ignore small objects
-                cv2.drawContours(output_frame, [contour], -1, (0, 0, 255), 2)  # Red edges
+                cv2.drawContours(output_frame, [contour], -1, (0, 0, 255), cv2.FILLED)  # Red edges
                 center = calculate_center(contour)
                 if center:
                     cv2.circle(output_frame, center, 5, (255, 0, 0), -1)  # Blue center point
