@@ -80,9 +80,9 @@ class FirstNImagesHandler:
         else:
             diff = differenceImage(img, self.getAverage())
             diff = blurImage(diff, 20)
-            diff = aboveThreshold(diff, 30)
+            diff = aboveThreshold(diff, 50)
             # convert image to RBG
-            diff = cv2.cvtColor(diff, cv2.COLOR_GRAY2BGR)
+            # diff = cv2.cvtColor(diff, cv2.COLOR_GRAY2BGR)
             # find objects in the image
             diff = find_objects(diff)
             cv2.imshow(TITLE, diff)
@@ -161,42 +161,25 @@ def detectCameras():
     plt.show()
 
 def find_objects(img):
-    # This is a very primitive scheme of finding and merging objects.
-    # It ignores the pixel-connectedness of close objects and just cares about the distance.
-    dx = 10
-    dy = 10
-    stepx = stepy = 5
-    threshold = 120
-    pixel_distance_merging = 15
-    objects = []
-    for x in range(0, img.shape[1] - dx, stepx):
-        for y in range(0, img.shape[0] - dy, stepy):
-            roi = img[y:y+dy, x:x+dx]
-            if np.mean(roi) > threshold:
-                objects.append((x, y))
+    params = cv2.SimpleBlobDetector_Params()
+    params.maxThreshold = 255
+    params.minThreshold = 10
+    # Filter by color (white blobs)
+    params.filterByColor = True
+    params.blobColor = 255
 
-    # Merge close objects
-    distance_squared = lambda obj1, obj2: (obj1[0] - obj2[0])**2 + (obj1[1] - obj2[1])**2
-    # Merge close objects with complexity O(n^2)
-    merged_objects = []
-    for obj in objects:
-        merged = False
-        for i in range(len(merged_objects)):
-            if distance_squared(obj, merged_objects[i]) < pixel_distance_merging**2:
-                merged_objects[i] = ((obj[0] + merged_objects[i][0]) // 2, (obj[1] + merged_objects[i][1]) // 2)
-                merged = True
-                break
-        if not merged:
-            merged_objects.append(obj)
+    # Filter by area
+    params.filterByArea = True
+    params.minArea = 50  # Minimum area of blob
+    params.maxArea = 5000  # Maximum area of blob
+    detector = cv2.SimpleBlobDetector_create(params)
+    keypoints = detector.detect(img)
+    print(keypoints)
 
-    objects = merged_objects
-    
-    for x, y in objects:
-        cv2.rectangle(img, (x, y), (x+dx, y+dy), (0, 255, 0), 1)
-        # point with coordinates at the center of the rectangle
-        cv2.circle(img, (x+dx//2, y+dy//2), 3, (0, 255, 0), -1)
-        # label the point
-        cv2.putText(img, f'({x+dx//2}, {y+dy//2})', (x+dx//2, y+dy//2), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
+    # convert img to RBG
+    img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+    # draw the keypoints
+    img = cv2.drawKeypoints(img, keypoints, np.array([]), (255, 0, 0), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
     return img
 
 
