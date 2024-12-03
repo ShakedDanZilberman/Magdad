@@ -65,6 +65,9 @@ def show_webcam():
     cam = cv2.VideoCapture(CAMERA_INDEX)
     WINDOW_NAME = 'Camera Connection'
     prev = None
+    image_index = 0
+    N = 3
+    first_N_images = []
     while True:
         ret_val, img = cam.read()
 
@@ -77,10 +80,27 @@ def show_webcam():
         processed_image = processImage(img)
         showEdges(img)
 
+        if image_index == -1:
+            # cv2.imshow("Difference from clear", differenceImage(clear_photo, processed_image))
+            pass
+        else:
+            # image_index += 1
+            # first_N_images.append(processed_image)
+            # if image_index == N:
+            #     clear_photo = np.zeros_like(first_N_images[0], dtype=np.float32)
+            #     for i in range(N):
+            #         clear_photo += first_N_images[i] * (1 / N)
+            #     # clear_photo = clear_photo / N
+            #     cv2.imshow('Average', clear_photo)
+            #     print('Average image computed')
+            #     image_index = -1
+            pass
+
         if prev is not None:
             diff = differenceImage(prev, img)
             cv2.imshow('Difference', diff)
         prev = img
+
 
         cv2.imshow(WINDOW_NAME, processed_image)
         # Press Escape or close the window to exit
