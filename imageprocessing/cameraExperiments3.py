@@ -16,6 +16,8 @@ class FirstNImagesHandler:
         self.images = [None] * N
         self.index = 0
         self.BRIGHTNESS_THRESHOLD = 230
+        self.loading_img = None
+        self.title = f'Average of First {self.N} Frames'
 
     def addImage(self, img):
         # Skip if index is -1
@@ -34,7 +36,7 @@ class FirstNImagesHandler:
         if self.index == self.N:
             self.index = -1
             self.getAverage()
-            cv2.imshow(f'Average of First {self.N} Frames', self.avg)
+            cv2.imshow(self.title, self.avg)
 
     def getAverage(self):
         # Return the average if it has already been calculated
@@ -46,19 +48,36 @@ class FirstNImagesHandler:
         
         # Calculate the average
         self.avg = np.zeros_like(self.images[0])
+        # Average only the non-None images
+        N_effective = self.N - len([i for i in self.images if i is None])
         for i in range(self.N):
-            # Add the image to the average with a weight of 1/N
-            self.avg = cv2.addWeighted(self.avg, 1, self.images[i], 1 / self.N, 0)
+            # Add the image to the average with a weight of 1/N_effective
+            if self.images[i] is not None:
+                self.avg = cv2.addWeighted(self.avg, 1, self.images[i], 1 / N_effective, 0)
         return self.avg
 
     def clear(self):
         # Clear the images and the average, and reset the index
+        self.shape = self.images[0].shape
         self.images = [None] * self.N
         self.avg = None
         self.index = 0
 
+        self.loading_img = np.ones(self.shape, np.uint8) * 128
+
+        # Show the loading image
+        cv2.imshow(self.title, self.loading_img)
+
     def isReady(self):
         return self.index == -1
+    
+    def displayDifference(self, img):
+        if not self.isReady():
+            cv2.imshow('Difference from Original', np.ones(img.shape, np.uint8) * 128)
+        diff = differenceImage(img, self.getAverage())
+        diff = blurImage(diff, 20)
+        diff = aboveThreshold(diff, 30)
+        cv2.imshow('Difference from Original', diff)
 
 def processImage(img):
     # Black and white image
@@ -97,6 +116,14 @@ def show10Images(imgs, titles=None):
             ax.set_title(titles[i])
     plt.show()
 
+def blurImage(img, factor=5):
+    if factor % 2 == 0:
+        factor += 1
+    return cv2.GaussianBlur(img, (factor, factor), 0)
+
+def aboveThreshold(img, threshold):
+    return cv2.threshold(img, threshold, 255, cv2.THRESH_TOZERO)[1]
+
 def detectCameras():
     # first try to connect to CAMERA_INDEX
     cam = cv2.VideoCapture(CAMERA_INDEX)
@@ -130,8 +157,7 @@ def show_webcam():
         assert ret_val, 'Camera @ index 1 not connected'
 
         # Downsize the image to better simulate IR camera
-        factor = .5
-        img = cv2.resize(img, (0, 0), fx=factor, fy=factor)
+        img = cv2.resize(img, (0, 0), fx=.5, fy=.5)
 
         processed_image = processImage(img)
         showEdges(img)
@@ -143,14 +169,16 @@ def show_webcam():
             cv2.imshow('Difference', diff)
         prev = img
 
-        if firstFramesHandler.isReady():
-            diff = differenceImage(img, firstFramesHandler.getAverage())
-            cv2.imshow('Difference from Original', diff)
+        firstFramesHandler.displayDifference(img)
+        if cv2.waitKey(1) == 32: # Whitespace
+            firstFramesHandler.clear()
 
 
         cv2.imshow(WINDOW_NAME, processed_image)
         # Press Escape or close the window to exit
         if cv2.waitKey(1) == 27:
+            break
+        if cv2.getWindowProperty(WINDOW_NAME, cv2.WND_PROP_VISIBLE) < 1:
             break
         if cv2.getWindowProperty(WINDOW_NAME, cv2.WND_PROP_VISIBLE) < 1:
             break
