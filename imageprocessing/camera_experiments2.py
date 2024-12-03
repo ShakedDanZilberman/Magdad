@@ -1,5 +1,6 @@
 import numpy as np
 import cv2
+import random as rng
 
 
 cap = cv2.VideoCapture(0)
@@ -9,12 +10,26 @@ while(True):
 
    # Our operations on the frame come here
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    blur = cv2.GaussianBlur(gray,(3,3),0)
-    ret, thresh_img = cv2.threshold(blur, 91, 255, cv2.THRESH_BINARY)
+    blur = cv2.GaussianBlur(gray,(9,9),0)
+    edges = cv2.Canny(blur, 100, 200)
+    ret, thresh_img = cv2.threshold(edges, 100, 255, cv2.THRESH_OTSU)
 
-    contours =  cv2.findContours(thresh_img,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)[-2]
-    for c in contours:
-        cv2.drawContours(frame, [c], 0, (255,0,0), 3)
+    contours =  cv2.findContours(edges,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)[-2]
+
+    contours_poly = [None]*len(contours)
+    boundRect = [None]*len(contours)
+    centers = [None]*len(contours)
+    radius = [None]*len(contours)
+    for i, c in enumerate(contours):
+        contours_poly[i] = cv2.approxPolyDP(c, 3, True)
+        boundRect[i] = cv2.minAreaRect(contours_poly[i])
+    for i in range(len(contours)):
+        color = (0,0,255)
+        cv2.drawContours(frame, contours_poly, i, color)
+        cv2.rectangle(frame, (int(boundRect[i][0]), int(boundRect[i][1])), \
+        (int(boundRect[i][0]+boundRect[i][2]), int(boundRect[i][1]+boundRect[i][3])), color, 2)
+    # for c in contours:
+    #     cv2.drawContours(frame, [c], 0, (255,0,0), 3)
 
      # Display the resulting frame
     cv2.imshow('frame',frame)
