@@ -132,22 +132,29 @@ def process_video_area(camera_id=1, mask=None):
 
         # Convert frame to grayscale and apply edge detection
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        edges = cv2.Canny(gray, 150, 200)
+        blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+
+        edges = cv2.Canny(blurred, 150, 200)
 
 
-        #use dialiation to fill in the edges
+        #use diliation to fill in the edges
         kernel_small = np.ones((3, 3), np.uint8)
         kernel = np.ones((5, 5), np.uint8)
         kernel_big = np.ones((7, 7), np.uint8)
 
         dilated_edges = cv2.dilate(edges, kernel, iterations=2)
-      #   gradient = cv2.morphologyEx(edges, cv2.MORPH_GRADIENT, kernel)
-      #   erode = cv2.erode(gradient, kernel, iterations=1)
-        closing = cv2.morphologyEx(dilated_edges, cv2.MORPH_CLOSE, kernel_big)
-        opening = cv2.morphologyEx(closing, cv2.MORPH_OPEN, kernel_small)
-        erode = cv2.erode(opening, kernel, iterations=4)
+        opening = cv2.morphologyEx(dilated_edges, cv2.MORPH_OPEN, kernel_big)
+        closing = cv2.morphologyEx(opening, cv2.MORPH_CLOSE, kernel)
+        erode = cv2.erode(closing, kernel_small, iterations=4)
 
-        cv2.imshow("Dilated Edges", erode)
+        # dilated_edges = cv2.dilate(edges, kernel, iterations=1)
+        # opening = cv2.morphologyEx(dilated_edges, cv2.MORPH_OPEN, kernel_big)
+        # dilated_2 = cv2.dilate(opening, kernel, iterations=2)
+        # closing = cv2.morphologyEx(dilated_2, cv2.MORPH_CLOSE, kernel)
+        #
+        # erode = cv2.erode(closing, kernel_small, iterations=4)
+
+        cv2.imshow("Dilated Edges", edges)
 
 
         # Mask edges to the user-defined area
