@@ -7,3 +7,6 @@
    - סיסמה: grauer44 
  - עכשיו אנחנו בטרמינל של הRPI שלנו, יש!
  - אם אנחנו רוצים לראות גם את המסך, נשתמש בפרוטוקול VNC, נתקין [קליינט VNC בשם TigerVNC](https://tigervnc.org/), ובאופן דומה, נתחבר.
+ - איך כותבים קוד? אפשר לכתוב ישירות בRPI, אפשר במחשב ואז להעביר קבצים אחד אחד.
+ - אפשר לכתוב קוד דרך VS CODE על המחשב האישי בזמן שעורכים את הקבצים בRPI דרך SSH, [בעזרת package שמורידים לVS CODE](https://besomi.com/coding-on-raspberry-pi-remotely-with-visual-studio-code/), [יש גם גרסה לPyCharm](https://medium.com/@sadeepari/access-raspberry-pi-with-ssh-in-pycharm-848df6d31e8a).
+ - 
