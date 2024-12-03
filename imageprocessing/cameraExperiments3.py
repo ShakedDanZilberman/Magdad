@@ -161,6 +161,8 @@ def detectCameras():
     plt.show()
 
 def find_objects(img):
+    # img is the output of the differenceImage function,
+    # regarding the difference between the current frame and the average of the first N frames
     params = cv2.SimpleBlobDetector_Params()
     params.maxThreshold = 255
     params.minThreshold = 10
@@ -170,10 +172,11 @@ def find_objects(img):
 
     # Filter by area
     params.filterByArea = True
-    params.minArea = 50  # Minimum area of blob
-    params.maxArea = 5000  # Maximum area of blob
+    params.minArea = 40  # Minimum area of blob
+    params.maxArea = 10000  # Maximum area of blob
     detector = cv2.SimpleBlobDetector_create(params)
     keypoints = detector.detect(img)
+    brightnesses = {}
     # print the centerpoints (x,y) of the blobs
     for keypoint in keypoints:
         x, y = int(keypoint.pt[0]), int(keypoint.pt[1])
@@ -183,13 +186,27 @@ def find_objects(img):
         blob_pixels = img[max(0, y - radius):min(img.shape[0], y + radius), max(0, x - radius):min(img.shape[1], x + radius)]
         # blob_pixels = img[y - radius:y + radius, x - radius:x + radius]
         mean_brightness = np.mean(blob_pixels) if len(blob_pixels) > 0 else 0
+        brightnesses[keypoint] = mean_brightness
         # format with 2 decimal points
-        print(f'({x:.2f}, {y:.2f}), r={radius:.2f}, Mean Brightness: {mean_brightness:.2f}')
+        # print(f'({x:.2f}, {y:.2f}), r={radius:.2f}, Mean Brightness: {mean_brightness:.2f}')
 
     # convert img to RBG
     img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
     # draw the keypoints
-    img = cv2.drawKeypoints(img, keypoints, np.array([]), (255, 0, 0), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+    for keypoint in keypoints:
+        # Draw a circle around the blob
+        x, y = int(keypoint.pt[0]), int(keypoint.pt[1])
+        radius = int(keypoint.size / 2)
+        brightness = brightnesses[keypoint]
+        color = (0, 255, 0) if brightness > 60 else (255, 0, 0)
+        cv2.circle(img, (x, y), radius, color, 2)
+        # draw an inner circle with the mean brightness
+        cv2.circle(img, (x, y), radius, (0, int(brightness), 0), -1)
+        # Draw a cross on the blob
+        cross_size = 2
+        cv2.line(img, (x - cross_size, y), (x + cross_size, y), color, 1)
+        cv2.line(img, (x, y - cross_size), (x, y + cross_size), color, 1)
+
     return img
 
 
@@ -208,12 +225,13 @@ def main():
         img = cv2.resize(img, (0, 0), fx=.5, fy=.5)
 
         processed_image = processImage(img)
-        showEdges(img)
+        # showEdges(img)
 
         firstFramesHandler.addImage(img)
 
         if prev is not None:
             diff = differenceImage(prev, img)
+            diff = blurImage(diff, 20)
             cv2.imshow('Difference', diff)
         prev = img
 
@@ -224,8 +242,6 @@ def main():
         cv2.imshow(WINDOW_NAME, processed_image)
         # Press Escape or close the window to exit
         if cv2.waitKey(1) == 27:
-            break
-        if cv2.getWindowProperty(WINDOW_NAME, cv2.WND_PROP_VISIBLE) < 1:
             break
         if cv2.getWindowProperty(WINDOW_NAME, cv2.WND_PROP_VISIBLE) < 1:
             break
