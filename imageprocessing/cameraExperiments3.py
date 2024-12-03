@@ -174,7 +174,17 @@ def find_objects(img):
     params.maxArea = 5000  # Maximum area of blob
     detector = cv2.SimpleBlobDetector_create(params)
     keypoints = detector.detect(img)
-    print(keypoints)
+    # print the centerpoints (x,y) of the blobs
+    for keypoint in keypoints:
+        x, y = int(keypoint.pt[0]), int(keypoint.pt[1])
+        radius = int(keypoint.size / 2)
+        # Get the mean brightness of the blob
+        # If a pixel is outside the image, it is ignored
+        blob_pixels = img[max(0, y - radius):min(img.shape[0], y + radius), max(0, x - radius):min(img.shape[1], x + radius)]
+        # blob_pixels = img[y - radius:y + radius, x - radius:x + radius]
+        mean_brightness = np.mean(blob_pixels) if len(blob_pixels) > 0 else 0
+        # format with 2 decimal points
+        print(f'({x:.2f}, {y:.2f}), r={radius:.2f}, Mean Brightness: {mean_brightness:.2f}')
 
     # convert img to RBG
     img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
