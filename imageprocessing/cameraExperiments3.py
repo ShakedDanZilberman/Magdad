@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 CAMERA_INDEX = 1
+averageFirstNFrames = 30
 
 def processImage(img):
     # Black and white image
@@ -33,6 +34,16 @@ def differenceImage(img1, img2):
     _, diff = cv2.threshold(diff, 30, 255, cv2.THRESH_BINARY)
     return diff
 
+def show10Images(imgs, titles=None):
+    fig, axs = plt.subplots(2, 5)
+    for i in range(10):
+        ax = axs[i // 5, i % 5]
+        ax.imshow(cv2.cvtColor(imgs[i], cv2.COLOR_BGR2RGB))
+        ax.axis('off')
+        if titles is not None:
+            ax.set_title(titles[i])
+    plt.show()
+
 def detectCameras():
     # first try to connect to CAMERA_INDEX
     cam = cv2.VideoCapture(CAMERA_INDEX)
@@ -50,13 +61,7 @@ def detectCameras():
             ret_val, imgs[i] = cam.read()
             cam.release()
     # Show all images in matplotlib window
-    fig, axs = plt.subplots(2, 5)
-    for i in range(10):
-        ax = axs[i // 5, i % 5]
-        if imgs[i] is not None:
-            ax.imshow(cv2.cvtColor(imgs[i], cv2.COLOR_BGR2RGB))
-        ax.axis('off')
-        ax.set_title(f'Camera {i}')
+    show10Images(imgs, [f'Camera {i}' for i in range(10)])
     plt.show()
 
 
@@ -66,7 +71,6 @@ def show_webcam():
     WINDOW_NAME = 'Camera Connection'
     prev = None
     image_index = 0
-    N = 10
     first_N_images = []
     while True:
         ret_val, img = cam.read()
@@ -89,10 +93,11 @@ def show_webcam():
                 continue
             image_index += 1
             first_N_images.append(processed_image)
-            if image_index == N:
-                clear_photo = np.zeros_like(first_N_images[0], dtype=np.float32)
-                for i in range(N):
-                    clear_photo += first_N_images[i] * (1 / N)
+            if image_index == averageFirstNFrames:
+                clear_photo = np.zeros_like(first_N_images[0])
+                for i in range(averageFirstNFrames):
+                    # clear_photo += first_N_images[i] * (1 / N)
+                    clear_photo = cv2.addWeighted(clear_photo, 1, first_N_images[i], 1 / averageFirstNFrames, 0)
                 # clear_photo = clear_photo / N
                 cv2.imshow('Average', clear_photo)
                 print('Average image computed')
