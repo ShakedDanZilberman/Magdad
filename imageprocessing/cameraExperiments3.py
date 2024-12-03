@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 CAMERA_INDEX = 1
 averageFirstNFrames = 30
 WINDOW_NAME = 'Camera Connection'
+MAX_CAMERAS = 10
 image_index = 0
 first_N_images = []
 
@@ -36,7 +37,7 @@ class FirstNImagesHandler:
         if self.index == self.N:
             self.index = -1
             self.getAverage()
-            cv2.imshow(self.title, self.avg)
+            # cv2.imshow(self.title, self.avg)
 
     def getAverage(self):
         # Return the average if it has already been calculated
@@ -88,12 +89,12 @@ def showEdges(img):
     # Detect Canny edges
     edges = cv2.Canny(img, 100, 200)
     # Detect contours
-    # contours, _ = cv2.findContours(edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    # # Draw contours on a black image
-    # black = np.zeros_like(img)
-    # cv2.drawContours(black, contours, -1, (255, 255, 255), 1)
-    # # Show
-    # cv2.imshow('Contours', black)
+    contours, _ = cv2.findContours(edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    # Draw contours on a black image
+    black = np.zeros_like(img)
+    cv2.drawContours(black, contours, -1, (255, 255, 255), 1)
+    # Show
+    cv2.imshow('Contours', black)
     cv2.imshow('Edges', edges)
 
 def differenceImage(img1, img2):
@@ -106,12 +107,18 @@ def differenceImage(img1, img2):
     _, diff = cv2.threshold(diff, 30, 255, cv2.THRESH_BINARY)
     return diff
 
-def show10Images(imgs, titles=None):
-    fig, axs = plt.subplots(2, 5)
-    for i in range(10):
-        ax = axs[i // 5, i % 5]
-        ax.imshow(cv2.cvtColor(imgs[i], cv2.COLOR_BGR2RGB))
+def showMultipleFrames(imgs, titles=None):
+    N = len(imgs)
+    # find the optimal p,q such that p*q >= N and p-q is minimized
+    p = int(np.ceil(np.sqrt(N)))
+    q = int(np.ceil(N / p))
+    fig, axs = plt.subplots(p, q, figsize=(20, 10))
+    for ax in axs.flat:
         ax.axis('off')
+    for i in range(N):
+        ax = axs[i // q, i % q]
+        if imgs[i] is not None:
+            ax.imshow(cv2.cvtColor(imgs[i], cv2.COLOR_BGR2RGB))
         if titles is not None:
             ax.set_title(titles[i])
     plt.show()
@@ -131,9 +138,9 @@ def detectCameras():
         print(f'Camera @ index {CAMERA_INDEX} is connected')
         cam.release()
         return
-    # Otherwise, try to connect to all
-    imgs = [None] * 10
-    for i in range(10):
+    # Otherwise, try to connect to all cameras
+    imgs = [None] * MAX_CAMERAS
+    for i in range(MAX_CAMERAS):
         cam = cv2.VideoCapture(i)
         if cam.isOpened():
             print(f'Camera @ index {i} is connected')
@@ -141,7 +148,7 @@ def detectCameras():
             ret_val, imgs[i] = cam.read()
             cam.release()
     # Show all images in matplotlib window
-    show10Images(imgs, [f'Camera {i}' for i in range(10)])
+    showMultipleFrames(imgs, [f'Camera {i}' for i in range(MAX_CAMERAS)])
     plt.show()
 
 
