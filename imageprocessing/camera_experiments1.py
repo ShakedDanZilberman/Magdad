@@ -112,7 +112,7 @@ def blob_detection(frame):
 
     return output_frame
 
-def process_video_area(camera_id=1, mask=None):
+def process_video_area(camera_id=1):
     """Main function to capture video, detect objects, and display results."""
     cap = cv2.VideoCapture(camera_id)
 
@@ -158,10 +158,10 @@ def process_video_area(camera_id=1, mask=None):
 
 
         # Mask edges to the user-defined area
-        masked_edges = cv2.bitwise_and(erode, mask)
+        #masked_edges = cv2.bitwise_and(erode, mask)
 
         # Find contours of the edges
-        contours, _ = cv2.findContours(masked_edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        contours, _ = cv2.findContours(erode, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
 
 
@@ -203,6 +203,5 @@ def process_video_area(camera_id=1, mask=None):
 
 
 if __name__ == "__main__":
-    mask = initialize_camera()
-    process_video_area(1, mask)
+    process_video_area(1)
 
