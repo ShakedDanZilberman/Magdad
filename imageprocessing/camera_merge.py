@@ -46,7 +46,7 @@ class ContoursHandler(Handler):
         erode = cv2.erode(closing, kernel_small, iterations=4)
         self.static = erode
 
-    def display(self):
+    def display(self, img):
         TITLE = 'Contours'
         if self.static is None:
             return
@@ -54,6 +54,9 @@ class ContoursHandler(Handler):
 
     def clear(self):
         pass
+
+    def get(self):
+        return self.static
 
 
 class Accumulator:
@@ -238,7 +241,10 @@ class ImageParse:
     @staticmethod
     def toGrayscale(img):
         # Black and white image
-        return cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        try:
+            return cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        except cv2.error:
+            return img
 
     @staticmethod
     def differenceImage(img1, img2):
