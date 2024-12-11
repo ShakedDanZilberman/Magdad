@@ -11,7 +11,7 @@ MAX_CAMERAS = 10
 image_index = 0
 first_N_images = []
 
-class FirstNImagesHandler:
+class NewPixelsHandler:
     def __init__(self, N):
         self.N = N
         self.images = [None] * N
@@ -23,7 +23,6 @@ class FirstNImagesHandler:
         self.cumulative = None
 
     def addImage(self, img):
-
         # Skip if index is -1
         if self.index == -1:
             return
@@ -65,6 +64,8 @@ class FirstNImagesHandler:
         return self.avg
 
     def clear(self):
+        self.cumulative = np.zeros((self.images[0].shape[0], self.images[0].shape[1]), dtype=np.uint8)
+
         # Clear the images and the average, and reset the index
         self.shape = self.images[0].shape
         self.images = [None] * self.N
@@ -72,8 +73,6 @@ class FirstNImagesHandler:
         self.index = 0
 
         self.loading_img = np.ones(self.shape, np.uint8) * 128
-
-        self.cumulative = np.zeros(self.shape, dtype=np.uint8)
 
         # Show the loading image
         # cv2.imshow(self.title, self.loading_img) 
@@ -100,7 +99,6 @@ class FirstNImagesHandler:
             diff = find_objects(diff)
             cv2.imshow(TITLE, diff)
             cv2.imshow(TITLE2, self.cumulative)
-
 
 
 def processImage(img):
@@ -229,7 +227,7 @@ def find_objects(img):
 def main():
     detectCameras()
     cam = cv2.VideoCapture(CAMERA_INDEX)
-    firstFramesHandler = FirstNImagesHandler(averageFirstNFrames)
+    firstFramesHandler = NewPixelsHandler(averageFirstNFrames)
     prev = None
 
     while True:
