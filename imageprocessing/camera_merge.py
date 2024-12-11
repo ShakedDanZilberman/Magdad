@@ -3,13 +3,54 @@
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
+from abc import ABC, abstractmethod
 
 CAMERA_INDEX = 1
-averageFirstNFrames = 30
-WINDOW_NAME = 'Camera Connection'
 MAX_CAMERAS = 10
 image_index = 0
-first_N_images = []
+
+
+class Handler(ABC):
+    @abstractmethod
+    def addImage(self, img):
+        pass
+
+    @abstractmethod
+    def display(self):
+        pass
+
+    @abstractmethod
+    def clear(self):
+        pass
+
+
+class ContoursHandler(Handler):
+    def __init__(self):
+        self.contours = None
+
+    def addImage(self, img):
+        gray = ImageParse.toGrayscale(img)
+        # manipluate the image to get the contours
+        blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+        edges = cv2.Canny(blurred, 150, 200)
+        kernel_small = np.ones((3, 3), np.uint8)
+        kernel = np.ones((5, 5), np.uint8)
+        kernel_big = np.ones((7, 7), np.uint8)
+        dilated_edges = cv2.dilate(edges, kernel, iterations=2)
+        opening = cv2.morphologyEx(dilated_edges, cv2.MORPH_OPEN, kernel_big)
+        closing = cv2.morphologyEx(opening, cv2.MORPH_CLOSE, kernel)
+        erode = cv2.erode(closing, kernel_small, iterations=4)
+        self.contours = erode
+
+    def display(self):
+        TITLE = 'Contours'
+        if self.contours is None:
+            return
+        cv2.imshow(TITLE, self.contours)
+
+    def clear(self):
+        pass
+
 
 class Accumulator:
     def __init__(self):
@@ -23,15 +64,32 @@ class Accumulator:
     def clear(self):
         self.accumulator = np.zeros((self.img.shape[0], self.img.shape[1]), dtype=np.uint8)
 
+class RawHandler(Handler):
+    TITLE = 'Camera Connection'
+    def __init__(self):
+        self.img = None
+        
+    def addImage(self, img):
+        self.img = img
 
-class NewPixelsHandler:
-    def __init__(self, N):
-        self.N = N
-        self.images = [None] * N
+    def display(self, img):
+        if self.img is None:
+            return
+        cv2.imshow(RawHandler.TITLE, img)
+
+    def clear(self):
+        self.img = None
+
+
+class NewPixelsHandler(Handler):
+    N = 30
+    first_N_images = []
+    def __init__(self):
+        self.images = [None] * NewPixelsHandler.N
         self.index = 0
         self.BRIGHTNESS_THRESHOLD = 230
         self.loading_img = None
-        self.title = f'Average of First {self.N} Frames'
+        self.title = f'Average of First {NewPixelsHandler.N} Frames'
         self.avg = None
 
 
@@ -49,11 +107,10 @@ class NewPixelsHandler:
         self.index += 1
 
         # Reset index if it exceeds N
-        if self.index == self.N:
+        if self.index == NewPixelsHandler.N:
             self.index = -1
             self.getAverage()
             # cv2.imshow(self.title, self.avg)
-
 
 
     def getAverage(self):
@@ -61,14 +118,14 @@ class NewPixelsHandler:
         if hasattr(self, 'avg') and self.avg is not None:
             return self.avg
         
-        if len(self.images) < self.N:
+        if len(self.images) < NewPixelsHandler.N:
             return None
         
         # Calculate the average
         self.avg = np.zeros_like(self.images[0])
         # Average only the non-None images
-        N_effective = self.N - len([i for i in self.images if i is None])
-        for i in range(self.N):
+        N_effective = NewPixelsHandler.N - len([i for i in self.images if i is None])
+        for i in range(NewPixelsHandler.N):
             # Add the image to the average with a weight of 1/N_effective
             if self.images[i] is not None:
                 self.avg = cv2.addWeighted(self.avg, 1, self.images[i], 1 / N_effective, 0)
@@ -78,7 +135,7 @@ class NewPixelsHandler:
     def clear(self):
         # Clear the images and the average, and reset the index
         self.shape = self.images[0].shape
-        self.images = [None] * self.N
+        self.images = [None] * NewPixelsHandler.N
         self.avg = None
         self.index = 0
 
@@ -110,7 +167,8 @@ class NewPixelsHandler:
             cv2.imshow(TITLE, diff)
             #cv2.imshow(TITLE2, self.cumulative)
 
-class DifferenceHandler:
+
+class DifferenceHandler(Handler):
     TITLE = 'Difference'
     def __init__(self):
         self.prev = None
@@ -261,7 +319,8 @@ class IO:
 def main():
     IO.detectCameras()
     cam = cv2.VideoCapture(CAMERA_INDEX)
-    newPixelsHandler = NewPixelsHandler(averageFirstNFrames)
+    rawHandler = RawHandler()
+    newPixelsHandler = NewPixelsHandler()
     differenceHandler = DifferenceHandler()
 
     while True:
@@ -273,20 +332,19 @@ def main():
         img = cv2.resize(img, (0, 0), fx=.5, fy=.5)
         img = ImageParse.toGrayscale(img)
 
+        rawHandler.addImage(img)
         newPixelsHandler.addImage(img)
         differenceHandler.addImage(img)
 
+        rawHandler.display(img)
         newPixelsHandler.display(img)
         differenceHandler.display(img)
         
         if cv2.waitKey(1) == 32: # Whitespace
             newPixelsHandler.clear()
 
-        cv2.imshow(WINDOW_NAME, img)
-        # Press Escape or close the window to exit
+        # Press Escape to exit
         if cv2.waitKey(1) == 27:
-            break
-        if cv2.getWindowProperty(WINDOW_NAME, cv2.WND_PROP_VISIBLE) < 1:
             break
     cv2.destroyAllWindows()
 
