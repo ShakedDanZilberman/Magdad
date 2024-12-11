@@ -339,6 +339,11 @@ class IO:
     def saveImage(img, path):
         cv2.imwrite(path, img)
 
+class DecitionMaker:
+    @staticmethod
+    def intersectHeatmaps(heatmap1, heatmap2):
+        return cv2.bitwise_and(heatmap1, heatmap2)
+    
 
 def generate_targets():
     pass
@@ -372,6 +377,7 @@ def main():
         for handler in [rawHandler, newPixelsHandler, differenceHandler, contoursHandler]:
             handler.add(img)
             handler.display(img)
+            #cv2.imshow('intersection', DecitionMaker.intersectHeatmaps(newPixelsHandler.get(), contoursHandler.get()))
         
         if cv2.waitKey(1) == 32: # Whitespace
             newPixelsHandler.clear()
