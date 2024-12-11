@@ -61,11 +61,9 @@ class ContoursHandler(Handler):
 
 class Accumulator:
     """
-    img is the curent frame in grayscale
     accumulator is the accumulated grayscale img
         """
     def __init__(self):
-        self.img = None
         self.accumulator = None
 
     def add(self, img):
@@ -73,11 +71,12 @@ class Accumulator:
             self.accumulator = np.zeros((self.img.shape[0], self.img.shape[1]), dtype=np.uint8)
         self.accumulator = cv2.addWeighted(self.cumulative, 0.9, img, 0.1, 0)
 
-    def clear(self):
-        self.accumulator = np.zeros((self.img.shape[0], self.img.shape[1]), dtype=np.uint8)
+    def clear(self, img):
+        self.accumulator = np.zeros((img.shape[0], img.shape[1]), dtype=np.uint8)
 
     def get(self):
         return self.accumulator
+
 
 class RawHandler(Handler):
     TITLE = 'Camera Connection'
@@ -339,6 +338,10 @@ class IO:
 
     def saveImage(img, path):
         cv2.imwrite(path, img)
+
+
+def generate_targets():
+    pass
 
 
 def main():
