@@ -345,8 +345,20 @@ class DecitionMaker:
         return cv2.bitwise_and(heatmap1, heatmap2)
     
 
-def generate_targets():
-    pass
+def generate_targets(heat_map: cv2.typing.MatLike):
+    CEP_90 = cv2.Canny(heat_map, 229, 228)
+    CEP_50 = cv2.Canny(heat_map, 128, 127)
+    contours_90, _ = cv2.findContours(CEP_90,
+    cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE) 
+    contours_50, _ = cv2.findContours(CEP_50,
+    cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+    CEP_90_targets = []
+    CEP_50_targets = []
+    for contour in contours_90:
+        CEP_90_targets = cv2.minEnclosingCircle(contour)
+    for contour in contours_50:
+        CEP_50_targets = cv2.minEnclosingCircle(contour)
+    return CEP_90_targets, CEP_50_targets
 
 
 def main():
