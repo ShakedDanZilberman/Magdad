@@ -12,7 +12,11 @@ image_index = 0
 
 class Handler(ABC):
     @abstractmethod
-    def addImage(self, img):
+    def add(self, img):
+        pass
+
+    @abstractmethod
+    def get(self):
         pass
 
     @abstractmethod
@@ -26,9 +30,9 @@ class Handler(ABC):
 
 class ContoursHandler(Handler):
     def __init__(self):
-        self.contours = None
+        self.static = None
 
-    def addImage(self, img):
+    def add(self, img):
         gray = ImageParse.toGrayscale(img)
         # manipluate the image to get the contours
         blurred = cv2.GaussianBlur(gray, (5, 5), 0)
@@ -40,37 +44,48 @@ class ContoursHandler(Handler):
         opening = cv2.morphologyEx(dilated_edges, cv2.MORPH_OPEN, kernel_big)
         closing = cv2.morphologyEx(opening, cv2.MORPH_CLOSE, kernel)
         erode = cv2.erode(closing, kernel_small, iterations=4)
-        self.contours = erode
+        self.static = erode
 
     def display(self):
         TITLE = 'Contours'
-        if self.contours is None:
+        if self.static is None:
             return
-        cv2.imshow(TITLE, self.contours)
+        cv2.imshow(TITLE, self.static)
 
     def clear(self):
         pass
 
 
 class Accumulator:
+    """
+    img is the curent frame in grayscale
+    accumulator is the accumulated grayscale img
+        """
     def __init__(self):
         self.img = None
         self.accumulator = None
 
-    def addImage(self):
+    def add(self, img):
         if self.accumulator is None:
             self.accumulator = np.zeros((self.img.shape[0], self.img.shape[1]), dtype=np.uint8)
+        self.accumulator = cv2.addWeighted(self.cumulative, 0.9, img, 0.1, 0)
 
     def clear(self):
         self.accumulator = np.zeros((self.img.shape[0], self.img.shape[1]), dtype=np.uint8)
+
+    def get(self):
+        return self.accumulator
 
 class RawHandler(Handler):
     TITLE = 'Camera Connection'
     def __init__(self):
         self.img = None
         
-    def addImage(self, img):
+    def add(self, img):
         self.img = img
+
+    def get(self):
+        return self.img
 
     def display(self, img):
         if self.img is None:
@@ -93,7 +108,7 @@ class NewPixelsHandler(Handler):
         self.avg = None
 
 
-    def addImage(self, img):
+    def add(self, img):
         # Skip if index is -1
         if self.index == -1:
             return
@@ -109,11 +124,11 @@ class NewPixelsHandler(Handler):
         # Reset index if it exceeds N
         if self.index == NewPixelsHandler.N:
             self.index = -1
-            self.getAverage()
+            self.get()
             # cv2.imshow(self.title, self.avg)
 
 
-    def getAverage(self):
+    def get(self):
         # Return the average if it has already been calculated
         if hasattr(self, 'avg') and self.avg is not None:
             return self.avg
@@ -154,7 +169,7 @@ class NewPixelsHandler(Handler):
         if not self.isReady():
             cv2.imshow(TITLE, LOADING_IMAGE)
         else:
-            diff = ImageParse.differenceImage(img, self.getAverage())
+            diff = ImageParse.differenceImage(img, self.get())
             diff = ImageParse.blurImage(diff, 20)
             diff = ImageParse.aboveThreshold(diff, 50)
 
@@ -174,7 +189,7 @@ class DifferenceHandler(Handler):
         self.prev = None
         self.diff = None
 
-    def addImage(self, img):
+    def add(self, img):
         if self.prev is not None:
             self.diff = ImageParse.differenceImage(self.prev, img)
             self.diff = ImageParse.blurImage(self.diff, 20)
@@ -188,6 +203,9 @@ class DifferenceHandler(Handler):
 
     def clear(self):
         raise NotImplementedError('DifferenceHandler does not support clear()')
+    
+    def get(self):
+        return self.diff
 
 
 class Rendering:
@@ -242,6 +260,7 @@ class ImageParse:
     
     @staticmethod
     def find_objects(img):
+        # TODO: refactor this function
         # img is the output of the differenceImage function,
         # regarding the difference between the current frame and the average of the first N frames
         params = cv2.SimpleBlobDetector_Params()
@@ -317,28 +336,33 @@ class IO:
 
 
 def main():
+    global CAMERA_INDEX
     IO.detectCameras()
     cam = cv2.VideoCapture(CAMERA_INDEX)
     rawHandler = RawHandler()
     newPixelsHandler = NewPixelsHandler()
     differenceHandler = DifferenceHandler()
+    contoursHandler = ContoursHandler()
 
     while True:
         ret_val, img = cam.read()
 
-        assert ret_val, 'Camera @ index 1 not connected'
+        if not ret_val:
+            print('Camera @ index 1 not connected')
+            CAMERA_INDEX = int(input('Enter the index of the camera you want to connect to: '))
+            cam = cv2.VideoCapture(CAMERA_INDEX)
+            ret_val, img = cam.read()
+            if not ret_val:
+                print('Failed to connect to camera')
+                break
 
         # Downsize and grayscale the image to better simulate IR camera - Remove this when IR camera is connected
         img = cv2.resize(img, (0, 0), fx=.5, fy=.5)
         img = ImageParse.toGrayscale(img)
 
-        rawHandler.addImage(img)
-        newPixelsHandler.addImage(img)
-        differenceHandler.addImage(img)
-
-        rawHandler.display(img)
-        newPixelsHandler.display(img)
-        differenceHandler.display(img)
+        for handler in [rawHandler, newPixelsHandler, differenceHandler, contoursHandler]:
+            handler.add(img)
+            handler.display(img)
         
         if cv2.waitKey(1) == 32: # Whitespace
             newPixelsHandler.clear()
