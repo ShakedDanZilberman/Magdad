@@ -154,7 +154,7 @@ def process_video_area(camera_id=1):
         #
         # erode = cv2.erode(closing, kernel_small, iterations=4)
 
-        cv2.imshow("Dilated Edges", edges)
+        cv2.imshow("Dilated Edges", erode)
 
 
         # Mask edges to the user-defined area

@@ -19,8 +19,11 @@ class FirstNImagesHandler:
         self.BRIGHTNESS_THRESHOLD = 230
         self.loading_img = None
         self.title = f'Average of First {self.N} Frames'
+        self.avg = None
+        self.cumulative = None
 
     def addImage(self, img):
+
         # Skip if index is -1
         if self.index == -1:
             return
@@ -39,6 +42,9 @@ class FirstNImagesHandler:
             self.getAverage()
             # cv2.imshow(self.title, self.avg)
 
+        if self.cumulative is None:
+            self.cumulative = np.zeros((img.shape[0], img.shape[1]), dtype=np.uint8)
+
     def getAverage(self):
         # Return the average if it has already been calculated
         if hasattr(self, 'avg') and self.avg is not None:
@@ -55,6 +61,7 @@ class FirstNImagesHandler:
             # Add the image to the average with a weight of 1/N_effective
             if self.images[i] is not None:
                 self.avg = cv2.addWeighted(self.avg, 1, self.images[i], 1 / N_effective, 0)
+
         return self.avg
 
     def clear(self):
@@ -66,6 +73,8 @@ class FirstNImagesHandler:
 
         self.loading_img = np.ones(self.shape, np.uint8) * 128
 
+        self.cumulative = np.zeros(self.shape, dtype=np.uint8)
+
         # Show the loading image
         # cv2.imshow(self.title, self.loading_img)
 
@@ -74,6 +83,7 @@ class FirstNImagesHandler:
     
     def displayDifference(self, img):
         TITLE = 'Difference from Original'
+        TITLE2 = 'Cumulative Difference'
         LOADING_IMAGE = np.ones(img.shape, np.uint8) * 128
         if not self.isReady():
             cv2.imshow(TITLE, LOADING_IMAGE)
@@ -81,11 +91,17 @@ class FirstNImagesHandler:
             diff = differenceImage(img, self.getAverage())
             diff = blurImage(diff, 20)
             diff = aboveThreshold(diff, 50)
+
+            self.cumulative = cv2.addWeighted(self.cumulative, 0.9, diff, 0.1, 0)
+
             # convert image to RBG
             # diff = cv2.cvtColor(diff, cv2.COLOR_GRAY2BGR)
             # find objects in the image
             diff = find_objects(diff)
             cv2.imshow(TITLE, diff)
+            cv2.imshow(TITLE2, self.cumulative)
+
+
 
 def processImage(img):
     # Black and white image
