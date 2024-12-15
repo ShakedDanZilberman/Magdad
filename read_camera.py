@@ -2,14 +2,13 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 import math
-
+import time
 from pyfirmata import Arduino, util
-from time import sleep
 
 
 CAMERA_INDEX = 1
 WINDOW_NAME = 'Camera Connection'
-MAX_CAMERAS = 10
+
 
 # Set up the Arduino board (replace 'COM8' with your Arduino's COM port)
 board = Arduino('COM8')  # Adjust the COM port based on your system
@@ -98,20 +97,83 @@ def find_red_point(frame):
     cY = int(M["m01"] / M["m00"])  # y-coordinate
 
     return cX, cY
-        
+
+
+# PID constants
+Kp = 0.1
+Ki = 0.1
+Kd = 0
+
+# Initialize previous values for PID
+time_prev = time.time() / 100
+integral = np.array([0, 0])
+error_prev = np.array([0, 0])
+
+def PID(target, curr, Kp=Kp, Ki=Ki, Kd=Kd):
+    # target and curr are (x, y)
+    global integral, time_prev, error_prev
+
+    now = time.time() / 100
+    error = np.array([target - curr]) 
+
+    P = Kp * error
+    integral = integral + Ki * error * (now - time_prev)
+    D = Kd*(error - error_prev) / (now - time_prev) 
+    delta = P + integral + D 
+
+    error_prev = error
+    time_prev = now
+    # offset for the angles
+    delta = 90 - delta
+    return delta
+
+
+mouse_x,mouse_y = 0, 0
+
+def click_event(event, x, y, flags, param):
+    global mouse_x,mouse_y
+    if event == cv2.EVENT_LBUTTONDOWN:
+        mouse_x,mouse_y=x,y     
 
 def main():
+    global mouse_x,mouse_y
+    #create camera and nonesense
     cam = cv2.VideoCapture(CAMERA_INDEX)
     cv2.namedWindow(WINDOW_NAME)
+    # make sure there is an image to be read\sent
     ret_val, img = cam.read()
-    global mx,my
-
     cv2.setMouseCallback(WINDOW_NAME, click_event)
+    cv2.imshow(WINDOW_NAME, img)
+
+    servoH.write(90)
+    time.sleep(0.1)
+    servoV.write(90)
+    time.sleep(0.1)
+
+    # main loop
     while True:
+        # read image
         ret_val, img = cam.read()
-        (rx,ry)=find_red_point(img)
-        cv2.circle(img,(rx,ry),10,(0,0,255),-1)
-        cv2.circle(img,(mx,my),10,(255,0,0),-1)
+        # display circles for laser and mouse
+        (laser_x,laser_y) = find_red_point(img)
+        cv2.circle(img,(laser_x,laser_y),7,(0,0,255),-1)
+        cv2.circle(img,(mouse_x,mouse_y),7,(255,0,0),-1)
+
+        #magic numbers!!!
+        # angleX = 180*(1/2-math.atan((mouse_x-laser_x)/340)/math.pi)
+        # angleY = 180*(1/2-math.atan((mouse_y-laser_y)/340)/math.pi)
+        
+        
+        pid = PID(np.array([mouse_x,mouse_y]),np.array([laser_x,laser_y]))
+        angleX, angleY = pid[0,0], pid[0,1]
+        print(angleX, angleY)
+        servoH.write(angleX)
+        time.sleep(0.1)
+        servoV.write(angleY)
+        time.sleep(0.1)
+
+        # display image 
+        cv2.imshow(WINDOW_NAME, img)
 
         # Press Escape or close the window to exit
         if cv2.waitKey(1) == 27:
