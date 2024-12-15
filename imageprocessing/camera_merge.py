@@ -65,8 +65,13 @@ class ContoursHandler(Handler):
 
 class Accumulator:
     """
-    accumulator is the accumulated grayscale img
-        """
+    Accumulator class to accumulate B&W heatmaps
+    It adds images with a weight of 0.1 to the accumulator
+
+    add(img) - adds the image to the accumulator
+    clear() - clears the accumulator
+    get() - returns the accumulator image
+    """
     def __init__(self):
         self.accumulator = None
 
@@ -83,6 +88,15 @@ class Accumulator:
 
 
 class RawHandler(Handler):
+    """
+    RawHandler class to present the raw image from the camera.
+    It does not manipulate the image in any way.
+
+    add(img) - adds the image to the handler
+    clear() - clears the image
+    get() - returns the image
+    display() - displays the image
+    """
     TITLE = 'Camera Connection'
     def __init__(self):
         self.img = None
@@ -103,6 +117,16 @@ class RawHandler(Handler):
 
 
 class NewPixelsHandler(Handler):
+    """
+    NewPixelsHandler class to accumulate the first N frames and calculate the average.
+    It then calculates the difference between the current frame and the average of the first N frames.
+
+    add(img) - adds the image to the handler; if the image is too bright, it is skipped.
+                It saves the first N images, and ignores the rest (until clear() is called).
+    clear() - clears the images and the average
+    get() - returns the average
+    display() - displays the difference between the current frame and the average
+    """
     N = 30
     first_N_images = []
     def __init__(self):
@@ -190,6 +214,15 @@ class NewPixelsHandler(Handler):
 
 
 class DifferenceHandler(Handler):
+    """
+    DifferenceHandler class to calculate the difference between the current frame and the previous frame.
+    This is useful for detecting movement.
+
+    add(img) - adds the image to the handler; if the previous image is None, it is skipped.
+    clear() - clears the previous image and the difference
+    get() - returns the difference
+    display() - displays the difference
+    """
     TITLE = 'Difference'
     def __init__(self):
         self.prev = None
@@ -217,6 +250,14 @@ class DifferenceHandler(Handler):
 class Rendering:
     @staticmethod
     def showMultipleFrames(imgs, titles=None, title=None):
+        """
+        Display multiple images in a grid using matplotlib.
+
+        Args:
+            imgs (list[np.ndarray]): List of images to display
+            titles (_type_, optional): _description_. Defaults to None.
+            title (_type_, optional): _description_. Defaults to None.
+        """
         N = len(imgs)
         # find the optimal p,q such that p*q >= N and p-q is minimized
         p = int(np.ceil(np.sqrt(N)))
@@ -243,7 +284,14 @@ class Rendering:
 class ImageParse:
     @staticmethod
     def toGrayscale(img):
-        # Black and white image
+        """Convert an image to grayscale
+
+        Args:
+            img (np.ndarray): The image to convert
+
+        Returns:
+            np.ndarray: The grayscale image
+        """
         try:
             return cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         except cv2.error:
@@ -251,6 +299,15 @@ class ImageParse:
 
     @staticmethod
     def differenceImage(img1, img2):
+        """Calculate the difference between two images
+
+        Args:
+            img1 (np.ndarray): The first image
+            img2 (np.ndarray): The second image
+
+        Returns:
+            np.ndarray: The difference between the two images
+        """
         # Calculate difference
         diff = cv2.absdiff(img1, img2)
         # Apply threshold
@@ -259,19 +316,37 @@ class ImageParse:
 
     @staticmethod
     def blurImage(img, factor=5):
+        """Blur an image using a Gaussian filter
+
+        Args:
+            img (np.ndarray): The image to blur
+            factor (int, optional): The size of the filter. Defaults to 5.
+
+        Returns:
+            np.ndarray: The blurred image
+        """
         if factor % 2 == 0:
             factor += 1
         return cv2.GaussianBlur(img, (factor, factor), 0)
 
     @staticmethod
     def aboveThreshold(img, threshold):
+        """Apply a threshold to an image
+
+        Args:
+            img (np.ndarray): The image to threshold
+            threshold (int): The threshold value
+
+        Returns:
+            np.ndarray: The thresholded image
+        """
         return cv2.threshold(img, threshold, 255, cv2.THRESH_TOZERO)[1]
     
     @staticmethod
     def find_objects(img):
-        # TODO: refactor this function
-        # img is the output of the differenceImage function,
-        # regarding the difference between the current frame and the average of the first N frames
+        # TODO: this is a horrible way to find objects, please improve
+        # This function is supposed to find objects in the image
+        # The image is a black and white image with white blobs on a black background
         params = cv2.SimpleBlobDetector_Params()
         params.maxThreshold = 255
         params.minThreshold = 10
@@ -285,34 +360,49 @@ class ImageParse:
         params.maxArea = 10000  # Maximum area of blob
         detector = cv2.SimpleBlobDetector_create(params)
         keypoints = detector.detect(img)
-        brightnesses = {}
-        # print the centerpoints (x,y) of the blobs
-        for keypoint in keypoints:
-            x, y = int(keypoint.pt[0]), int(keypoint.pt[1])
-            radius = int(keypoint.size / 2)
-            # Get the mean brightness of the blob
-            # If a pixel is outside the image, it is ignored
-            blob_pixels = img[max(0, y - radius):min(img.shape[0], y + radius), max(0, x - radius):min(img.shape[1], x + radius)]
-            # blob_pixels = img[y - radius:y + radius, x - radius:x + radius]
-            mean_brightness = np.mean(blob_pixels) if len(blob_pixels) > 0 else 0
-            brightnesses[keypoint] = mean_brightness
-            # format with 2 decimal points
-            # print(f'({x:.2f}, {y:.2f}), r={radius:.2f}, Mean Brightness: {mean_brightness:.2f}')
+        
+        # Get the brightness of each blob
+        brightnesses = ImageParse.evaluateBrightness(img, keypoints)
+        
+        img = ImageParse.drawKeypointsOnImage(img, keypoints, brightnesses)
 
-        # convert img to RBG
+        return img
+    
+    @staticmethod
+    def evaluateBrightness(img, keypoints):
+        """Evaluate the brightness of each keypoint in an image
+
+        Args:
+            img (np.ndarray): The image to evaluate
+            keypoints (list): List of keypoints
+
+        Returns:
+            dict: A dictionary containing the brightness of each keypoint
+        """
+        radii = {keypoint: int(keypoint.size / 2) for keypoint in keypoints}
+        bounding_boxes = {keypoint: (int(keypoint.pt[0] - keypoint.size / 2), int(keypoint.pt[1] - keypoint.size / 2), radius, radius) for keypoint, radius in radii.items()}
+        for keypoint, (x, y, w, h) in bounding_boxes.items():
+            bounding_boxes[keypoint] = (max(0, x), max(0, y), min(img.shape[1], w), min(img.shape[0], h))
+        brightnesses = {keypoint: np.mean(img[y:y+h, x:x+w]) for keypoint, (x, y, w, h) in bounding_boxes.items()}
+        return brightnesses
+    
+    @staticmethod
+    def drawKeypointsOnImage(img, keypoints, brightnesses, cross_size=2):
+        # Convert the image to color
         img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+        centerpoints = {keypoint: (int(keypoint.pt[0]), int(keypoint.pt[1])) for keypoint in keypoints}
+        radii = {keypoint: int(keypoint.size / 2) for keypoint in keypoints}
         # draw the keypoints
         for keypoint in keypoints:
             # Draw a circle around the blob
-            x, y = int(keypoint.pt[0]), int(keypoint.pt[1])
-            radius = int(keypoint.size / 2)
+            x, y = centerpoints[keypoint]
+            radius = radii[keypoint]
             brightness = brightnesses[keypoint]
-            color = (0, 255, 0) if brightness > 60 else (255, 0, 0)
+            # color is a lerp between green and blue, where blue is for low brightness and green is for high brightness
+            color = (0, brightness, int(255 - brightness))
             cv2.circle(img, (x, y), radius, color, 2)
-            # draw an inner circle with the mean brightness
             cv2.circle(img, (x, y), radius, (0, int(brightness), 0), -1)
             # Draw a cross on the blob
-            cross_size = 2
             cv2.line(img, (x - cross_size, y), (x + cross_size, y), color, 1)
             cv2.line(img, (x, y - cross_size), (x, y + cross_size), color, 1)
 
@@ -321,6 +411,9 @@ class ImageParse:
 
 class IO:
     def detectCameras():
+        """Detect all connected cameras and display their images in a grid using matplotlib
+        
+        If the camera at CAMERA_INDEX is connected, the function will print a message and return."""
         # first try to connect to CAMERA_INDEX
         cam = cv2.VideoCapture(CAMERA_INDEX)
         if cam.isOpened():
@@ -341,15 +434,38 @@ class IO:
         plt.show()
 
     def saveImage(img, path):
+        """Save an image to a file
+
+        Args:
+            img (np.ndarray): The image to save
+            path (str): The path to save the image to
+        """
         cv2.imwrite(path, img)
 
 class DecitionMaker:
     @staticmethod
     def intersectHeatmaps(heatmap1, heatmap2):
+        """Intersect two heatmaps
+
+        Args:
+            heatmap1 (np.ndarray): The first heatmap
+            heatmap2 (np.ndarray): The second heatmap
+
+        Returns:
+            np.ndarray: The intersection of the two heatmaps
+        """
         return cv2.bitwise_and(heatmap1, heatmap2)
     
 
 def generate_targets(heat_map: cv2.typing.MatLike):
+    """Generate targets from a heatmap.
+
+    Args:
+        heat_map (cv2.typing.MatLike): The heatmap to generate targets from
+
+    Returns:
+        Tuple: A tuple containing the targets for CEP_90 and CEP_50
+    """
     CEP_90 = cv2.Canny(heat_map, 229, 228)
     CEP_50 = cv2.Canny(heat_map, 128, 127)
     contours_90, _ = cv2.findContours(CEP_90,
@@ -372,7 +488,7 @@ def main():
     rawHandler = RawHandler()
     newPixelsHandler = NewPixelsHandler()
     differenceHandler = DifferenceHandler()
-    contoursHandler = ContoursHandler()
+    # contoursHandler = ContoursHandler()
 
     while True:
         ret_val, img = cam.read()
@@ -390,7 +506,7 @@ def main():
         img = cv2.resize(img, (0, 0), fx=.5, fy=.5)
         img = ImageParse.toGrayscale(img)
 
-        for handler in [rawHandler, newPixelsHandler, differenceHandler, contoursHandler]:
+        for handler in [rawHandler, newPixelsHandler, differenceHandler]:
             handler.add(img)
             handler.display(img)
             #cv2.imshow('intersection', DecitionMaker.intersectHeatmaps(newPixelsHandler.get(), contoursHandler.get()))
