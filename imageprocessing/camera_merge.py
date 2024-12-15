@@ -35,16 +35,20 @@ class ContoursHandler(Handler):
     def add(self, img):
         gray = ImageParse.toGrayscale(img)
         # manipluate the image to get the contours
-        blurred = cv2.GaussianBlur(gray, (5, 5), 0)
-        edges = cv2.Canny(blurred, 150, 200)
+        blurred = cv2.GaussianBlur(gray, (3, 3), 0)
+        edges = cv2.Canny(blurred, 120, 160)
         kernel_small = np.ones((3, 3), np.uint8)
         kernel = np.ones((5, 5), np.uint8)
         kernel_big = np.ones((7, 7), np.uint8)
-        dilated_edges = cv2.dilate(edges, kernel, iterations=2)
-        opening = cv2.morphologyEx(dilated_edges, cv2.MORPH_OPEN, kernel_big)
-        closing = cv2.morphologyEx(opening, cv2.MORPH_CLOSE, kernel)
-        erode = cv2.erode(closing, kernel_small, iterations=4)
+        dilated_edges = cv2.dilate(edges, kernel_small, iterations=3)
+        closing = cv2.morphologyEx(dilated_edges, cv2.MORPH_CLOSE, kernel)
+        opening = cv2.morphologyEx(closing, cv2.MORPH_OPEN, kernel_small)
+        erode = cv2.erode(opening, kernel_small, iterations=4)
+        cv2.floodFill(filled_image, mask, seedPoint=(0, 0), newVal=(0, 255, 0), loDiff=(5, 5, 5), upDiff=(5, 5, 5))
+
         self.static = erode
+        cv2.imshow("dilation", dilated_edges)
+        cv2.imshow("closing", closing)
 
     def display(self, img):
         TITLE = 'Contours'
@@ -339,9 +343,26 @@ class IO:
     def saveImage(img, path):
         cv2.imwrite(path, img)
 
+class DecitionMaker:
+    @staticmethod
+    def intersectHeatmaps(heatmap1, heatmap2):
+        return cv2.bitwise_and(heatmap1, heatmap2)
+    
 
-def generate_targets():
-    pass
+def generate_targets(heat_map: cv2.typing.MatLike):
+    CEP_90 = cv2.Canny(heat_map, 229, 228)
+    CEP_50 = cv2.Canny(heat_map, 128, 127)
+    contours_90, _ = cv2.findContours(CEP_90,
+    cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE) 
+    contours_50, _ = cv2.findContours(CEP_50,
+    cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+    CEP_90_targets = []
+    CEP_50_targets = []
+    for contour in contours_90:
+        CEP_90_targets = cv2.minEnclosingCircle(contour)
+    for contour in contours_50:
+        CEP_50_targets = cv2.minEnclosingCircle(contour)
+    return CEP_90_targets, CEP_50_targets
 
 
 def main():
@@ -372,6 +393,7 @@ def main():
         for handler in [rawHandler, newPixelsHandler, differenceHandler, contoursHandler]:
             handler.add(img)
             handler.display(img)
+            #cv2.imshow('intersection', DecitionMaker.intersectHeatmaps(newPixelsHandler.get(), contoursHandler.get()))
         
         if cv2.waitKey(1) == 32: # Whitespace
             newPixelsHandler.clear()
