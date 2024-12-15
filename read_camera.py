@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import math
 import time
 from pyfirmata import Arduino, util
+from time import sleep
 
 
 CAMERA_INDEX = 1
