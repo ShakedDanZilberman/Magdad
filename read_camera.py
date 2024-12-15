@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import math
 import time
 from pyfirmata import Arduino, util
+from time import sleep
 
 
 CAMERA_INDEX = 1
@@ -11,12 +12,11 @@ WINDOW_NAME = 'Camera Connection'
 
 
 # Set up the Arduino board (replace 'COM8' with your Arduino's COM port)
-board = Arduino('COM7')  # Adjust the COM port based on your system
-# you can check on windows by the "mode" command in the CMD
+board = Arduino('COM8')  # Adjust the COM port based on your system
 
 # Define the pin for the servo (usually PWM pins)
-servoV_pin = 3
-servoH_pin = 5# Servo control pin (could be any PWM pin)
+servoV_pin = 5
+servoH_pin = 3# Servo control pin (could be any PWM pin)
 laser_pin = 8
 board.digital[laser_pin].write(1)
 # Attach the servo to the board
@@ -25,9 +25,37 @@ servoH = board.get_pin(f'd:{servoH_pin}:s')
 # Start an iterator thread to read analog inputs
 it = util.Iterator(board)
 it.start()
+servoH.write(9)
+servoV.write(9)
+sleep(1)
 
 
-# straight from chatGPT
+A0 = 0
+B0 = 0
+C0 = -0.12
+D0 = 71
+
+A1 = -0.0000007
+B1 = 0.0004
+C1 = -0.193
+D1 = 73.6
+# Main loop to control the servo
+def angle_calc(coordinates):
+    X = coordinates[0]
+    Y = coordinates[1]
+    angleX = D0 + C0*X +B0*X**2 + A0*X**3
+    angleY = D1 + C1*Y +B1*Y**2 + A1*Y**3
+    return angleX, angleY
+
+mx,my=0,0
+
+def click_event(event, x, y, flags, param):
+    global mx,my
+    if event == cv2.EVENT_LBUTTONDOWN:
+        # print(f"Clicked coordinates: {relative_x}, {relative_y}")
+        mx,my=x,y
+        
+
 def find_red_point(frame):
     """
     Finds the (x, y) coordinates of the single red point in the image.
@@ -137,13 +165,10 @@ def main():
         # angleY = 180*(1/2-math.atan((mouse_y-laser_y)/340)/math.pi)
         
         
-        pid = PID(np.array([mouse_x,mouse_y]),np.array([laser_x,laser_y]))
-        angleX, angleY = pid[0,0], pid[0,1]
-        print(angleX, angleY)
-        servoH.write(angleX)
-        time.sleep(0.1)
-        servoV.write(angleY)
-        time.sleep(0.1)
+        # pid = PID(np.array([mouse_x,mouse_y]),np.array([laser_x,laser_y]))
+        # angleX, angleY = pid[0,0], pid[0,1]
+
+
 
         # display image 
         cv2.imshow(WINDOW_NAME, img)
@@ -153,6 +178,18 @@ def main():
             break
         if cv2.getWindowProperty(WINDOW_NAME, cv2.WND_PROP_VISIBLE) < 1:
             break
+        
+
+        # angleX, angleY = angle_calc([mx-rx,my-ry])
+        #magic numbers!!!
+        angleX, angleY = angle_calc([mx,my])
+        print(angleX,angleY)
+        servoH.write(angleX)
+        servoV.write(angleY)
+        sleep(0.1)
+        cv2.imshow(WINDOW_NAME, img)
+
+
 
     cv2.destroyAllWindows()
     board.exit()
