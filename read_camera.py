@@ -15,8 +15,8 @@ board = Arduino('COM7')  # Adjust the COM port based on your system
 # you can check on windows by the "mode" command in the CMD
 
 # Define the pin for the servo (usually PWM pins)
-servoV_pin = 3
-servoH_pin = 5# Servo control pin (could be any PWM pin)
+servoV_pin = 5
+servoH_pin = 3
 laser_pin = 8
 board.digital[laser_pin].write(1)
 # Attach the servo to the board
@@ -73,9 +73,9 @@ def find_red_point(frame):
 
 
 # PID constants
-Kp = 0.1
-Ki = 0.1
-Kd = 0
+Kp = -0.05
+Ki = 0.0
+Kd = 0.0
 
 # Initialize previous values for PID
 time_prev = time.time() / 100
@@ -83,7 +83,7 @@ integral = np.array([0, 0])
 error_prev = np.array([0, 0])
 
 def PID(target, curr, Kp=Kp, Ki=Ki, Kd=Kd):
-    # target and curr are (x, y)
+    # target and curr are [x, y]
     global integral, time_prev, error_prev
 
     now = time.time() / 100
@@ -93,15 +93,15 @@ def PID(target, curr, Kp=Kp, Ki=Ki, Kd=Kd):
     integral = integral + Ki * error * (now - time_prev)
     D = Kd*(error - error_prev) / (now - time_prev) 
     delta = P + integral + D 
-
     error_prev = error
     time_prev = now
     # offset for the angles
-    delta = 90 - delta
+    print(delta)
     return delta
 
 
-mouse_x,mouse_y = 0, 0
+mouse_x,mouse_y = 320, 240
+
 
 def click_event(event, x, y, flags, param):
     global mouse_x,mouse_y
@@ -117,12 +117,9 @@ def main():
     ret_val, img = cam.read()
     cv2.setMouseCallback(WINDOW_NAME, click_event)
     cv2.imshow(WINDOW_NAME, img)
-
-    servoH.write(90)
-    time.sleep(0.1)
-    servoV.write(90)
-    time.sleep(0.1)
-
+    old_x,old_y=0,0 
+    angleX = 80
+    angleY = 50
     # main loop
     while True:
         # read image
@@ -132,21 +129,24 @@ def main():
         cv2.circle(img,(laser_x,laser_y),7,(0,0,255),-1)
         cv2.circle(img,(mouse_x,mouse_y),7,(255,0,0),-1)
 
-        #magic numbers!!!
-        # angleX = 180*(1/2-math.atan((mouse_x-laser_x)/340)/math.pi)
-        # angleY = 180*(1/2-math.atan((mouse_y-laser_y)/340)/math.pi)
+        # display image 
+        cv2.imshow(WINDOW_NAME, img)
         
-        
+
         pid = PID(np.array([mouse_x,mouse_y]),np.array([laser_x,laser_y]))
-        angleX, angleY = pid[0,0], pid[0,1]
-        print(angleX, angleY)
+        angleX += pid[0,0]
+        angleY += pid[0,1]
+        if angleX > 180: angleX = 180
+        if angleY > 180: angleY = 180
+        if angleX < 0: angleX = 0
+        if angleY < 0: angleY = 0
+
         servoH.write(angleX)
         time.sleep(0.1)
         servoV.write(angleY)
         time.sleep(0.1)
 
-        # display image 
-        cv2.imshow(WINDOW_NAME, img)
+        old_x, old_y = angleX, angleY
 
         # Press Escape or close the window to exit
         if cv2.waitKey(1) == 27:
