@@ -33,12 +33,12 @@ sleep(1)
 A0 = 0
 B0 = 0
 C0 = -0.12
-D0 = 76
+D0 = 71
 
-A1 = 0
-B1 = 0
-C1 = -0.15
-D1 = 73
+A1 = -0.0000007
+B1 = 0.0004
+C1 = -0.193
+D1 = 73.6
 # Main loop to control the servo
 def angle_calc(coordinates):
     X = coordinates[0]
