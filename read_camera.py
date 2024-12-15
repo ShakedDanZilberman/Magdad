@@ -12,10 +12,10 @@ WINDOW_NAME = 'Camera Connection'
 MAX_CAMERAS = 10
 
 # Set up the Arduino board (replace 'COM8' with your Arduino's COM port)
-board = Arduino('COM3')  # Adjust the COM port based on your system
+board = Arduino('COM8')  # Adjust the COM port based on your system
 
 # Define the pin for the servo (usually PWM pins)
-servoV_pin = 4
+servoV_pin = 5
 servoH_pin = 3# Servo control pin (could be any PWM pin)
 laser_pin = 8
 board.digital[laser_pin].write(1)
@@ -25,23 +25,26 @@ servoH = board.get_pin(f'd:{servoH_pin}:s')
 # Start an iterator thread to read analog inputs
 it = util.Iterator(board)
 it.start()
+servoH.write(9)
+servoV.write(9)
+sleep(1)
 
 
 A0 = 0
 B0 = 0
-C0 = 0.5
-D0 = 90
+C0 = -0.12
+D0 = 76
 
 A1 = 0
 B1 = 0
-C1 = 0.5
-D1 = 90
+C1 = -0.15
+D1 = 73
 # Main loop to control the servo
 def angle_calc(coordinates):
     X = coordinates[0]
     Y = coordinates[1]
     angleX = D0 + C0*X +B0*X**2 + A0*X**3
-    angleY = D1 + C1*X +B1*Y**2 + A1*Y**3
+    angleY = D1 + C1*Y +B1*Y**2 + A1*Y**3
     return angleX, angleY
 
 mx,my=0,0
@@ -119,11 +122,9 @@ def main():
 
         # angleX, angleY = angle_calc([mx-rx,my-ry])
         #magic numbers!!!
-        angleX = 180-90*(math.atan((mx-rx)/340)/math.pi + 1)
-        angleY = 180-90*(math.atan((my-ry)/340)/math.pi + 1)
+        angleX, angleY = angle_calc([mx,my])
         print(angleX,angleY)
         servoH.write(angleX)
-        sleep(0.1)
         servoV.write(angleY)
         sleep(0.1)
         cv2.imshow(WINDOW_NAME, img)

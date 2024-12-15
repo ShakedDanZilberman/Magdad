@@ -4,18 +4,18 @@ from pyfirmata import Arduino, util
 from time import sleep
 A0 = 0
 B0 = 0
-C0 = 0
+C0 = 0.5
 D0 = 90
 
 A1 = 0
 B1 = 0
-C1 = 0
+C1 = 0.5
 D1 = 90
 
 # PID constants (tune these based on your system)
-Kp = 1.0  # Proportional gain
-Ki = 0.1  # Integral gain
-Kd = 0.01  # Derivative gain
+Kp = 0.1  # Proportional gain
+Ki = 0  # Integral gain
+Kd = 0  # Derivative gain
 
 # Initialize previous values for PID
 prev_errorX = 0
