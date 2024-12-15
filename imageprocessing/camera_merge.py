@@ -48,7 +48,7 @@ class ContoursHandler(Handler):
         erode = cv2.erode(closing, kernel_small, iterations=5)
         contours, hierarchy = cv2.findContours(erode, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         cv2.drawContours(black_canvas, contours, -1, (255, 255, 255), cv2.FILLED)
-        heat_map = cv2.GaussianBlur(black_canvas, (9, 9), 11, 11)
+        heat_map = cv2.GaussianBlur(black_canvas, (15, 15), 15, 15)
         self.static = heat_map
 
     def display(self, img):
@@ -310,10 +310,15 @@ class ImageParse:
             np.ndarray: The difference between the two images
         """
         # Calculate difference
-        diff = cv2.absdiff(img1, img2)
+        print(img2)
+        if (isinstance(img1, np.ndarray) and img1.size > 1) and (isinstance(img2, np.ndarray) and img2.size > 1):
+            # print("case 1")
+            diff = cv2.absdiff(img1, img2)
         # Apply threshold
-        _, diff = cv2.threshold(diff, 30, 255, cv2.THRESH_BINARY)
-        return diff
+            _, diff = cv2.threshold(diff, 30, 255, cv2.THRESH_BINARY)
+            return diff
+        return np.zeros((350, 200, 1), dtype = np.uint8)
+        
 
     @staticmethod
     def blurImage(img, factor=5):
@@ -455,18 +460,18 @@ class DecisionMaker:
         Returns:
             np.ndarray: The intersection of the two heatmaps
         """
-        print(heat_map_1)
-        print(heat_map_2)
+        # print(heat_map_1)
+        # print(heat_map_2)
         if (isinstance(heat_map_1, np.ndarray) and heat_map_1.size > 1) and (isinstance(heat_map_2, np.ndarray) and heat_map_2.size > 1):
-            print("case 1")
+            # print("case 1")
             return 0.5*(heat_map_1+heat_map_2)
         if isinstance(heat_map_1, np.ndarray) and heat_map_1.size > 1:
-            print("case 2", heat_map_1.size)
+            # print("case 2", heat_map_1.size)
             return heat_map_1
         if isinstance(heat_map_2, np.ndarray) and heat_map_2.size > 1:
-            print("case 3", heat_map_2.size)
+            # print("case 3", heat_map_2.size)
             return heat_map_2
-        print("case 4")
+        # print("case 4")
         return np.zeros((350, 200, 1), dtype = np.uint8)
         
     
@@ -481,8 +486,10 @@ def generate_targets(heat_map: cv2.typing.MatLike):
         Tuple: A tuple containing the targets for CEP_90 and CEP_50
     """
     # print(heat_map)
-    CEP_90 = cv2.Canny(heat_map, 228, 229)
-    CEP_50 = cv2.Canny(heat_map, 127, 128)
+    _, reduction_90 = cv2.threshold(heat_map, 228, 229, cv2.THRESH_BINARY)
+    _, reduction_50 = cv2.threshold(heat_map, 127, 128, cv2.THRESH_BINARY)
+    CEP_90 = cv2.Canny(reduction_90, 100, 150)
+    CEP_50 = cv2.Canny(reduction_50, 127, 128)
     contours_90, _ = cv2.findContours(CEP_90,
     cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE) 
     contours_50, _ = cv2.findContours(CEP_50,
@@ -490,9 +497,13 @@ def generate_targets(heat_map: cv2.typing.MatLike):
     CEP_90_targets = []
     CEP_50_targets = []
     for contour in contours_90:
-        CEP_90_targets = cv2.minEnclosingCircle(contour)
+        (x,y), radius = cv2.minEnclosingCircle(contour)
+        new_circle = (x,y), radius
+        CEP_90_targets.append(new_circle)
     for contour in contours_50:
-        CEP_50_targets = cv2.minEnclosingCircle(contour)
+        (x,y), radius = cv2.minEnclosingCircle(contour)
+        new_circle = (x,y), radius
+        CEP_50_targets.append(new_circle)
     return CEP_90_targets, CEP_50_targets
 
 
@@ -527,10 +538,10 @@ def main():
             average = DecisionMaker.avg_heat_maps(newPixelsHandler.get(), contoursHandler.get())
             circles_90, circles_50 = generate_targets(average)
             for circle in circles_50:
-                print(circle[0], circle[1])
-                cv2.circle(average, (circle[0], circle[1]), circle[2], (0, 255, 0), 1)
+                # print(circle[1])
+                cv2.circle(average, (int(circle[0][0]), int(circle[0][1])), int(circle[1]), (0, 255, 0), 1)
             for circle in circles_90:
-                cv2.circle(average, (circle[0], circle[1]), circle[2], (0, 0, 255), 1)
+                cv2.circle(average, (int(circle[0][0]), int(circle[0][1])), int(circle[1]), (0, 0, 255), 1)
             cv2.imshow('average', average)
         
         if cv2.waitKey(1) == 32: # Whitespace
