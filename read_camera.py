@@ -12,7 +12,7 @@ WINDOW_NAME = 'Camera Connection'
 
 
 # Set up the Arduino board (replace 'COM8' with your Arduino's COM port)
-board = Arduino('COM8')  # Adjust the COM port based on your system
+board = Arduino('COM7')  # Adjust the COM port based on your system
 
 # Define the pin for the servo (usually PWM pins)
 servoV_pin = 5
@@ -47,14 +47,6 @@ def angle_calc(coordinates):
     angleY = D1 + C1*Y +B1*Y**2 + A1*Y**3
     return angleX, angleY
 
-mx,my=0,0
-
-def click_event(event, x, y, flags, param):
-    global mx,my
-    if event == cv2.EVENT_LBUTTONDOWN:
-        # print(f"Clicked coordinates: {relative_x}, {relative_y}")
-        mx,my=x,y
-        
 
 def find_red_point(frame):
     """
@@ -145,7 +137,7 @@ def main():
     ret_val, img = cam.read()
     cv2.setMouseCallback(WINDOW_NAME, click_event)
     cv2.imshow(WINDOW_NAME, img)
-    old_x,old_y=0,0 
+    count = 0
     angleX = 80
     angleY = 50
     # main loop
@@ -160,21 +152,23 @@ def main():
         # display image 
         cv2.imshow(WINDOW_NAME, img)
         
-
-        pid = PID(np.array([mouse_x,mouse_y]),np.array([laser_x,laser_y]))
-        angleX += pid[0,0]
-        angleY += pid[0,1]
-        if angleX > 180: angleX = 180
-        if angleY > 180: angleY = 180
-        if angleX < 0: angleX = 0
-        if angleY < 0: angleY = 0
+        angleX, angleY = angle_calc([mouse_x,mouse_y])
+        
+        
+        if count>1000:
+            print(angleX,angleY)
+            pid = PID(np.array([mouse_x,mouse_y]),np.array([laser_x,laser_y]))
+            angleX += pid[0,0]
+            angleY += pid[0,1]
+            if angleX > 180: angleX = 180
+            if angleY > 180: angleY = 180
+            if angleX < 0: angleX = 0
+            if angleY < 0: angleY = 0
 
         servoH.write(angleX)
-        time.sleep(0.1)
         servoV.write(angleY)
         time.sleep(0.1)
-
-        old_x, old_y = angleX, angleY
+        count += 1
 
         # Press Escape or close the window to exit
         if cv2.waitKey(1) == 27:
@@ -182,16 +176,6 @@ def main():
         if cv2.getWindowProperty(WINDOW_NAME, cv2.WND_PROP_VISIBLE) < 1:
             break
         
-
-        # angleX, angleY = angle_calc([mx-rx,my-ry])
-        #magic numbers!!!
-        angleX, angleY = angle_calc([mx,my])
-        print(angleX,angleY)
-        servoH.write(angleX)
-        servoV.write(angleY)
-        sleep(0.1)
-        cv2.imshow(WINDOW_NAME, img)
-
 
 
     cv2.destroyAllWindows()
