@@ -93,8 +93,8 @@ def find_red_point(frame):
 
 
 # PID constants
-Kp = -0.05
-Ki = 0.0
+Kp = -0.1
+Ki = -0.0
 Kd = 0.0
 
 # Initialize previous values for PID
@@ -116,20 +116,27 @@ def PID(target, curr, Kp=Kp, Ki=Ki, Kd=Kd):
     error_prev = error
     time_prev = now
     # offset for the angles
-    print(delta)
     return delta
 
 
 mouse_x,mouse_y = 320, 240
+flag = False
 
 
 def click_event(event, x, y, flags, param):
-    global mouse_x,mouse_y
+    global mouse_x,mouse_y,flag,time_prev,integral,error_prev
     if event == cv2.EVENT_LBUTTONDOWN:
-        mouse_x,mouse_y=x,y     
+        mouse_x,mouse_y=x,y  
+        flag = True
+        time.sleep(0.1)
+        time_prev = time.time() / 100
+        integral = np.array([0, 0])
+        error_prev = np.array([0, 0])
+
+
 
 def main():
-    global mouse_x,mouse_y
+    global mouse_x,mouse_y, flag
     #create camera and nonesense
     cam = cv2.VideoCapture(CAMERA_INDEX)
     cv2.namedWindow(WINDOW_NAME)
@@ -137,7 +144,6 @@ def main():
     ret_val, img = cam.read()
     cv2.setMouseCallback(WINDOW_NAME, click_event)
     cv2.imshow(WINDOW_NAME, img)
-    count = 0
     angleX = 80
     angleY = 50
     # main loop
@@ -153,11 +159,9 @@ def main():
         cv2.imshow(WINDOW_NAME, img)
         
         angleX, angleY = angle_calc([mouse_x,mouse_y])
-        
-        
-        if count>1000:
-            print(angleX,angleY)
+        if flag:
             pid = PID(np.array([mouse_x,mouse_y]),np.array([laser_x,laser_y]))
+            print(pid)
             angleX += pid[0,0]
             angleY += pid[0,1]
             if angleX > 180: angleX = 180
@@ -168,7 +172,7 @@ def main():
         servoH.write(angleX)
         servoV.write(angleY)
         time.sleep(0.1)
-        count += 1
+    
 
         # Press Escape or close the window to exit
         if cv2.waitKey(1) == 27:
