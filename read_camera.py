@@ -8,15 +8,15 @@ from pyfirmata import Arduino, util
 
 CAMERA_INDEX = 1
 WINDOW_NAME = 'Camera Connection'
-MAX_CAMERAS = 10
+
 
 # Set up the Arduino board (replace 'COM8' with your Arduino's COM port)
 board = Arduino('COM7')  # Adjust the COM port based on your system
 # you can check on windows by the "mode" command in the CMD
 
 # Define the pin for the servo (usually PWM pins)
-servoV_pin = 4
-servoH_pin = 3# Servo control pin (could be any PWM pin)
+servoV_pin = 3
+servoH_pin = 5# Servo control pin (could be any PWM pin)
 laser_pin = 8
 board.digital[laser_pin].write(1)
 # Attach the servo to the board
