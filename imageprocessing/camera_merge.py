@@ -35,16 +35,20 @@ class ContoursHandler(Handler):
     def add(self, img):
         gray = ImageParse.toGrayscale(img)
         # manipluate the image to get the contours
-        blurred = cv2.GaussianBlur(gray, (5, 5), 0)
-        edges = cv2.Canny(blurred, 150, 200)
+        blurred = cv2.GaussianBlur(gray, (3, 3), 0)
+        edges = cv2.Canny(blurred, 120, 160)
         kernel_small = np.ones((3, 3), np.uint8)
         kernel = np.ones((5, 5), np.uint8)
         kernel_big = np.ones((7, 7), np.uint8)
-        dilated_edges = cv2.dilate(edges, kernel, iterations=2)
-        opening = cv2.morphologyEx(dilated_edges, cv2.MORPH_OPEN, kernel_big)
-        closing = cv2.morphologyEx(opening, cv2.MORPH_CLOSE, kernel)
-        erode = cv2.erode(closing, kernel_small, iterations=4)
+        dilated_edges = cv2.dilate(edges, kernel_small, iterations=3)
+        closing = cv2.morphologyEx(dilated_edges, cv2.MORPH_CLOSE, kernel)
+        opening = cv2.morphologyEx(closing, cv2.MORPH_OPEN, kernel_small)
+        erode = cv2.erode(opening, kernel_small, iterations=4)
+        cv2.floodFill(filled_image, mask, seedPoint=(0, 0), newVal=(0, 255, 0), loDiff=(5, 5, 5), upDiff=(5, 5, 5))
+
         self.static = erode
+        cv2.imshow("dilation", dilated_edges)
+        cv2.imshow("closing", closing)
 
     def display(self, img):
         TITLE = 'Contours'
