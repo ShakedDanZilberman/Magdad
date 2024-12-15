@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import math
 import time
 from pyfirmata import Arduino, util
+from time import sleep
 
 
 CAMERA_INDEX = 1
@@ -11,8 +12,7 @@ WINDOW_NAME = 'Camera Connection'
 
 
 # Set up the Arduino board (replace 'COM8' with your Arduino's COM port)
-board = Arduino('COM7')  # Adjust the COM port based on your system
-# you can check on windows by the "mode" command in the CMD
+board = Arduino('COM8')  # Adjust the COM port based on your system
 
 # Define the pin for the servo (usually PWM pins)
 servoV_pin = 5
@@ -25,9 +25,37 @@ servoH = board.get_pin(f'd:{servoH_pin}:s')
 # Start an iterator thread to read analog inputs
 it = util.Iterator(board)
 it.start()
+servoH.write(9)
+servoV.write(9)
+sleep(1)
 
 
-# straight from chatGPT
+A0 = 0
+B0 = 0
+C0 = -0.12
+D0 = 71
+
+A1 = -0.0000007
+B1 = 0.0004
+C1 = -0.193
+D1 = 73.6
+# Main loop to control the servo
+def angle_calc(coordinates):
+    X = coordinates[0]
+    Y = coordinates[1]
+    angleX = D0 + C0*X +B0*X**2 + A0*X**3
+    angleY = D1 + C1*Y +B1*Y**2 + A1*Y**3
+    return angleX, angleY
+
+mx,my=0,0
+
+def click_event(event, x, y, flags, param):
+    global mx,my
+    if event == cv2.EVENT_LBUTTONDOWN:
+        # print(f"Clicked coordinates: {relative_x}, {relative_y}")
+        mx,my=x,y
+        
+
 def find_red_point(frame):
     """
     Finds the (x, y) coordinates of the single red point in the image.
@@ -153,6 +181,18 @@ def main():
             break
         if cv2.getWindowProperty(WINDOW_NAME, cv2.WND_PROP_VISIBLE) < 1:
             break
+        
+
+        # angleX, angleY = angle_calc([mx-rx,my-ry])
+        #magic numbers!!!
+        angleX, angleY = angle_calc([mx,my])
+        print(angleX,angleY)
+        servoH.write(angleX)
+        servoV.write(angleY)
+        sleep(0.1)
+        cv2.imshow(WINDOW_NAME, img)
+
+
 
     cv2.destroyAllWindows()
     board.exit()

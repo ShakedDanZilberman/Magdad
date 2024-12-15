@@ -34,21 +34,22 @@ class ContoursHandler(Handler):
 
     def add(self, img):
         gray = ImageParse.toGrayscale(img)
+        height, width = img.shape
+        black_canvas = np.zeros((height, width, 3), dtype = np.uint8)
         # manipluate the image to get the contours
         blurred = cv2.GaussianBlur(gray, (3, 3), 0)
-        edges = cv2.Canny(blurred, 120, 160)
+        edges = cv2.Canny(blurred, 150, 200)
         kernel_small = np.ones((3, 3), np.uint8)
         kernel = np.ones((5, 5), np.uint8)
         kernel_big = np.ones((7, 7), np.uint8)
-        dilated_edges = cv2.dilate(edges, kernel_small, iterations=3)
-        closing = cv2.morphologyEx(dilated_edges, cv2.MORPH_CLOSE, kernel)
-        opening = cv2.morphologyEx(closing, cv2.MORPH_OPEN, kernel_small)
-        erode = cv2.erode(opening, kernel_small, iterations=4)
-        cv2.floodFill(filled_image, mask, seedPoint=(0, 0), newVal=(0, 255, 0), loDiff=(5, 5, 5), upDiff=(5, 5, 5))
-
-        self.static = erode
-        cv2.imshow("dilation", dilated_edges)
-        cv2.imshow("closing", closing)
+        dilated_edges = cv2.dilate(edges, kernel, iterations=2)
+        opening = cv2.morphologyEx(dilated_edges, cv2.MORPH_OPEN, kernel_big)
+        closing = cv2.morphologyEx(opening, cv2.MORPH_CLOSE, kernel)
+        erode = cv2.erode(closing, kernel_small, iterations=5)
+        contours, hierarchy = cv2.findContours(erode, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        cv2.drawContours(black_canvas, contours, -1, (255, 255, 255), cv2.FILLED)
+        heat_map = cv2.GaussianBlur(black_canvas, (9, 9), 11, 11)
+        self.static = heat_map
 
     def display(self, img):
         TITLE = 'Contours'
@@ -208,7 +209,7 @@ class NewPixelsHandler(Handler):
             # convert image to RBG
             # diff = cv2.cvtColor(diff, cv2.COLOR_GRAY2BGR)
             # find objects in the image
-            diff = ImageParse.find_objects(diff)
+            # diff = ImageParse.find_objects(diff)
             cv2.imshow(TITLE, diff)
             #cv2.imshow(TITLE2, self.cumulative)
 
@@ -442,9 +443,9 @@ class IO:
         """
         cv2.imwrite(path, img)
 
-class DecitionMaker:
+class DecisionMaker:
     @staticmethod
-    def intersectHeatmaps(heatmap1, heatmap2):
+    def avg_heat_maps(heat_map_1, heat_map_2):
         """Intersect two heatmaps
 
         Args:
@@ -454,7 +455,20 @@ class DecitionMaker:
         Returns:
             np.ndarray: The intersection of the two heatmaps
         """
-        return cv2.bitwise_and(heatmap1, heatmap2)
+        print(heat_map_1)
+        print(heat_map_2)
+        if (isinstance(heat_map_1, np.ndarray) and heat_map_1.size > 1) and (isinstance(heat_map_2, np.ndarray) and heat_map_2.size > 1):
+            print("case 1")
+            return 0.5*(heat_map_1+heat_map_2)
+        if isinstance(heat_map_1, np.ndarray) and heat_map_1.size > 1:
+            print("case 2", heat_map_1.size)
+            return heat_map_1
+        if isinstance(heat_map_2, np.ndarray) and heat_map_2.size > 1:
+            print("case 3", heat_map_2.size)
+            return heat_map_2
+        print("case 4")
+        return np.zeros((350, 200, 1), dtype = np.uint8)
+        
     
 
 def generate_targets(heat_map: cv2.typing.MatLike):
@@ -466,8 +480,9 @@ def generate_targets(heat_map: cv2.typing.MatLike):
     Returns:
         Tuple: A tuple containing the targets for CEP_90 and CEP_50
     """
-    CEP_90 = cv2.Canny(heat_map, 229, 228)
-    CEP_50 = cv2.Canny(heat_map, 128, 127)
+    # print(heat_map)
+    CEP_90 = cv2.Canny(heat_map, 228, 229)
+    CEP_50 = cv2.Canny(heat_map, 127, 128)
     contours_90, _ = cv2.findContours(CEP_90,
     cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE) 
     contours_50, _ = cv2.findContours(CEP_50,
@@ -488,7 +503,7 @@ def main():
     rawHandler = RawHandler()
     newPixelsHandler = NewPixelsHandler()
     differenceHandler = DifferenceHandler()
-    # contoursHandler = ContoursHandler()
+    contoursHandler = ContoursHandler()
 
     while True:
         ret_val, img = cam.read()
@@ -506,13 +521,22 @@ def main():
         img = cv2.resize(img, (0, 0), fx=.5, fy=.5)
         img = ImageParse.toGrayscale(img)
 
-        for handler in [rawHandler, newPixelsHandler, differenceHandler]:
+        for handler in [rawHandler, newPixelsHandler, differenceHandler, contoursHandler]:
             handler.add(img)
             handler.display(img)
-            #cv2.imshow('intersection', DecitionMaker.intersectHeatmaps(newPixelsHandler.get(), contoursHandler.get()))
+            average = DecisionMaker.avg_heat_maps(newPixelsHandler.get(), contoursHandler.get())
+            circles_90, circles_50 = generate_targets(average)
+            for circle in circles_50:
+                print(circle[0], circle[1])
+                cv2.circle(average, (circle[0], circle[1]), circle[2], (0, 255, 0), 1)
+            for circle in circles_90:
+                cv2.circle(average, (circle[0], circle[1]), circle[2], (0, 0, 255), 1)
+            cv2.imshow('average', average)
         
         if cv2.waitKey(1) == 32: # Whitespace
             newPixelsHandler.clear()
+
+
 
         # Press Escape to exit
         if cv2.waitKey(1) == 27:
