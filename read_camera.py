@@ -164,13 +164,10 @@ def main():
         # angleY = 180*(1/2-math.atan((mouse_y-laser_y)/340)/math.pi)
         
         
-        pid = PID(np.array([mouse_x,mouse_y]),np.array([laser_x,laser_y]))
-        angleX, angleY = pid[0,0], pid[0,1]
-        print(angleX, angleY)
-        servoH.write(angleX)
-        time.sleep(0.1)
-        servoV.write(angleY)
-        time.sleep(0.1)
+        # pid = PID(np.array([mouse_x,mouse_y]),np.array([laser_x,laser_y]))
+        # angleX, angleY = pid[0,0], pid[0,1]
+
+
 
         # display image 
         cv2.imshow(WINDOW_NAME, img)
