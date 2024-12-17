@@ -27,9 +27,12 @@ it.start()
 servoH.write(9)
 servoV.write(9)
 sleep(1)
-STARTX = 20
-STARTY = 30
-NUM_ITER = 5
+STARTX = 60
+STARTY = 40
+deltaX = 30
+deltaY = 20
+
+NUM_ITER = 10
 A0 = 0
 B0 = 0
 C0 = 0.5
@@ -113,21 +116,24 @@ def main():
     sleep(1)
     cam = cv2.VideoCapture(CAMERA_INDEX)
     cv2.namedWindow(WINDOW_NAME)
+
     ret_val, img = cam.read()
+    sleep(1)
     global mx, my
 
     cv2.setMouseCallback(WINDOW_NAME, click_event)
-    for j in range(NUM_ITER):
-        for i in range(NUM_ITER):
-            angleX = STARTX + i*4
-            angleY = STARTY + j*4
+    for j in range(NUM_ITER+1):
+        for i in range(NUM_ITER+1):
+            angleX = STARTX - deltaX + i*2*deltaX/NUM_ITER
+            print(angleX)
+            angleY = STARTY - deltaY + j*2*deltaY/NUM_ITER
+            print(angleY)
             servoH.write(angleX)
             servoV.write(angleY)
-            sleep(0.5)
+            sleep(1)
             ret_val, img = cam.read()
-            (rx, ry) = find_red_point(img)
-            cv2.circle(img, (rx, ry), 10, (0, 0, 255), -1)
             rx, ry = find_red_point(img)
+            cv2.circle(img, (rx, ry), 10, (0, 0, 255), -1)
             angleX_rx_values.append([rx,angleX])
             angleY_ry_values.append([ry, angleY])
             sleep(0.5)
@@ -160,8 +166,17 @@ def main():
     # Generate x-values for smooth curve plotting
     rx_smooth = np.linspace(min(rx_values), max(rx_values), 500)
     ry_smooth = np.linspace(min(ry_values), max(ry_values), 500)
+    # Print the fit parameters for angleX vs rx
+    print("Fit Parameters for angleX vs rx (3rd-degree polynomial):")
+    print(f"y = {fit_angleX[0]:.5e}x³ + {fit_angleX[1]:.5e}x² + {fit_angleX[2]:.5e}x + {fit_angleX[3]:.5e}")
+    print(f"Coefficients: {fit_angleX}")
 
-    # Plot angleX vs rx with 3rd degree polynomial fit
+    # Print the fit parameters for angleY vs ry
+    print("\nFit Parameters for angleY vs ry (3rd-degree polynomial):")
+    print(f"y = {fit_angleY[0]:.5e}x³ + {fit_angleY[1]:.5e}x² + {fit_angleY[2]:.5e}x + {fit_angleY[3]:.5e}")
+    print(f"Coefficients: {fit_angleY}")
+
+    # Plot angleX vs rx with 3rd-degree polynomial fit
     plt.figure(figsize=(10, 5))
     plt.scatter(rx_values, angleX_values, color='green', label='Data points', alpha=0.8)
     plt.plot(rx_smooth, fit_angleX_poly(rx_smooth), color='red',
@@ -173,7 +188,7 @@ def main():
     plt.grid(True)
     plt.show()
 
-    # Plot angleY vs ry with 3rd degree polynomial fit
+    # Plot angleY vs ry with 3rd-degree polynomial fit
     plt.figure(figsize=(10, 5))
     plt.scatter(ry_values, angleY_values, color='blue', label='Data points', alpha=0.8)
     plt.plot(ry_smooth, fit_angleY_poly(ry_smooth), color='red',
@@ -184,7 +199,6 @@ def main():
     plt.legend()
     plt.grid(True)
     plt.show()
-
 
 
 if __name__ == '__main__':

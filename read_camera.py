@@ -30,15 +30,15 @@ servoV.write(9)
 sleep(1)
 
 
-A0 = 0
-B0 = 0
-C0 = -0.12
-D0 = 71
+A0 = -0.00000008
+B0 = 0.000147
+C0 = -0.17
+D0 = 108
 
-A1 = -0.0000007
-B1 = 0.0004
-C1 = -0.193
-D1 = 73.6
+A1 = -0.000000323
+B1 = 0.000246
+C1 = -0.18
+D1 = 71.5
 # Main loop to control the servo
 def angle_calc(coordinates):
     X = coordinates[0]
@@ -124,16 +124,9 @@ flag = False
 
 
 def click_event(event, x, y, flags, param):
-    global mouse_x,mouse_y,flag,time_prev,integral,error_prev
+    global mouse_x,mouse_y
     if event == cv2.EVENT_LBUTTONDOWN:
-        mouse_x,mouse_y=x,y  
-        flag = True
-        time.sleep(0.1)
-        time_prev = time.time() / 100
-        integral = np.array([0, 0])
-        error_prev = np.array([0, 0])
-
-
+        mouse_x,mouse_y=x,y     
 
 def main():
     global mouse_x,mouse_y, flag
@@ -150,9 +143,24 @@ def main():
     while True:
         # read image
         ret_val, img = cam.read()
+        global mx, my
+
+        cv2.setMouseCallback(WINDOW_NAME, click_event)
+
         # display circles for laser and mouse
         (laser_x,laser_y) = find_red_point(img)
         cv2.circle(img,(laser_x,laser_y),7,(0,0,255),-1)
+        cv2.circle(img,(mx,my),7,(255,0,0),-1)
+
+        #magic numbers!!!
+        # angleX = 180*(1/2-math.atan((mouse_x-laser_x)/340)/math.pi)
+        # angleY = 180*(1/2-math.atan((mouse_y-laser_y)/340)/math.pi)
+        
+        
+        # pid = PID(np.array([mouse_x,mouse_y]),np.array([laser_x,laser_y]))
+        # angleX, angleY = pid[0,0], pid[0,1]
+
+
         cv2.circle(img,(mouse_x,mouse_y),7,(255,0,0),-1)
 
         # display image 
@@ -179,6 +187,18 @@ def main():
             break
         if cv2.getWindowProperty(WINDOW_NAME, cv2.WND_PROP_VISIBLE) < 1:
             break
+        
+
+        # angleX, angleY = angle_calc([mx-rx,my-ry])
+        #magic numbers!!!
+        print(mx,my)
+        angleX, angleY = angle_calc([mx,my])
+        print(angleX,angleY)
+        servoH.write(angleX)
+        servoV.write(angleY)
+        sleep(0.1)
+        cv2.imshow(WINDOW_NAME, img)
+
         
 
 
