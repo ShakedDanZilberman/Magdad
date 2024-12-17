@@ -12,11 +12,11 @@ WINDOW_NAME = 'Camera Connection'
 
 
 # Set up the Arduino board (replace 'COM8' with your Arduino's COM port)
-board = Arduino('COM8')  # Adjust the COM port based on your system
+board = Arduino('COM7')  # Adjust the COM port based on your system
 
 # Define the pin for the servo (usually PWM pins)
 servoV_pin = 5
-servoH_pin = 3# Servo control pin (could be any PWM pin)
+servoH_pin = 3
 laser_pin = 8
 board.digital[laser_pin].write(1)
 # Attach the servo to the board
@@ -47,14 +47,6 @@ def angle_calc(coordinates):
     angleY = D1 + C1*Y +B1*Y**2 + A1*Y**3
     return angleX, angleY
 
-mx,my=0,0
-
-def click_event(event, x, y, flags, param):
-    global mx,my
-    if event == cv2.EVENT_LBUTTONDOWN:
-        # print(f"Clicked coordinates: {relative_x}, {relative_y}")
-        mx,my=x,y
-        
 
 def find_red_point(frame):
     """
@@ -101,9 +93,9 @@ def find_red_point(frame):
 
 
 # PID constants
-Kp = 0.1
-Ki = 0.1
-Kd = 0
+Kp = -0.1
+Ki = -0.0
+Kd = 0.0
 
 # Initialize previous values for PID
 time_prev = time.time() / 100
@@ -111,7 +103,7 @@ integral = np.array([0, 0])
 error_prev = np.array([0, 0])
 
 def PID(target, curr, Kp=Kp, Ki=Ki, Kd=Kd):
-    # target and curr are (x, y)
+    # target and curr are [x, y]
     global integral, time_prev, error_prev
 
     now = time.time() / 100
@@ -121,18 +113,23 @@ def PID(target, curr, Kp=Kp, Ki=Ki, Kd=Kd):
     integral = integral + Ki * error * (now - time_prev)
     D = Kd*(error - error_prev) / (now - time_prev) 
     delta = P + integral + D 
-
     error_prev = error
     time_prev = now
     # offset for the angles
-    delta = 90 - delta
     return delta
 
 
-mouse_x,mouse_y = 0, 0
+mouse_x,mouse_y = 320, 240
+flag = False
+
+
+def click_event(event, x, y, flags, param):
+    global mouse_x,mouse_y
+    if event == cv2.EVENT_LBUTTONDOWN:
+        mouse_x,mouse_y=x,y     
 
 def main():
-    global mouse_x,mouse_y
+    global mouse_x,mouse_y, flag
     #create camera and nonesense
     cam = cv2.VideoCapture(CAMERA_INDEX)
     cv2.namedWindow(WINDOW_NAME)
@@ -140,12 +137,8 @@ def main():
     ret_val, img = cam.read()
     cv2.setMouseCallback(WINDOW_NAME, click_event)
     cv2.imshow(WINDOW_NAME, img)
-
-    servoH.write(90)
-    time.sleep(0.1)
-    servoV.write(90)
-    time.sleep(0.1)
-
+    angleX = 80
+    angleY = 50
     # main loop
     while True:
         # read image
@@ -168,9 +161,26 @@ def main():
         # angleX, angleY = pid[0,0], pid[0,1]
 
 
+        cv2.circle(img,(mouse_x,mouse_y),7,(255,0,0),-1)
 
         # display image 
         cv2.imshow(WINDOW_NAME, img)
+        
+        angleX, angleY = angle_calc([mouse_x,mouse_y])
+        if flag:
+            pid = PID(np.array([mouse_x,mouse_y]),np.array([laser_x,laser_y]))
+            print(pid)
+            angleX += pid[0,0]
+            angleY += pid[0,1]
+            if angleX > 180: angleX = 180
+            if angleY > 180: angleY = 180
+            if angleX < 0: angleX = 0
+            if angleY < 0: angleY = 0
+
+        servoH.write(angleX)
+        servoV.write(angleY)
+        time.sleep(0.1)
+    
 
         # Press Escape or close the window to exit
         if cv2.waitKey(1) == 27:
@@ -189,6 +199,7 @@ def main():
         sleep(0.1)
         cv2.imshow(WINDOW_NAME, img)
 
+        
 
 
     cv2.destroyAllWindows()
