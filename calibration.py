@@ -139,41 +139,47 @@ def main():
     global mx, my
 
     cv2.setMouseCallback(WINDOW_NAME, click_event)
-    for j in range(NUM_ITER+1):
-        for i in range(NUM_ITER+1):
-            angleX = STARTX - deltaX + i*2*deltaX/NUM_ITER
-            print(angleX)
-            angleY = STARTY - deltaY + j*2*deltaY/NUM_ITER
-            print(angleY)
-            servoH.write(angleX)
-            servoV.write(angleY)
-            sleep(1)
-            ret_val, img = cam.read()
-            rx, ry = find_red_point(img)
-            cv2.circle(img, (rx, ry), 10, (0, 0, 255), -1)
-            angleX_rx_values.append([rx, angleX])
-            angleY_ry_values.append([ry, angleY])
-            sleep(0.5)
-            # Press Escape or close the window to exit
-            if cv2.waitKey(1) == 27:
-                break
-            if cv2.getWindowProperty(WINDOW_NAME, cv2.WND_PROP_VISIBLE) < 1:
-                break
+    if False:
+        for j in range(NUM_ITER+1):
+            for i in range(NUM_ITER+1):
+                angleX = STARTX - deltaX + i*2*deltaX/NUM_ITER
+                print(angleX)
+                angleY = STARTY - deltaY + j*2*deltaY/NUM_ITER
+                print(angleY)
+                servoH.write(angleX)
+                servoV.write(angleY)
+                sleep(1)
+                ret_val, img = cam.read()
+                rx, ry = find_red_point(img)
+                cv2.circle(img, (rx, ry), 10, (0, 0, 255), -1)
+                angleX_rx_values.append([rx, angleX])
+                angleY_ry_values.append([ry, angleY])
+                sleep(0.5)
+                # Press Escape or close the window to exit
+                if cv2.waitKey(1) == 27:
+                    break
+                if cv2.getWindowProperty(WINDOW_NAME, cv2.WND_PROP_VISIBLE) < 1:
+                    break
 
-            # angleX, angleY = angle_calc([mx-rx,my-ry])
-            # magic numbers!!!
-            cv2.imshow(WINDOW_NAME, img)
+                # angleX, angleY = angle_calc([mx-rx,my-ry])
+                # magic numbers!!!
+                cv2.imshow(WINDOW_NAME, img)
     cv2.destroyAllWindows()
     board.exit()
     # Extract rx and angleX values from angleX_rx_values
-    rx_values = [item[0] for item in angleX_rx_values]
-    angleX_values = [item[1] for item in angleX_rx_values]
+    # rx_values = [item[0] for item in angleX_rx_values]
+    # angleX_values = [item[1] for item in angleX_rx_values]
+    rx_values = [item[0] for item in MEASUREMENTS]
+    ry_values = [item[1] for item in MEASUREMENTS]
+    angleX_values = [item[2] for item in MEASUREMENTS]
+    angleY_values = [item[3] for item in MEASUREMENTS]
+
 
     # Extract ry and angleY values from angleY_ry_values
-    ry_values = [item[0] for item in angleY_ry_values]
-    angleY_values = [item[1] for item in angleY_ry_values]
+    # ry_values = [item[0] for item in angleY_ry_values]
+    # angleY_values = [item[1] for item in angleY_ry_values]
 
-    print(list(zip(rx_values, ry_values, angleX_values, angleY_values)))
+    # print(list(zip(rx_values, ry_values, angleX_values, angleY_values)))
 
     # Compute 3rd degree polynomial fit for angleX vs rx
     fit_angleX = np.polyfit(rx_values, angleX_values, 3)  # 3rd degree polynomial fit
