@@ -11,7 +11,7 @@ WINDOW_NAME = 'Camera Connection'
 MAX_CAMERAS = 10
 
 # Set up the Arduino board (replace 'COM8' with your Arduino's COM port)
-board = Arduino('COM7')  # Adjust the COM port based on your system
+board = Arduino('COM8')  # Adjust the COM port based on your system
 
 # Define the pin for the servo (usually PWM pins)
 servoV_pin = 5
@@ -148,6 +148,7 @@ def main():
             cv2.imshow(WINDOW_NAME, img)
     cv2.destroyAllWindows()
     board.exit()
+    # Extract rx and angleX values from angleX_rx_values
     rx_values = [item[0] for item in angleX_rx_values]
     angleX_values = [item[1] for item in angleX_rx_values]
 
@@ -165,39 +166,71 @@ def main():
     fit_angleY = np.polyfit(ry_values, angleY_values, 3)  # 3rd degree polynomial fit
     fit_angleY_poly = np.poly1d(fit_angleY)
 
+    # Compute 3rd degree polynomial fit for angleX vs ry
+    fit_angleX_ry = np.polyfit(ry_values, angleX_values, 3)  # angleX vs ry
+    fit_angleX_ry_poly = np.poly1d(fit_angleX_ry)
+
+    # Compute 3rd degree polynomial fit for angleY vs rx
+    fit_angleY_rx = np.polyfit(rx_values, angleY_values, 3)  # angleY vs rx
+    fit_angleY_rx_poly = np.poly1d(fit_angleY_rx)
+
     # Generate x-values for smooth curve plotting
     rx_smooth = np.linspace(min(rx_values), max(rx_values), 500)
     ry_smooth = np.linspace(min(ry_values), max(ry_values), 500)
-    # Print the fit parameters for angleX vs rx
+
+    # Print the fit parameters
     print("Fit Parameters for angleX vs rx (3rd-degree polynomial):")
     print(f"y = {fit_angleX[0]:.5e}x³ + {fit_angleX[1]:.5e}x² + {fit_angleX[2]:.5e}x + {fit_angleX[3]:.5e}")
-    print(f"Coefficients: {fit_angleX}")
 
-    # Print the fit parameters for angleY vs ry
     print("\nFit Parameters for angleY vs ry (3rd-degree polynomial):")
     print(f"y = {fit_angleY[0]:.5e}x³ + {fit_angleY[1]:.5e}x² + {fit_angleY[2]:.5e}x + {fit_angleY[3]:.5e}")
-    print(f"Coefficients: {fit_angleY}")
 
-    # Plot angleX vs rx with 3rd-degree polynomial fit
+    print("\nFit Parameters for angleX vs ry (3rd-degree polynomial):")
+    print(f"y = {fit_angleX_ry[0]:.5e}x³ + {fit_angleX_ry[1]:.5e}x² + {fit_angleX_ry[2]:.5e}x + {fit_angleX_ry[3]:.5e}")
+
+    print("\nFit Parameters for angleY vs rx (3rd-degree polynomial):")
+    print(f"y = {fit_angleY_rx[0]:.5e}x³ + {fit_angleY_rx[1]:.5e}x² + {fit_angleY_rx[2]:.5e}x + {fit_angleY_rx[3]:.5e}")
+
+    # Plot angleX vs rx
     plt.figure(figsize=(10, 5))
     plt.scatter(rx_values, angleX_values, color='green', label='Data points', alpha=0.8)
-    plt.plot(rx_smooth, fit_angleX_poly(rx_smooth), color='red',
-             label=f'3rd-degree fit: y = {fit_angleX[0]:.2e}x³ + {fit_angleX[1]:.2e}x² + {fit_angleX[2]:.2e}x + {fit_angleX[3]:.2e}')
+    plt.plot(rx_smooth, fit_angleX_poly(rx_smooth), color='red', label='3rd-degree polynomial fit')
     plt.xlabel('rx (Red Point X-coordinate)')
     plt.ylabel('angleX (Servo Angle X)')
-    plt.title('Servo Angle X vs Red Point X-coordinate with 3rd Degree Polynomial Fit')
+    plt.title('Servo Angle X vs Red Point X-coordinate')
     plt.legend()
     plt.grid(True)
     plt.show()
 
-    # Plot angleY vs ry with 3rd-degree polynomial fit
+    # Plot angleY vs ry
     plt.figure(figsize=(10, 5))
     plt.scatter(ry_values, angleY_values, color='blue', label='Data points', alpha=0.8)
-    plt.plot(ry_smooth, fit_angleY_poly(ry_smooth), color='red',
-             label=f'3rd-degree fit: y = {fit_angleY[0]:.2e}x³ + {fit_angleY[1]:.2e}x² + {fit_angleY[2]:.2e}x + {fit_angleY[3]:.2e}')
+    plt.plot(ry_smooth, fit_angleY_poly(ry_smooth), color='red', label='3rd-degree polynomial fit')
     plt.xlabel('ry (Red Point Y-coordinate)')
     plt.ylabel('angleY (Servo Angle Y)')
-    plt.title('Servo Angle Y vs Red Point Y-coordinate with 3rd Degree Polynomial Fit')
+    plt.title('Servo Angle Y vs Red Point Y-coordinate')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
+    # Plot angleX vs ry
+    plt.figure(figsize=(10, 5))
+    plt.scatter(ry_values, angleX_values, color='purple', label='Data points', alpha=0.8)
+    plt.plot(ry_smooth, fit_angleX_ry_poly(ry_smooth), color='red', label='3rd-degree polynomial fit')
+    plt.xlabel('ry (Red Point Y-coordinate)')
+    plt.ylabel('angleX (Servo Angle X)')
+    plt.title('Servo Angle X vs Red Point Y-coordinate')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
+    # Plot angleY vs rx
+    plt.figure(figsize=(10, 5))
+    plt.scatter(rx_values, angleY_values, color='orange', label='Data points', alpha=0.8)
+    plt.plot(rx_smooth, fit_angleY_rx_poly(rx_smooth), color='red', label='3rd-degree polynomial fit')
+    plt.xlabel('rx (Red Point X-coordinate)')
+    plt.ylabel('angleY (Servo Angle Y)')
+    plt.title('Servo Angle Y vs Red Point X-coordinate')
     plt.legend()
     plt.grid(True)
     plt.show()
