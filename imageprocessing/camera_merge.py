@@ -8,7 +8,19 @@ from abc import ABC, abstractmethod
 CAMERA_INDEX = 1
 MAX_CAMERAS = 10
 image_index = 0
+HIGH_CEP_INDEX = 0.9
+LOW_CEP_INDEX = 0.5
+DILATION_ITERATIONS = 1
+EROSION_ITERATIONS = 4
 
+DILATION_KERNEL_SIZE = 3
+OPENING_KERNEL_SIZE = 9
+CLOSING_KERNEL_SIZE = 5
+EROSION_KERNEL_SIZE = 3
+
+CONTOUR_EXTRACTION_M0DE = cv2.RETR_EXTERNAL
+CONTOUR_EXTRACTION_METHOD = cv2.CHAIN_APPROX_SIMPLE
+CONTOUR_THICKNESS = cv2.FILLED
 
 class Handler(ABC):
     @abstractmethod
@@ -32,6 +44,17 @@ class ContoursHandler(Handler):
     def __init__(self):
         self.static = None
 
+    def optimize_edges(self, edges):
+        
+        dilation_kernel = np.ones((5, 5), np.uint8)
+        opening_kernel = np.ones((9, 9), np.uint8)
+        closing_kernel = np.ones((5, 5), np.uint8)
+        erosion_kernel = np.ones((3, 3), np.uint8)
+        dilated_edges = cv2.dilate(edges, dilation_kernel, iterations=2)
+        opening = cv2.morphologyEx(dilated_edges, cv2.MORPH_OPEN, opening_kernel)
+        closing = cv2.morphologyEx(opening, cv2.MORPH_CLOSE, closing_kernel)
+        erode = cv2.erode(closing, erosion_kernel, iterations=5)
+
     def add(self, img):
         gray = ImageParse.toGrayscale(img)
         height, width = img.shape
@@ -39,15 +62,9 @@ class ContoursHandler(Handler):
         # manipluate the image to get the contours
         blurred = cv2.GaussianBlur(gray, (3, 3), 0)
         edges = cv2.Canny(blurred, 150, 200)
-        kernel_small = np.ones((3, 3), np.uint8)
-        kernel = np.ones((5, 5), np.uint8)
-        kernel_big = np.ones((7, 7), np.uint8)
-        dilated_edges = cv2.dilate(edges, kernel, iterations=2)
-        opening = cv2.morphologyEx(dilated_edges, cv2.MORPH_OPEN, kernel_big)
-        closing = cv2.morphologyEx(opening, cv2.MORPH_CLOSE, kernel)
-        erode = cv2.erode(closing, kernel_small, iterations=5)
-        contours, hierarchy = cv2.findContours(erode, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        cv2.drawContours(black_canvas, contours, -1, (255, 255, 255), cv2.FILLED)
+        optimized = self.optimize_edges(edges)
+        contours, hierarchy = cv2.findContours(optimized, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        cv2.drawContours(black_canvas, contours, -1, (255, 255, 255), CONTOUR_THICKNESS)
         heat_map = cv2.GaussianBlur(black_canvas, (15, 15), 15, 15)
         self.static = heat_map
 
@@ -483,28 +500,30 @@ def generate_targets(heat_map: cv2.typing.MatLike):
         heat_map (cv2.typing.MatLike): The heatmap to generate targets from
 
     Returns:
-        Tuple: A tuple containing the targets for CEP_90 and CEP_50
+        Tuple: A tuple containing the targets for CEP_HIGH and CEP_LOW
     """
     # print(heat_map)
-    _, reduction_90 = cv2.threshold(heat_map, 228, 229, cv2.THRESH_BINARY)
-    _, reduction_50 = cv2.threshold(heat_map, 127, 128, cv2.THRESH_BINARY)
-    CEP_90 = cv2.Canny(reduction_90, 100, 150)
-    CEP_50 = cv2.Canny(reduction_50, 127, 128)
-    contours_90, _ = cv2.findContours(CEP_90,
+    high_intensity = int(HIGH_CEP_INDEX*255)
+    low_intensity = int(LOW_CEP_INDEX*255)
+    _, reduction_high = cv2.threshold(heat_map, high_intensity-1, high_intensity, cv2.THRESH_BINARY)
+    _, reduction_low = cv2.threshold(heat_map, low_intensity-1, low_intensity, cv2.THRESH_BINARY)
+    CEP_HIGH = cv2.Canny(reduction_high, 100, 150)
+    CEP_LOW = cv2.Canny(reduction_low, 127, 128)
+    contours_high, _ = cv2.findContours(CEP_HIGH,
     cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE) 
-    contours_50, _ = cv2.findContours(CEP_50,
+    contours_low, _ = cv2.findContours(CEP_LOW,
     cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
-    CEP_90_targets = []
-    CEP_50_targets = []
-    for contour in contours_90:
+    high_targets = []
+    low_targets = []
+    for contour in contours_high:
         (x,y), radius = cv2.minEnclosingCircle(contour)
         new_circle = (x,y), radius
-        CEP_90_targets.append(new_circle)
-    for contour in contours_50:
+        high_targets.append(new_circle)
+    for contour in contours_low:
         (x,y), radius = cv2.minEnclosingCircle(contour)
         new_circle = (x,y), radius
-        CEP_50_targets.append(new_circle)
-    return CEP_90_targets, CEP_50_targets
+        low_targets.append(new_circle)
+    return high_targets, low_targets
 
 
 def main():
@@ -536,11 +555,11 @@ def main():
             handler.add(img)
             handler.display(img)
             average = DecisionMaker.avg_heat_maps(newPixelsHandler.get(), contoursHandler.get())
-            circles_90, circles_50 = generate_targets(average)
-            for circle in circles_50:
+            circles_high, circles_low = generate_targets(average)
+            for circle in circles_low:
                 # print(circle[1])
                 cv2.circle(average, (int(circle[0][0]), int(circle[0][1])), int(circle[1]), (0, 255, 0), 1)
-            for circle in circles_90:
+            for circle in circles_high:
                 cv2.circle(average, (int(circle[0][0]), int(circle[0][1])), int(circle[1]), (0, 0, 255), 1)
             cv2.imshow('average', average)
         
