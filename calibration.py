@@ -134,7 +134,7 @@ def main():
             ret_val, img = cam.read()
             rx, ry = find_red_point(img)
             cv2.circle(img, (rx, ry), 10, (0, 0, 255), -1)
-            angleX_rx_values.append([rx,angleX])
+            angleX_rx_values.append([rx, angleX])
             angleY_ry_values.append([ry, angleY])
             sleep(0.5)
             # Press Escape or close the window to exit
@@ -154,6 +154,8 @@ def main():
     # Extract ry and angleY values from angleY_ry_values
     ry_values = [item[0] for item in angleY_ry_values]
     angleY_values = [item[1] for item in angleY_ry_values]
+
+    print(zip(rx_values, ry_values, angleX_values, angleY_values))
 
     # Compute 3rd degree polynomial fit for angleX vs rx
     fit_angleX = np.polyfit(rx_values, angleX_values, 3)  # 3rd degree polynomial fit
