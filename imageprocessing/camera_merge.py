@@ -10,17 +10,20 @@ MAX_CAMERAS = 10
 image_index = 0
 HIGH_CEP_INDEX = 0.9
 LOW_CEP_INDEX = 0.5
-DILATION_ITERATIONS = 1
-EROSION_ITERATIONS = 4
+DILATION_ITERATIONS = 2
+EROSION_ITERATIONS = 5
 
-DILATION_KERNEL_SIZE = 3
-OPENING_KERNEL_SIZE = 9
-CLOSING_KERNEL_SIZE = 5
-EROSION_KERNEL_SIZE = 3
+DILATION_KERNEL = (5,5)
+OPENING_KERNEL = (9,9)
+CLOSING_KERNEL = (5,5)
+EROSION_KERNEL = (3,3)
 
 CONTOUR_EXTRACTION_M0DE = cv2.RETR_EXTERNAL
 CONTOUR_EXTRACTION_METHOD = cv2.CHAIN_APPROX_SIMPLE
 CONTOUR_THICKNESS = cv2.FILLED
+CONTOUR_HEATMAP_BLUR_KERNEL = (15, 15)
+CONTOUR_HEATMAP_STDEV = 15
+
 
 class Handler(ABC):
     @abstractmethod
@@ -46,14 +49,14 @@ class ContoursHandler(Handler):
 
     def optimize_edges(self, edges):
         
-        dilation_kernel = np.ones((5, 5), np.uint8)
-        opening_kernel = np.ones((9, 9), np.uint8)
-        closing_kernel = np.ones((5, 5), np.uint8)
-        erosion_kernel = np.ones((3, 3), np.uint8)
-        dilated_edges = cv2.dilate(edges, dilation_kernel, iterations=2)
+        dilation_kernel = np.ones(DILATION_KERNEL, np.uint8)
+        opening_kernel = np.ones(OPENING_KERNEL, np.uint8)
+        closing_kernel = np.ones(CLOSING_KERNEL, np.uint8)
+        erosion_kernel = np.ones(EROSION_KERNEL, np.uint8)
+        dilated_edges = cv2.dilate(edges, dilation_kernel, iterations=DILATION_ITERATIONS)
         opening = cv2.morphologyEx(dilated_edges, cv2.MORPH_OPEN, opening_kernel)
         closing = cv2.morphologyEx(opening, cv2.MORPH_CLOSE, closing_kernel)
-        erode = cv2.erode(closing, erosion_kernel, iterations=5)
+        erode = cv2.erode(closing, erosion_kernel, iterations=EROSION_ITERATIONS)
 
     def add(self, img):
         gray = ImageParse.toGrayscale(img)
@@ -63,9 +66,9 @@ class ContoursHandler(Handler):
         blurred = cv2.GaussianBlur(gray, (3, 3), 0)
         edges = cv2.Canny(blurred, 150, 200)
         optimized = self.optimize_edges(edges)
-        contours, hierarchy = cv2.findContours(optimized, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        contours, hierarchy = cv2.findContours(optimized, CONTOUR_EXTRACTION_M0DE, CONTOUR_EXTRACTION_METHOD)
         cv2.drawContours(black_canvas, contours, -1, (255, 255, 255), CONTOUR_THICKNESS)
-        heat_map = cv2.GaussianBlur(black_canvas, (15, 15), 15, 15)
+        heat_map = cv2.GaussianBlur(black_canvas, CONTOUR_HEATMAP_BLUR_KERNEL, CONTOUR_HEATMAP_STDEV)
         self.static = heat_map
 
     def display(self, img):
@@ -515,15 +518,23 @@ def generate_targets(heat_map: cv2.typing.MatLike):
     cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
     high_targets = []
     low_targets = []
+    contour_centers = []
     for contour in contours_high:
+        # add accurate CEP to list
         (x,y), radius = cv2.minEnclosingCircle(contour)
         new_circle = (x,y), radius
         high_targets.append(new_circle)
+        # add contour center to list
+        M = cv2.moments(contour)
+        cx = int(M['m10']/M['m00'])
+        cy = int(M['m01']/M['m00'])
+        contour_centers.append((cx, cy))
     for contour in contours_low:
+        # add inaccurate CEP to list
         (x,y), radius = cv2.minEnclosingCircle(contour)
         new_circle = (x,y), radius
         low_targets.append(new_circle)
-    return high_targets, low_targets
+    return high_targets, low_targets, contour_centers
 
 
 def main():
@@ -555,12 +566,14 @@ def main():
             handler.add(img)
             handler.display(img)
             average = DecisionMaker.avg_heat_maps(newPixelsHandler.get(), contoursHandler.get())
-            circles_high, circles_low = generate_targets(average)
+            circles_high, circles_low, centers = generate_targets(average)
             for circle in circles_low:
                 # print(circle[1])
                 cv2.circle(average, (int(circle[0][0]), int(circle[0][1])), int(circle[1]), (0, 255, 0), 1)
             for circle in circles_high:
                 cv2.circle(average, (int(circle[0][0]), int(circle[0][1])), int(circle[1]), (0, 0, 255), 1)
+            for center in centers:
+                cv2.circle(average, center, radius=1, color=(255, 0, 0), thickness=-1)
             cv2.imshow('average', average)
         
         if cv2.waitKey(1) == 32: # Whitespace
