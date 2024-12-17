@@ -167,7 +167,7 @@ def offlineAnalysis():
 
     for i in range(100):
         for j in range(100):
-            thetaXspace[i, j], thetaYspace[i, j] = getAngles(X[i, j], Y[i, j])
+            thetaXspace[i, j], thetaYspace[i, j] = bilerp(X[i, j], Y[i, j])
     
 
     # Display a heatmap with x and y as the spatial coordinates, and value thetaXspace, with pcolormesh
