@@ -126,6 +126,68 @@ def find_red_point(frame):
 
     return cX, cY
 
+def bilerp(x0, y0):
+    # Extract the x, y, thetaX, and thetaY values from MEASUREMENTS
+    x = [item[0] for item in MEASUREMENTS]
+    y = [item[1] for item in MEASUREMENTS]
+    thetaX = [item[2] for item in MEASUREMENTS]
+    thetaY = [item[3] for item in MEASUREMENTS]
+
+    # get the four closest points to the black point in x,y space
+    distance_squared = lambda x1, y1, x2, y2: (x1 - x2) ** 2 + (y1 - y2) ** 2
+    # use np because it's faster than list comprehension
+    distances_squared = np.array([distance_squared(x0, y0, x[i], y[i]) for i in range(len(x))])
+    closest_points = np.argsort(distances_squared)[:4]
+
+    # Cubic interpolate the four closest points to get the value at the black point
+    # Make sure to normalise it correctly
+    
+    angleX0 = 0
+    angleY0 = 0
+    for i in closest_points:
+        angleX0 += thetaX[i] / distances_squared[i]
+        angleY0 += thetaY[i] / distances_squared[i]
+
+    angleX0 /= np.sum(1 / distances_squared[closest_points])
+    angleY0 /= np.sum(1 / distances_squared[closest_points])
+
+    return angleX0, angleY0
+
+def offlineAnalysis():
+    # Extract the x, y, thetaX, and thetaY values from MEASUREMENTS
+    x = [item[0] for item in MEASUREMENTS]
+    y = [item[1] for item in MEASUREMENTS]
+    thetaX = [item[2] for item in MEASUREMENTS]
+    thetaY = [item[3] for item in MEASUREMENTS]
+    xspace = np.linspace(min(x), max(x), 100)
+    yspace = np.linspace(min(y), max(y), 100)
+    X, Y = np.meshgrid(xspace, yspace)
+    thetaXspace = np.zeros((100, 100))
+    thetaYspace = np.zeros((100, 100))
+
+    for i in range(100):
+        for j in range(100):
+            thetaXspace[i, j], thetaYspace[i, j] = getAngles(X[i, j], Y[i, j])
+    
+
+    # Display a heatmap with x and y as the spatial coordinates, and value thetaXspace, with pcolormesh
+    fig, (ax1, ax2) = plt.subplots(2)
+    pcm = ax1.pcolormesh(X, Y, thetaXspace, cmap='coolwarm')
+    fig.colorbar(pcm, ax=ax1)
+    ax1.set_xlabel('rx')
+    ax1.set_ylabel('ry')
+    ax1.set_title('Heatmap of thetaX')
+
+    # Display a heatmap with rx and ry as the spatial coordinate, and value thetaY
+    pcm = ax2.pcolormesh(X, Y, thetaYspace, cmap='YlGnBu')
+    fig.colorbar(pcm, ax=ax2)
+
+    ax2.set_xlabel('rx')
+    ax2.set_ylabel('ry')
+    ax2.set_title('Heatmap of thetaY')
+    
+    plt.show()
+
 
 def main():
     servoH.write(STARTX)
