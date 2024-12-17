@@ -8,6 +8,13 @@ from abc import ABC, abstractmethod
 CAMERA_INDEX = 1
 MAX_CAMERAS = 10
 image_index = 0
+
+# Parameters to play with in calibration
+INITIAL_BLURRING_KERNEL = (3,3)
+EDGE_DETECTION_MINTHRESH = 100
+EDGE_DETECTION_MAXTHRESH = 130
+
+
 HIGH_CEP_INDEX = 0.9
 LOW_CEP_INDEX = 0.5
 DILATION_ITERATIONS = 2
@@ -48,7 +55,7 @@ class ContoursHandler(Handler):
         self.static = None
 
     def optimize_edges(self, edges):
-        
+        # TODO: ADD DOCSTRING
         dilation_kernel = np.ones(DILATION_KERNEL, np.uint8)
         opening_kernel = np.ones(OPENING_KERNEL, np.uint8)
         closing_kernel = np.ones(CLOSING_KERNEL, np.uint8)
@@ -56,15 +63,15 @@ class ContoursHandler(Handler):
         dilated_edges = cv2.dilate(edges, dilation_kernel, iterations=DILATION_ITERATIONS)
         opening = cv2.morphologyEx(dilated_edges, cv2.MORPH_OPEN, opening_kernel)
         closing = cv2.morphologyEx(opening, cv2.MORPH_CLOSE, closing_kernel)
-        erode = cv2.erode(closing, erosion_kernel, iterations=EROSION_ITERATIONS)
+        return cv2.erode(closing, erosion_kernel, iterations=EROSION_ITERATIONS)
 
     def add(self, img):
         gray = ImageParse.toGrayscale(img)
         height, width = img.shape
         black_canvas = np.zeros((height, width, 3), dtype = np.uint8)
         # manipluate the image to get the contours
-        blurred = cv2.GaussianBlur(gray, (3, 3), 0)
-        edges = cv2.Canny(blurred, 150, 200)
+        blurred = cv2.GaussianBlur(gray, INITIAL_BLURRING_KERNEL, 0)
+        edges = cv2.Canny(blurred, EDGE_DETECTION_MINTHRESH, EDGE_DETECTION_MAXTHRESH)
         optimized = self.optimize_edges(edges)
         contours, hierarchy = cv2.findContours(optimized, CONTOUR_EXTRACTION_M0DE, CONTOUR_EXTRACTION_METHOD)
         cv2.drawContours(black_canvas, contours, -1, (255, 255, 255), CONTOUR_THICKNESS)
@@ -98,8 +105,8 @@ class Accumulator:
 
     def add(self, img):
         if self.accumulator is None:
-            self.accumulator = np.zeros((self.img.shape[0], self.img.shape[1]), dtype=np.uint8)
-        self.accumulator = cv2.addWeighted(self.cumulative, 0.9, img, 0.1, 0)
+            self.accumulator = np.zeros((img.shape[0], img.shape[1]), dtype=np.uint8)
+        self.accumulator = cv2.addWeighted(self.accumulator, 0.9, img, 0.1, 0)
 
     def clear(self, img):
         self.accumulator = np.zeros((img.shape[0], img.shape[1]), dtype=np.uint8)
@@ -330,9 +337,7 @@ class ImageParse:
             np.ndarray: The difference between the two images
         """
         # Calculate difference
-        print(img2)
         if (isinstance(img1, np.ndarray) and img1.size > 1) and (isinstance(img2, np.ndarray) and img2.size > 1):
-            # print("case 1")
             diff = cv2.absdiff(img1, img2)
         # Apply threshold
             _, diff = cv2.threshold(diff, 30, 255, cv2.THRESH_BINARY)
@@ -468,6 +473,7 @@ class IO:
         """
         cv2.imwrite(path, img)
 
+
 class DecisionMaker:
     @staticmethod
     def avg_heat_maps(heat_map_1, heat_map_2):
@@ -480,21 +486,14 @@ class DecisionMaker:
         Returns:
             np.ndarray: The intersection of the two heatmaps
         """
-        # print(heat_map_1)
-        # print(heat_map_2)
         if (isinstance(heat_map_1, np.ndarray) and heat_map_1.size > 1) and (isinstance(heat_map_2, np.ndarray) and heat_map_2.size > 1):
-            # print("case 1")
             return 0.5*(heat_map_1+heat_map_2)
         if isinstance(heat_map_1, np.ndarray) and heat_map_1.size > 1:
-            # print("case 2", heat_map_1.size)
             return heat_map_1
         if isinstance(heat_map_2, np.ndarray) and heat_map_2.size > 1:
-            # print("case 3", heat_map_2.size)
             return heat_map_2
-        # print("case 4")
         return np.zeros((350, 200, 1), dtype = np.uint8)
         
-    
 
 def generate_targets(heat_map: cv2.typing.MatLike):
     """Generate targets from a heatmap.
@@ -505,7 +504,6 @@ def generate_targets(heat_map: cv2.typing.MatLike):
     Returns:
         Tuple: A tuple containing the targets for CEP_HIGH and CEP_LOW
     """
-    # print(heat_map)
     high_intensity = int(HIGH_CEP_INDEX*255)
     low_intensity = int(LOW_CEP_INDEX*255)
     _, reduction_high = cv2.threshold(heat_map, high_intensity-1, high_intensity, cv2.THRESH_BINARY)
@@ -526,15 +524,29 @@ def generate_targets(heat_map: cv2.typing.MatLike):
         high_targets.append(new_circle)
         # add contour center to list
         M = cv2.moments(contour)
-        cx = int(M['m10']/M['m00'])
-        cy = int(M['m01']/M['m00'])
-        contour_centers.append((cx, cy))
+        if not M['m00'] == 0:
+            cx = int(M['m10']/M['m00'])
+            cy = int(M['m01']/M['m00'])
+            contour_centers.append((int(cx), int(cy)))
+        else:
+            contour_centers.append((int(x), int(y)))
     for contour in contours_low:
         # add inaccurate CEP to list
         (x,y), radius = cv2.minEnclosingCircle(contour)
         new_circle = (x,y), radius
         low_targets.append(new_circle)
     return high_targets, low_targets, contour_centers
+
+
+def show_targets(average):
+    circles_high, circles_low, centers = generate_targets(average)
+    for circle in circles_low:
+        cv2.circle(average, (int(circle[0][0]), int(circle[0][1])), int(circle[1]), (0, 255, 0), 1)
+    for circle in circles_high:
+        cv2.circle(average, (int(circle[0][0]), int(circle[0][1])), int(circle[1]), (0, 0, 255), 1)
+    for center in centers:
+        cv2.circle(average, center, radius=1, color=(255, 0, 0), thickness=-1)
+    cv2.imshow('average', average)
 
 
 def main():
@@ -545,6 +557,7 @@ def main():
     newPixelsHandler = NewPixelsHandler()
     differenceHandler = DifferenceHandler()
     contoursHandler = ContoursHandler()
+    accumulator = Accumulator()
 
     while True:
         ret_val, img = cam.read()
@@ -565,16 +578,9 @@ def main():
         for handler in [rawHandler, newPixelsHandler, differenceHandler, contoursHandler]:
             handler.add(img)
             handler.display(img)
-            average = DecisionMaker.avg_heat_maps(newPixelsHandler.get(), contoursHandler.get())
-            circles_high, circles_low, centers = generate_targets(average)
-            for circle in circles_low:
-                # print(circle[1])
-                cv2.circle(average, (int(circle[0][0]), int(circle[0][1])), int(circle[1]), (0, 255, 0), 1)
-            for circle in circles_high:
-                cv2.circle(average, (int(circle[0][0]), int(circle[0][1])), int(circle[1]), (0, 0, 255), 1)
-            for center in centers:
-                cv2.circle(average, center, radius=1, color=(255, 0, 0), thickness=-1)
-            cv2.imshow('average', average)
+        changes_heat_map = accumulator.add(newPixelsHandler.get())
+        average = DecisionMaker.avg_heat_maps(changes_heat_map, contoursHandler.get())
+        show_targets(average=average)
         
         if cv2.waitKey(1) == 32: # Whitespace
             newPixelsHandler.clear()
