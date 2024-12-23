@@ -11,7 +11,7 @@ WINDOW_NAME = 'Camera Connection'
 MAX_CAMERAS = 10
 
 # Set up the Arduino board (replace 'COM8' with your Arduino's COM port)
-board = Arduino('COM8')  # Adjust the COM port based on your system
+board = Arduino('COM3')  # Adjust the COM port based on your system
 
 # Define the pin for the servo (usually PWM pins)
 servoV_pin = 5
