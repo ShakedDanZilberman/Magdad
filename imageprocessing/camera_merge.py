@@ -474,6 +474,14 @@ class IO:
         cv2.imwrite(path, img)
 
 
+class LaserPointer:
+    def __init__(self):
+        pass
+    
+    def move(self, point):
+        pass
+
+
 class DecisionMaker:
     @staticmethod
     def avg_heat_maps(heat_map_1, heat_map_2):
@@ -547,6 +555,7 @@ def show_targets(average):
     for center in centers:
         cv2.circle(average, center, radius=1, color=(255, 0, 0), thickness=-1)
     cv2.imshow('average', average)
+    return circles_high, circles_low, centers
 
 
 def main():
@@ -558,6 +567,7 @@ def main():
     differenceHandler = DifferenceHandler()
     contoursHandler = ContoursHandler()
     accumulator = Accumulator()
+    laser_pointer = LaserPointer()
 
     while True:
         ret_val, img = cam.read()
@@ -580,8 +590,10 @@ def main():
             handler.display(img)
         changes_heat_map = accumulator.add(newPixelsHandler.get())
         average = DecisionMaker.avg_heat_maps(changes_heat_map, contoursHandler.get())
-        show_targets(average=average)
-        
+        circles_high, circles_low, centers = show_targets(average=average)
+        for i in range(len(centers)):
+            laser_pointer.move(centers[i])
+            time.sleep(5)
         if cv2.waitKey(1) == 32: # Whitespace
             newPixelsHandler.clear()
 
