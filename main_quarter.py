@@ -5,10 +5,10 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 from abc import ABC, abstractmethod
+from pyfirmata import Arduino, util
 
-CAMERA_INDEX = 0
+CAMERA_INDEX = 1
 MAX_CAMERAS = 10
-image_index = 0
 
 # Parameters to play with in calibration
 INITIAL_BLURRING_KERNEL = (3,3)
@@ -477,10 +477,71 @@ class IO:
 
 class LaserPointer:
     def __init__(self):
-        pass
+        self.point = (0, 0)
+        self.board = Arduino('COM3')
+
+        # Define the pins for the servos and the laser
+        servoV_pin = 5
+        servoH_pin = 3
+        laser_pin = 8
+        self.board.digital[laser_pin].write(1)
+        # Attach the servo to the board
+        self.servoV = self.board.get_pin(f'd:{servoV_pin}:s')  # 's' means it's a servo
+        self.servoH = self.board.get_pin(f'd:{servoH_pin}:s')
+
+        # Start an iterator thread to read analog inputs
+        it = util.Iterator(self.board)
+        it.start()
+
+        # Setup sequence to reset servos
+        time.sleep(1)
+    
+    def angle_calc(self, coordinates):
+        X = coordinates[0]  # rx
+        Y = coordinates[1]  # ry
+
+        # Coefficients for angleX polynomial
+        AX = 113.9773
+        BX = -0.0588
+        CX = 0.0001
+        DX = 0
+        EX = -0.1736
+        FX = 0.0001
+        GX = 0.0000
+        HX = 0.0001
+        IX = -0.0000
+        JX = 0
+
+        # Coefficients for angleY polynomial
+        AY = 69.3912
+        BY = -0.1502
+        CY = 0.0001
+        DY = 0
+        EY = 0.0144
+        FY = 0.0
+        GY = 0.0000
+        HY = 0.0000
+        IY = 0.0000
+        JY = 0
+
+        # Calculate angleX using the full polynomial expression
+        angleX = (AX + BX * Y + CX * Y ** 2 + DX * Y ** 3 +
+                EX * X + FX * X * Y + GX * X * Y ** 2 +
+                HX * X ** 2 + IX * X ** 2 * Y + JX * X ** 3)
+
+        # Calculate angleY using the full polynomial expression
+        angleY = (AY + BY * Y + CY * Y ** 2 + DY * Y ** 3 +
+                EY * X + FY * X * Y + GY * X * Y ** 2 +
+                HY * X ** 2 + IY * X ** 2 * Y + JY * X ** 3)
+
+        return angleX, angleY
     
     def move(self, point):
-        pass
+        self.point = point 
+        angleX, angleY = self.angle_calc(point)
+        print(angleX,angleY)
+        self.servoH.write(angleX)
+        self.servoV.write(angleY)
 
 
 class DecisionMaker:
@@ -560,8 +621,8 @@ def show_targets(average):
 
 
 def main():
-    global CAMERA_INDEX
-    IO.detectCameras()
+    global CAMERA_INDEX, timestep
+    CameraIO.detectCameras()
     cam = cv2.VideoCapture(CAMERA_INDEX)
     rawHandler = RawHandler()
     newPixelsHandler = NewPixelsHandler()
@@ -569,9 +630,11 @@ def main():
     contoursHandler = ContoursHandler()
     accumulator = Accumulator()
     laser_pointer = LaserPointer()
-
+    number_of_frames = 0
     while True:
+        number_of_frames+=1
         ret_val, img = cam.read()
+        img = ImageParse.toGrayscale(img)
 
         if not ret_val:
             print('Camera @ index 1 not connected')
@@ -590,11 +653,12 @@ def main():
             handler.add(img)
             handler.display(img)
         changes_heat_map = accumulator.add(newPixelsHandler.get())
+        # contours_heat_map = accumulator.add(contoursHandler.get())  
+        
         average = DecisionMaker.avg_heat_maps(changes_heat_map, contoursHandler.get())
         circles_high, circles_low, centers = show_targets(average=average)
         for i in range(len(centers)):
             laser_pointer.move(centers[i])
-            time.sleep(5)
         if cv2.waitKey(1) == 32: # Whitespace
             newPixelsHandler.clear()
 
