@@ -9,12 +9,12 @@ from pyfirmata import Arduino, util
 
 CAMERA_INDEX = 1
 MAX_CAMERAS = 10
-
+timestep = 0
+centers = [[90,90]]
 # Parameters to play with in calibration
 INITIAL_BLURRING_KERNEL = (3,3)
 EDGE_DETECTION_MINTHRESH = 100
 EDGE_DETECTION_MAXTHRESH = 130
-
 
 HIGH_CEP_INDEX = 0.9
 LOW_CEP_INDEX = 0.5
@@ -237,7 +237,7 @@ class NewPixelsHandler(Handler):
             # convert image to RBG
             # diff = cv2.cvtColor(diff, cv2.COLOR_GRAY2BGR)
             # find objects in the image
-            # diff = ImageParse.find_objects(diff)
+            # diff = ImageParse.find_objects(diff)  # method redundant
             cv2.imshow(TITLE, diff)
             #cv2.imshow(TITLE2, self.cumulative)
 
@@ -374,31 +374,31 @@ class ImageParse:
         """
         return cv2.threshold(img, threshold, 255, cv2.THRESH_TOZERO)[1]
     
-    @staticmethod
-    def find_objects(img):
-        # TODO: this is a horrible way to find objects, please improve
-        # This function is supposed to find objects in the image
-        # The image is a black and white image with white blobs on a black background
-        params = cv2.SimpleBlobDetector_Params()
-        params.maxThreshold = 255
-        params.minThreshold = 10
-        # Filter by color (white blobs)
-        params.filterByColor = True
-        params.blobColor = 255
+    # @staticmethod
+    # def find_objects(img):
+        # # TODO: this is a horrible way to find objects, please improve
+        # # This function is supposed to find objects in the image
+        # # The image is a black and white image with white blobs on a black background
+        # params = cv2.SimpleBlobDetector_Params()
+        # params.maxThreshold = 255
+        # params.minThreshold = 10
+        # # Filter by color (white blobs)
+        # params.filterByColor = True
+        # params.blobColor = 255
 
-        # Filter by area
-        params.filterByArea = True
-        params.minArea = 40  # Minimum area of blob
-        params.maxArea = 10000  # Maximum area of blob
-        detector = cv2.SimpleBlobDetector_create(params)
-        keypoints = detector.detect(img)
+        # # Filter by area
+        # params.filterByArea = True
+        # params.minArea = 40  # Minimum area of blob
+        # params.maxArea = 10000  # Maximum area of blob
+        # detector = cv2.SimpleBlobDetector_create(params)
+        # keypoints = detector.detect(img)
         
-        # Get the brightness of each blob
-        brightnesses = ImageParse.evaluateBrightness(img, keypoints)
+        # # Get the brightness of each blob
+        # brightnesses = ImageParse.evaluateBrightness(img, keypoints)
         
-        img = ImageParse.drawKeypointsOnImage(img, keypoints, brightnesses)
+        # img = ImageParse.drawKeypointsOnImage(img, keypoints, brightnesses)
 
-        return img
+        # return img
     
     @staticmethod
     def evaluateBrightness(img, keypoints):
@@ -439,9 +439,50 @@ class ImageParse:
             cv2.line(img, (x, y - cross_size), (x, y + cross_size), color, 1)
 
         return img
+    
+    @staticmethod
+    def generate_targets(heat_map: cv2.typing.MatLike):
+        """Generate targets from a heatmap.
 
+        Args:
+            heat_map (cv2.typing.MatLike): The heatmap to generate targets from
 
-class IO:
+        Returns:
+            Tuple: A tuple containing the targets for CEP_HIGH and CEP_LOW
+        """
+        high_intensity = int(HIGH_CEP_INDEX*255)
+        low_intensity = int(LOW_CEP_INDEX*255)
+        _, reduction_high = cv2.threshold(heat_map, high_intensity-1, high_intensity, cv2.THRESH_BINARY)
+        _, reduction_low = cv2.threshold(heat_map, low_intensity-1, low_intensity, cv2.THRESH_BINARY)
+        CEP_HIGH = cv2.Canny(reduction_high, 100, 150)
+        CEP_LOW = cv2.Canny(reduction_low, 127, 128)
+        contours_high, _ = cv2.findContours(CEP_HIGH,
+        cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE) 
+        contours_low, _ = cv2.findContours(CEP_LOW,
+        cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+        high_targets = []
+        low_targets = []
+        contour_centers = []
+        for contour in contours_high:
+            # add accurate CEP to list
+            (x,y), radius = cv2.minEnclosingCircle(contour)
+            new_circle = (x,y), radius
+            high_targets.append(new_circle)
+            # add contour center to list
+            M = cv2.moments(contour)
+            if not M['m00'] == 0:
+                cx = int(M['m10']/M['m00'])
+                cy = int(M['m01']/M['m00'])
+                contour_centers.append((int(cx), int(cy)))
+            else:
+                contour_centers.append((int(x), int(y)))
+        for contour in contours_low:
+            # add inaccurate CEP to list
+            (x,y), radius = cv2.minEnclosingCircle(contour)
+            new_circle = (x,y), radius
+            low_targets.append(new_circle)
+        return high_targets, low_targets, contour_centers
+
     def detectCameras():
         """Detect all connected cameras and display their images in a grid using matplotlib
         
@@ -661,8 +702,6 @@ def main():
             laser_pointer.move(centers[i])
         if cv2.waitKey(1) == 32: # Whitespace
             newPixelsHandler.clear()
-
-
 
         # Press Escape to exit
         if cv2.waitKey(1) == 27:
