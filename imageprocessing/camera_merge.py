@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from abc import ABC, abstractmethod
 
-CAMERA_INDEX = 0
+CAMERA_INDEX = 1
 MAX_CAMERAS = 10
 image_index = 0
 
@@ -569,7 +569,7 @@ def main():
     contoursHandler = ContoursHandler()
     accumulator = Accumulator()
     laser_pointer = LaserPointer()
-
+    number_of_frames = 0
     while True:
         ret_val, img = cam.read()
 
@@ -581,7 +581,7 @@ def main():
             if not ret_val:
                 print('Failed to connect to camera')
                 break
-
+        number_of_frames += 1
         # Downsize and grayscale the image to better simulate IR camera - Remove this when IR camera is connected
         img = cv2.resize(img, (0, 0), fx=.5, fy=.5)
         img = ImageParse.toGrayscale(img)
@@ -590,11 +590,11 @@ def main():
             handler.add(img)
             handler.display(img)
         changes_heat_map = accumulator.add(newPixelsHandler.get())
+        # contours_heat_map = accumulator.add_static(contoursHandler.get(), number_of_frames)     
         average = DecisionMaker.avg_heat_maps(changes_heat_map, contoursHandler.get())
         circles_high, circles_low, centers = show_targets(average=average)
-        for i in range(len(centers)):
-            laser_pointer.move(centers[i])
-            time.sleep(5)
+        # for i in range(len(centers)):
+        #     laser_pointer.move(centers[i])
         if cv2.waitKey(1) == 32: # Whitespace
             newPixelsHandler.clear()
 
