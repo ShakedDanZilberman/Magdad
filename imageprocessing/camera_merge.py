@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from abc import ABC, abstractmethod
 
-CAMERA_INDEX = 1
+CAMERA_INDEX = 0
 MAX_CAMERAS = 10
 image_index = 0
 
