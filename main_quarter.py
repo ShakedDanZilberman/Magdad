@@ -6,6 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from abc import ABC, abstractmethod
 from pyfirmata import Arduino, util
+import threading
 
 CAMERA_INDEX = 1
 MAX_CAMERAS = 10
@@ -16,8 +17,8 @@ INITIAL_BLURRING_KERNEL = (3, 3)
 EDGE_DETECTION_MINTHRESH = 100
 EDGE_DETECTION_MAXTHRESH = 130
 
-HIGH_CEP_INDEX = 0.9
-LOW_CEP_INDEX = 0.5
+HIGH_CEP_INDEX = 0.5
+LOW_CEP_INDEX = 0.2
 DILATION_ITERATIONS = 2
 EROSION_ITERATIONS = 5
 
@@ -109,20 +110,28 @@ class Accumulator:
     clear() - clears the accumulator
     get() - returns the accumulator image
     """
+    LOOKBACK = 10
 
     def __init__(self):
         self.accumulator = None
+        self.window = []
 
     def add(self, img, prev_weight, new_weight):
-        print(img)
-        print(prev_weight, new_weight)
         if not isinstance(img, np.ndarray):
             return
         if len(img.shape) < 2:
             return
         if self.accumulator is None:
             self.accumulator = np.zeros((img.shape[0], img.shape[1]), dtype=np.uint8)
-        self.accumulator = cv2.addWeighted(self.accumulator, prev_weight, img, new_weight, 0)
+        self.window.append(img)
+        if len(self.window) > Accumulator.LOOKBACK:
+            self.window.pop(0)
+        moving_average = np.zeros((img.shape[0], img.shape[1]), dtype=np.uint8)
+        for frame in self.window:
+            moving_average += (frame * 0.3).astype(np.uint8)
+        moving_average = np.clip(moving_average, 0, 255)
+        moving_average = moving_average.astype(np.uint8)
+        self.accumulator = moving_average
 
     # def add_static(self, img, number_of_frames_so_far):
     #     if self.accumulator is None:
@@ -131,6 +140,7 @@ class Accumulator:
 
     def clear(self, img):
         self.accumulator = np.zeros((img.shape[0], img.shape[1]), dtype=np.uint8)
+        self.window = []
 
     def get(self):
         return self.accumulator
@@ -193,6 +203,7 @@ class NewPixelsHandler(Handler):
     def add(self, img):
         # Skip if index is -1
         if self.index == -1:
+            self.img = img
             return
 
         # Skip images that are too bright
@@ -201,18 +212,21 @@ class NewPixelsHandler(Handler):
 
         # Add image to the list
         self.images[self.index] = img
-        self.index += 1
+        self.index += 1 
 
         # Reset index if it exceeds N
         if self.index == NewPixelsHandler.N:
             self.index = -1
-            self.get()
+            self.get(img)
             # cv2.imshow(self.title, self.avg)
 
-    def get(self):
+    def get(self, img):
         # Return the average if it has already been calculated
         if hasattr(self, "avg") and self.avg is not None:
-            return self.avg
+            diff = ImageParse.differenceImage(img, self.avg)
+            diff = ImageParse.blurImage(diff, 20)
+            diff = ImageParse.aboveThreshold(diff, 50)
+            return diff
 
         if len(self.images) < NewPixelsHandler.N:
             return None
@@ -252,9 +266,7 @@ class NewPixelsHandler(Handler):
         if not self.isReady():
             cv2.imshow(TITLE, LOADING_IMAGE)
         else:
-            diff = ImageParse.differenceImage(img, self.get())
-            diff = ImageParse.blurImage(diff, 20)
-            diff = ImageParse.aboveThreshold(diff, 50)
+            
 
             # self.cumulative = cv2.addWeighted(self.cumulative, 0.9, diff, 0.1, 0)
 
@@ -262,7 +274,7 @@ class NewPixelsHandler(Handler):
             # diff = cv2.cvtColor(diff, cv2.COLOR_GRAY2BGR)
             # find objects in the image
             # diff = ImageParse.find_objects(diff)  # method redundant
-            cv2.imshow(TITLE, diff)
+            cv2.imshow(TITLE, self.get(img))
             # cv2.imshow(TITLE2, self.cumulative)
 
 
@@ -504,6 +516,8 @@ class ImageParse:
         _, reduction_low = cv2.threshold(
             heat_map, low_intensity - 1, low_intensity, cv2.THRESH_BINARY
         )
+        reduction_high = cv2.GaussianBlur(reduction_high, INITIAL_BLURRING_KERNEL, 0)
+        reduction_low = cv2.GaussianBlur(reduction_low, INITIAL_BLURRING_KERNEL, 0)
         CEP_HIGH = cv2.Canny(reduction_high, 100, 150)
         CEP_LOW = cv2.Canny(reduction_low, 127, 128)
         contours_high, _ = cv2.findContours(
@@ -592,66 +606,115 @@ class LaserPointer:
         # Start an iterator thread to read analog inputs
         it = util.Iterator(self.board)
         it.start()
+        # Coefficients for angleX polynomial
+        self.AX = 113.9773
+        self.BX = -0.0588
+        self.CX = 0.0001
+        self.DX = 0
+        self.EX = -0.1736
+        self.FX = 0.0001
+        self.GX = 0.0000
+        self.HX = 0.0001
+        self.IX = -0.0000
+        self.JX = 0
 
-        # Setup sequence to reset servos
-        time.sleep(1)
+        # Coefficients for angleY polynomial
+        self.AY = 69.3912
+        self.BY = -0.1502
+        self.CY = 0.0001
+        self.DY = 0
+        self.EY = 0.0144
+        self.FY = 0.0
+        self.GY = 0.0000
+        self.HY = 0.0000
+        self.IY = 0.0000
+        self.JY = 0
 
+        self.STARTX = 60
+        self.STARTY = 40
+        self.deltaX = 30
+        self.deltaY = 20
+        self.NUMITER = 10
+
+    def calibration():
+        mx, my = 0, 0
+        def click_event(event, x, y, flags, param):
+            global mx, my
+            if event == cv2.EVENT_LBUTTONDOWN:
+                # print(f"Clicked coordinates: {relative_x}, {relative_y}")
+                mx, my = x, y
+        def find_red_point(frame):
+            """
+            Finds the (x, y) coordinates of the single red point in the image.
+
+            Args:
+                frame: The input image (BGR format).
+
+            Returns:
+                A tuple (x, y) representing the center of the red point if found, or None if no red point is detected.
+            """
+            # Convert the frame to HSV color space
+            hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+
+            # Define the lower and upper bounds for red in HSV
+            lower_red1 = np.array([0, 120, 70])  # Lower range for red
+            upper_red1 = np.array([10, 255, 255])  # Upper range for red
+            lower_red2 = np.array([170, 120, 70])  # Lower range for red (wrapping around 180 degrees)
+            upper_red2 = np.array([180, 255, 255])  # Upper range for red
+
+            # Create masks for red
+            mask1 = cv2.inRange(hsv, lower_red1, upper_red1)
+            mask2 = cv2.inRange(hsv, lower_red2, upper_red2)
+            mask = cv2.bitwise_or(mask1, mask2)  # Combine masks
+
+            # Find contours of the mask
+            contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+            if len(contours) == 0:
+                return (0, 0)  # No red point found
+
+            # Assume the largest contour is the red point (adjust as needed)
+            largest_contour = max(contours, key=cv2.contourArea)
+
+            # Get the center of the red point
+            M = cv2.moments(largest_contour)
+            if M["m00"] == 0:
+                return (0, 0)  # Avoid division by zero
+
+            cX = int(M["m10"] / M["m00"])  # x-coordinate
+            cY = int(M["m01"] / M["m00"])  # y-coordinate
+
+            return cX, cY
+        
     def angle_calc(self, coordinates):
         X = coordinates[0]  # rx
         Y = coordinates[1]  # ry
-
-        # Coefficients for angleX polynomial
-        AX = 113.9773
-        BX = -0.0588
-        CX = 0.0001
-        DX = 0
-        EX = -0.1736
-        FX = 0.0001
-        GX = 0.0000
-        HX = 0.0001
-        IX = -0.0000
-        JX = 0
-
-        # Coefficients for angleY polynomial
-        AY = 69.3912
-        BY = -0.1502
-        CY = 0.0001
-        DY = 0
-        EY = 0.0144
-        FY = 0.0
-        GY = 0.0000
-        HY = 0.0000
-        IY = 0.0000
-        JY = 0
-
         # Calculate angleX using the full polynomial expression
         angleX = (
-            AX
-            + BX * Y
-            + CX * Y**2
-            + DX * Y**3
-            + EX * X
-            + FX * X * Y
-            + GX * X * Y**2
-            + HX * X**2
-            + IX * X**2 * Y
-            + JX * X**3
+            self.AX
+            + self.BX * Y
+            + self.CX * Y**2
+            + self.DX * Y**3
+            + self.EX * X
+            + self.FX * X * Y
+            + self.GX * X * Y**2
+            + self.HX * X**2
+            + self.IX * X**2 * Y
+            + self.JX * X**3
         )
-
         # Calculate angleY using the full polynomial expression
         angleY = (
-            AY
-            + BY * Y
-            + CY * Y**2
-            + DY * Y**3
-            + EY * X
-            + FY * X * Y
-            + GY * X * Y**2
-            + HY * X**2
-            + IY * X**2 * Y
-            + JY * X**3
+            self.AY
+            + self.BY * Y
+            + self.CY * Y**2
+            + self.DY * Y**3
+            + self.EY * X
+            + self.FY * X * Y
+            + self.GY * X * Y**2
+            + self.HY * X**2
+            + self.IY * X**2 * Y
+            + self.JY * X**3
         )
-
         return angleX, angleY
 
     def move(self, point):
@@ -664,7 +727,7 @@ class LaserPointer:
 
 class DecisionMaker:
     @staticmethod
-    def avg_heat_maps(heat_map_1, heat_map_2):
+    def avg_heat_maps(changes_map, contours_map):
         """Intersect two heatmaps
 
         Args:
@@ -674,21 +737,28 @@ class DecisionMaker:
         Returns:
             np.ndarray: The intersection of the two heatmaps
         """
-        if (isinstance(heat_map_1, np.ndarray) and heat_map_1.size > 1) and (
-            isinstance(heat_map_2, np.ndarray) and heat_map_2.size > 1
+        
+        if (isinstance(changes_map, np.ndarray) and changes_map.size > 1) and (
+            isinstance(contours_map, np.ndarray) and contours_map.size > 1
         ):
-            return 0.5 * (heat_map_1 + heat_map_2)
-        if isinstance(heat_map_1, np.ndarray) and heat_map_1.size > 1:
-            return heat_map_1
-        if isinstance(heat_map_2, np.ndarray) and heat_map_2.size > 1:
-            return heat_map_2
+            if np.mean(changes_map) < 20:
+                return contours_map
+            if np.mean(contours_map) < 20:
+                return changes_map
+            result = changes_map + contours_map
+            result = np.clip(result, 0, 255)
+            return result
+        if isinstance(changes_map, np.ndarray) and changes_map.size > 1:
+            return changes_map
+        if isinstance(contours_map, np.ndarray) and contours_map.size > 1:
+            return contours_map
         return np.zeros((IMG_HEIGHT, IMG_WIDTH, 1), dtype=np.uint8)
 
-
 def show_targets(average):
+    average = cv2.cvtColor(average, cv2.COLOR_GRAY2BGR)
     circles_high, circles_low, centers = ImageParse.generate_targets(average)
     for circle in circles_low:
-        cv2.circle(
+        cv2.circle( 
             average,
             (int(circle[0][0]), int(circle[0][1])),
             int(circle[1]),
@@ -714,17 +784,22 @@ def laser_thread():
     laser_pointer = LaserPointer()
     while True:
         for center in centers:
-            laser_pointer.move(center)
-            
+            laser_pointer.move()
+            time.sleep(0.3)
+
+
 def main():
-    global CAMERA_INDEX, timestep
+    global CAMERA_INDEX, timestep, centers
     CameraIO.detectCameras()
     cam = cv2.VideoCapture(CAMERA_INDEX)
     rawHandler = RawHandler()
     newPixelsHandler = NewPixelsHandler()
     differenceHandler = DifferenceHandler()
     contoursHandler = ContoursHandler()
-    accumulator = Accumulator()
+    accumulator_contours = Accumulator()
+    laser = threading.Thread(target=laser_thread)
+    laser.start()
+
     
     number_of_frames = 0
     while True:
@@ -754,12 +829,18 @@ def main():
             contoursHandler,
         ]:
             handler.add(img)
-            # TODO: display in a separate thread?
             handler.display(img)
         
-        changes_heat_map = accumulator.add(newPixelsHandler.get(), 0.9, 0.1)
-        contours_heat_map = accumulator.add(contoursHandler.get(), 0.9, 0.1)
-        average = DecisionMaker.avg_heat_maps(changes_heat_map, contours_heat_map)
+        # accumulator_changes.add(newPixelsHandler.get(), 0.9, 0.1)
+        # changes_heat_map = newPixelsHandler.get()
+        accumulator_contours.add(contoursHandler.get(), 0.99, 0.01)
+        # show accumulated heatmaps
+        # cv2.imshow("acc changes", accumulator_changes.get())
+        cv2.imshow("acc contours", accumulator_contours.get())
+
+        average = DecisionMaker.avg_heat_maps(newPixelsHandler.get(img), contoursHandler.get())
+        cv2.imshow("newPixelsHandler.get()", newPixelsHandler.get(img))
+        cv2.imshow("average before", average)
         circles_high, circles_low, centers = show_targets(average=average)
         
         if cv2.waitKey(1) == 32:  # Whitespace

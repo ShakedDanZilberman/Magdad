@@ -11,7 +11,7 @@ WINDOW_NAME = 'Camera Connection'
 MAX_CAMERAS = 10
 
 # Set up the Arduino board (replace 'COM8' with your Arduino's COM port)
-board = Arduino('COM3')  # Adjust the COM port based on your system
+board = Arduino('COM6')  # Adjust the COM port based on your system
 
 # Define the pin for the servo (usually PWM pins)
 servoV_pin = 5
@@ -201,7 +201,7 @@ def main():
     global mx, my
 
     cv2.setMouseCallback(WINDOW_NAME, click_event)
-    if False:
+    if True:
         for j in range(NUM_ITER+1):
             for i in range(NUM_ITER+1):
                 angleX = STARTX - deltaX + i*2*deltaX/NUM_ITER
@@ -229,19 +229,19 @@ def main():
     cv2.destroyAllWindows()
     board.exit()
     # Extract rx and angleX values from angleX_rx_values
-    # rx_values = [item[0] for item in angleX_rx_values]
-    # angleX_values = [item[1] for item in angleX_rx_values]
-    rx_values = [item[0] for item in MEASUREMENTS]
-    ry_values = [item[1] for item in MEASUREMENTS]
-    angleX_values = [item[2] for item in MEASUREMENTS]
-    angleY_values = [item[3] for item in MEASUREMENTS]
+    rx_values = [item[0] for item in angleX_rx_values]
+    angleX_values = [item[1] for item in angleX_rx_values]
+    # rx_values = [item[0] for item in MEASUREMENTS]
+    # ry_values = [item[1] for item in MEASUREMENTS]
+    # angleX_values = [item[2] for item in MEASUREMENTS]
+    # angleY_values = [item[3] for item in MEASUREMENTS]
 
 
     # Extract ry and angleY values from angleY_ry_values
-    # ry_values = [item[0] for item in angleY_ry_values]
-    # angleY_values = [item[1] for item in angleY_ry_values]
+    ry_values = [item[0] for item in angleY_ry_values]
+    angleY_values = [item[1] for item in angleY_ry_values]
 
-    # print(list(zip(rx_values, ry_values, angleX_values, angleY_values)))
+    print(list(zip(rx_values, ry_values, angleX_values, angleY_values)))
 
     # Compute 3rd degree polynomial fit for angleX vs rx
     fit_angleX = np.polyfit(rx_values, angleX_values, 3)  # 3rd degree polynomial fit
