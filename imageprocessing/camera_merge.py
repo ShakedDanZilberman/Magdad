@@ -77,7 +77,7 @@ class ContoursHandler(Handler):
         contours, hierarchy = cv2.findContours(optimized, CONTOUR_EXTRACTION_M0DE, CONTOUR_EXTRACTION_METHOD)
         cv2.drawContours(black_canvas, contours, -1, (255, 255, 255), CONTOUR_THICKNESS)
         heat_map = cv2.GaussianBlur(black_canvas, CONTOUR_HEATMAP_BLUR_KERNEL, CONTOUR_HEATMAP_STDEV)
-        self.static = heat_map
+        self.static = ImageParse.toGrayscale(heat_map)
 
     def display(self, img):
         TITLE = 'Contours'
@@ -589,9 +589,9 @@ def main():
         for handler in [rawHandler, newPixelsHandler, differenceHandler, contoursHandler]:
             handler.add(img)
             handler.display(img)
-        changes_heat_map = accumulator.add(newPixelsHandler.get())
+        # changes_heat_map = accumulator.add(newPixelsHandler.get())
         # contours_heat_map = accumulator.add_static(contoursHandler.get(), number_of_frames)     
-        average = DecisionMaker.avg_heat_maps(changes_heat_map, contoursHandler.get())
+        average = DecisionMaker.avg_heat_maps(newPixelsHandler.get(), contoursHandler.get())
         circles_high, circles_low, centers = show_targets(average=average)
         # for i in range(len(centers)):
         #     laser_pointer.move(centers[i])

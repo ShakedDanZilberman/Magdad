@@ -5,7 +5,8 @@ import time
 from pyfirmata import Arduino, util
 from time import sleep
 
-CAMERA_INDEX = 1
+CAMERA_INDEX = 1 
+
 WINDOW_NAME = 'Camera Connection'
 
 # Set up the Arduino board (replace 'COM8' with your Arduino's COM port)

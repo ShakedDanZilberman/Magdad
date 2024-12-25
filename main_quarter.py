@@ -32,6 +32,9 @@ CONTOUR_THICKNESS = cv2.FILLED
 CONTOUR_HEATMAP_BLUR_KERNEL = (15, 15)
 CONTOUR_HEATMAP_STDEV = 15
 
+IMG_WIDTH = 240
+IMG_HEIGHT = 320
+
 
 class Handler(ABC):
     @abstractmethod
@@ -110,10 +113,16 @@ class Accumulator:
     def __init__(self):
         self.accumulator = None
 
-    def add(self, img):
+    def add(self, img, prev_weight, new_weight):
+        print(img)
+        print(prev_weight, new_weight)
+        if not isinstance(img, np.ndarray):
+            return
+        if len(img.shape) < 2:
+            return
         if self.accumulator is None:
             self.accumulator = np.zeros((img.shape[0], img.shape[1]), dtype=np.uint8)
-        self.accumulator = cv2.addWeighted(self.accumulator, 0.9, img, 0.1, 0)
+        self.accumulator = cv2.addWeighted(self.accumulator, prev_weight, img, new_weight, 0)
 
     # def add_static(self, img, number_of_frames_so_far):
     #     if self.accumulator is None:
@@ -362,7 +371,7 @@ class ImageParse:
             # Apply threshold
             _, diff = cv2.threshold(diff, 30, 255, cv2.THRESH_BINARY)
             return diff
-        return np.zeros((350, 200, 1), dtype=np.uint8)
+        return np.zeros((IMG_HEIGHT, IMG_WIDTH, 1), dtype=np.uint8)
 
     @staticmethod
     def blurImage(img, factor=5):
@@ -569,7 +578,7 @@ class CameraIO:
 class LaserPointer:
     def __init__(self):
         self.point = (0, 0)
-        self.board = Arduino("COM3")
+        self.board = Arduino("COM6")
 
         # Define the pins for the servos and the laser
         servoV_pin = 5
@@ -673,7 +682,7 @@ class DecisionMaker:
             return heat_map_1
         if isinstance(heat_map_2, np.ndarray) and heat_map_2.size > 1:
             return heat_map_2
-        return np.zeros((350, 200, 1), dtype=np.uint8)
+        return np.zeros((IMG_HEIGHT, IMG_WIDTH, 1), dtype=np.uint8)
 
 
 def show_targets(average):
@@ -700,6 +709,13 @@ def show_targets(average):
     return circles_high, circles_low, centers
 
 
+def laser_thread():
+    global centers
+    laser_pointer = LaserPointer()
+    while True:
+        for center in centers:
+            laser_pointer.move(center)
+            
 def main():
     global CAMERA_INDEX, timestep
     CameraIO.detectCameras()
@@ -709,7 +725,7 @@ def main():
     differenceHandler = DifferenceHandler()
     contoursHandler = ContoursHandler()
     accumulator = Accumulator()
-    laser_pointer = LaserPointer()
+    
     number_of_frames = 0
     while True:
         number_of_frames += 1
@@ -740,14 +756,12 @@ def main():
             handler.add(img)
             # TODO: display in a separate thread?
             handler.display(img)
-        changes_heat_map = accumulator.add(newPixelsHandler.get())
-        # contours_heat_map = accumulator.add(contoursHandler.get())
-
-        average = DecisionMaker.avg_heat_maps(changes_heat_map, contoursHandler.get())
+        
+        changes_heat_map = accumulator.add(newPixelsHandler.get(), 0.9, 0.1)
+        contours_heat_map = accumulator.add(contoursHandler.get(), 0.9, 0.1)
+        average = DecisionMaker.avg_heat_maps(changes_heat_map, contours_heat_map)
         circles_high, circles_low, centers = show_targets(average=average)
-        # TODO: the logic here is not good. Improve
-        for i in range(len(centers)):
-            laser_pointer.move(centers[i])
+        
         if cv2.waitKey(1) == 32:  # Whitespace
             newPixelsHandler.clear()
 
