@@ -5,13 +5,14 @@ import math
 import random
 from pyfirmata import Arduino, util
 from time import sleep
+from mpl_toolkits.mplot3d import Axes3D
 
 CAMERA_INDEX = 1
 WINDOW_NAME = 'Camera Connection'
 MAX_CAMERAS = 10
 
 # Set up the Arduino board (replace 'COM8' with your Arduino's COM port)
-board = Arduino('COM6')  # Adjust the COM port based on your system
+board = Arduino('COM8')  # Adjust the COM port based on your system
 
 # Define the pin for the servo (usually PWM pins)
 servoV_pin = 5
@@ -27,12 +28,14 @@ it.start()
 servoH.write(9)
 servoV.write(9)
 sleep(1)
-STARTX = 60
-STARTY = 40
+STARTX = 55
+STARTY = 45
 deltaX = 30
-deltaY = 20
+deltaY = 10
 
-NUM_ITER = 10
+NUM_ITERX = 8
+
+NUM_ITERY = 3
 A0 = 0
 B0 = 0
 C0 = 0.5
@@ -77,10 +80,11 @@ mx, my = 0, 0
 
 
 def click_event(event, x, y, flags, param):
-    global mx, my
+    global mx, my, click_flag
     if event == cv2.EVENT_LBUTTONDOWN:
         # print(f"Clicked coordinates: {relative_x}, {relative_y}")
         mx, my = x, y
+        click_flag = True  # Set flag to indicate a valid click
 
 
 def find_red_point(frame):
@@ -187,6 +191,49 @@ def offlineAnalysis():
     ax2.set_title('Heatmap of thetaY')
     
     plt.show()
+def polyfit2d(x, y, z, degree=3):
+    """
+    Fits a 2D polynomial of the given degree to the data (x, y, z).
+
+    Args:
+        x: 1D array of x-coordinates.
+        y: 1D array of y-coordinates.
+        z: 1D array of dependent variable (z-values).
+        degree: Degree of the polynomial (default is 3).
+
+    Returns:
+        coeffs: Coefficients of the 2D polynomial.
+    """
+    # Generate the design matrix for a 2D polynomial of the given degree
+    terms = []
+    for i in range(degree + 1):
+        for j in range(degree + 1 - i):
+            terms.append((x ** i) * (y ** j))
+    A = np.vstack(terms).T
+
+    # Solve the least squares problem
+    coeffs, _, _, _ = np.linalg.lstsq(A, z, rcond=None)
+    return coeffs
+def evaluate2dpoly(coeffs, x, y, degree=3):
+    """
+    Evaluates a 2D polynomial with the given coefficients.
+
+    Args:
+        coeffs: Coefficients of the 2D polynomial.
+        x: 2D array of x-coordinates.
+        y: 2D array of y-coordinates.
+        degree: Degree of the polynomial (default is 3).
+
+    Returns:
+        z: 2D array of predicted z-values.
+    """
+    z = np.zeros_like(x)
+    idx = 0
+    for i in range(degree + 1):
+        for j in range(degree + 1 - i):
+            z += coeffs[idx] * (x ** i) * (y ** j)
+            idx += 1
+    return z
 
 
 def main():
@@ -196,41 +243,67 @@ def main():
     cam = cv2.VideoCapture(CAMERA_INDEX)
     cv2.namedWindow(WINDOW_NAME)
 
-    ret_val, img = cam.read()
-    sleep(1)
-    global mx, my
+    global mx, my, click_flag
 
+    # Initialize variables for clicked coordinates and flag
+    mx, my = 0, 0
+    click_flag = False
+
+    # Set mouse callback
     cv2.setMouseCallback(WINDOW_NAME, click_event)
-    if True:
-        for j in range(NUM_ITER+1):
-            for i in range(NUM_ITER+1):
-                angleX = STARTX - deltaX + i*2*deltaX/NUM_ITER
-                print(angleX)
-                angleY = STARTY - deltaY + j*2*deltaY/NUM_ITER
-                print(angleY)
-                servoH.write(angleX)
-                servoV.write(angleY)
-                sleep(1)
-                ret_val, img = cam.read()
-                rx, ry = find_red_point(img)
-                cv2.circle(img, (rx, ry), 10, (0, 0, 255), -1)
-                angleX_rx_values.append([rx, angleX])
-                angleY_ry_values.append([ry, angleY])
-                sleep(0.5)
-                # Press Escape or close the window to exit
-                if cv2.waitKey(1) == 27:
-                    break
-                if cv2.getWindowProperty(WINDOW_NAME, cv2.WND_PROP_VISIBLE) < 1:
+
+    for j in range(NUM_ITERY + 1):
+        for i in range(NUM_ITERX + 1):
+            # Compute servo angles
+            angleX = STARTX - deltaX + i * 2 * deltaX / NUM_ITERX
+            angleY = STARTY - deltaY + j * 2 * deltaY / NUM_ITERY
+            print(f"Servo angles: angleX={angleX}, angleY={angleY}")
+
+            # Move the servos
+            servoH.write(angleX)
+            servoV.write(angleY)
+
+            # Wait for the servos to stabilize
+            sleep(1)
+
+            # Capture the current frame from the camera
+            ret_val, img = cam.read()
+            if not ret_val:
+                print("Failed to capture frame from camera.")
+                continue
+
+            # Reset click_flag and display the image until a click is detected
+            click_flag = False
+            while not click_flag:
+                cv2.imshow(WINDOW_NAME, img)
+                if cv2.waitKey(1) == 27:  # Break if 'ESC' is pressed
                     break
 
-                # angleX, angleY = angle_calc([mx-rx,my-ry])
-                # magic numbers!!!
-                cv2.imshow(WINDOW_NAME, img)
+            # Mark the clicked point on the image
+            cv2.circle(img, (mx, my), 10, (0, 0, 255), -1)
+
+            # Save the clicked coordinates with corresponding servo angles
+            angleX_rx_values.append([mx, angleX])
+            angleY_ry_values.append([my, angleY])
+
+            print(f"Saved click: mx={mx}, my={my}, angleX={angleX}, angleY={angleY}")
+
+            # Wait briefly before moving to the next position
+            sleep(0.5)
+
+            # Check if the window is closed
+            if cv2.getWindowProperty(WINDOW_NAME, cv2.WND_PROP_VISIBLE) < 1:
+                break
+
+    # Cleanup
     cv2.destroyAllWindows()
     board.exit()
+
     # Extract rx and angleX values from angleX_rx_values
-    rx_values = [item[0] for item in angleX_rx_values]
-    angleX_values = [item[1] for item in angleX_rx_values]
+    rx_values = [itemX[0] for itemX in angleX_rx_values]
+    angleX_values = [itemX[1] for itemX in angleX_rx_values]
+    ry_values = [itemY[0] for itemY in angleY_ry_values]
+    angleY_values = [itemY[1] for itemY in angleY_ry_values]
     # rx_values = [item[0] for item in MEASUREMENTS]
     # ry_values = [item[1] for item in MEASUREMENTS]
     # angleX_values = [item[2] for item in MEASUREMENTS]
@@ -262,65 +335,77 @@ def main():
     # Generate x-values for smooth curve plotting
     rx_smooth = np.linspace(min(rx_values), max(rx_values), 500)
     ry_smooth = np.linspace(min(ry_values), max(ry_values), 500)
+    with open("fit_parameters.txt", "w") as file:
+        file.write("Fit Parameters for angleX vs rx (3rd-degree polynomial):\n")
+        file.write(
+            f"y = {fit_angleX[0]:.5e}x³ + {fit_angleX[1]:.5e}x² + {fit_angleX[2]:.5e}x + {fit_angleX[3]:.5e}\n\n")
+
+        file.write("Fit Parameters for angleY vs ry (3rd-degree polynomial):\n")
+        file.write(
+            f"y = {fit_angleY[0]:.5e}x³ + {fit_angleY[1]:.5e}x² + {fit_angleY[2]:.5e}x + {fit_angleY[3]:.5e}\n\n")
+
+        file.write("Fit Parameters for angleX vs ry (3rd-degree polynomial):\n")
+        file.write(
+            f"y = {fit_angleX_ry[0]:.5e}x³ + {fit_angleX_ry[1]:.5e}x² + {fit_angleX_ry[2]:.5e}x + {fit_angleX_ry[3]:.5e}\n\n")
+
+        file.write("Fit Parameters for angleY vs rx (3rd-degree polynomial):\n")
+        file.write(
+            f"y = {fit_angleY_rx[0]:.5e}x³ + {fit_angleY_rx[1]:.5e}x² + {fit_angleY_rx[2]:.5e}x + {fit_angleY_rx[3]:.5e}\n\n")
+
+    print("Fit parameters saved to 'fit_parameters.txt'.")
 
     # Print the fit parameters
-    print("Fit Parameters for angleX vs rx (3rd-degree polynomial):")
-    print(f"y = {fit_angleX[0]:.5e}x³ + {fit_angleX[1]:.5e}x² + {fit_angleX[2]:.5e}x + {fit_angleX[3]:.5e}")
+       # Fit a 3rd-degree 2D polynomial for angleY vs rx, ry
+    coeffs_angleY = polyfit2d(np.array(rx_values), np.array(ry_values), np.array(angleY_values), degree=3)
 
-    print("\nFit Parameters for angleY vs ry (3rd-degree polynomial):")
-    print(f"y = {fit_angleY[0]:.5e}x³ + {fit_angleY[1]:.5e}x² + {fit_angleY[2]:.5e}x + {fit_angleY[3]:.5e}")
+    # Fit a 3rd-degree 2D polynomial for angleX vs rx, ry
+    coeffs_angleX = polyfit2d(np.array(rx_values), np.array(ry_values), np.array(angleX_values), degree=3)
 
-    print("\nFit Parameters for angleX vs ry (3rd-degree polynomial):")
-    print(f"y = {fit_angleX_ry[0]:.5e}x³ + {fit_angleX_ry[1]:.5e}x² + {fit_angleX_ry[2]:.5e}x + {fit_angleX_ry[3]:.5e}")
+    # Generate a grid for visualization
+    rx_grid, ry_grid = np.meshgrid(np.linspace(min(rx_values), max(rx_values), 100),
+                                   np.linspace(min(ry_values), max(ry_values), 100))
 
-    print("\nFit Parameters for angleY vs rx (3rd-degree polynomial):")
-    print(f"y = {fit_angleY_rx[0]:.5e}x³ + {fit_angleY_rx[1]:.5e}x² + {fit_angleY_rx[2]:.5e}x + {fit_angleY_rx[3]:.5e}")
+    # Evaluate the fitted 2D polynomials
+    angleY_pred = evaluate2dpoly(coeffs_angleY, rx_grid, ry_grid, degree=3)
+    angleX_pred = evaluate2dpoly(coeffs_angleX, rx_grid, ry_grid, degree=3)
 
-    # Plot angleX vs rx
-    plt.figure(figsize=(10, 5))
-    plt.scatter(rx_values, angleX_values, color='green', label='Data points', alpha=0.8)
-    plt.plot(rx_smooth, fit_angleX_poly(rx_smooth), color='red', label='3rd-degree polynomial fit')
-    plt.xlabel('rx (Red Point X-coordinate)')
-    plt.ylabel('angleX (Servo Angle X)')
-    plt.title('Servo Angle X vs Red Point X-coordinate')
-    plt.legend()
-    plt.grid(True)
+    # Plot 3D surface for angleY vs rx, ry
+    fig = plt.figure(figsize=(10, 7))
+    ax = fig.add_subplot(111, projection='3d')
+    ax.scatter(rx_values, ry_values, angleY_values, c='blue', label='Data points')
+    ax.plot_surface(rx_grid, ry_grid, angleY_pred, cmap='viridis', alpha=0.6)
+    ax.set_xlabel('rx (Red Point X-coordinate)')
+    ax.set_ylabel('ry (Red Point Y-coordinate)')
+    ax.set_zlabel('angleY (Servo Angle Y)')
+    ax.set_title('3D Polynomial Fit: angleY vs rx, ry')
+    ax.legend()
     plt.show()
 
-    # Plot angleY vs ry
-    plt.figure(figsize=(10, 5))
-    plt.scatter(ry_values, angleY_values, color='blue', label='Data points', alpha=0.8)
-    plt.plot(ry_smooth, fit_angleY_poly(ry_smooth), color='red', label='3rd-degree polynomial fit')
-    plt.xlabel('ry (Red Point Y-coordinate)')
-    plt.ylabel('angleY (Servo Angle Y)')
-    plt.title('Servo Angle Y vs Red Point Y-coordinate')
-    plt.legend()
-    plt.grid(True)
+    # Plot 3D surface for angleX vs rx, ry
+    fig = plt.figure(figsize=(10, 7))
+    ax = fig.add_subplot(111, projection='3d')
+    ax.scatter(rx_values, ry_values, angleX_values, c='green', label='Data points')
+    ax.plot_surface(rx_grid, ry_grid, angleX_pred, cmap='plasma', alpha=0.6)
+    ax.set_xlabel('rx (Red Point X-coordinate)')
+    ax.set_ylabel('ry (Red Point Y-coordinate)')
+    ax.set_zlabel('angleX (Servo Angle X)')
+    ax.set_title('3D Polynomial Fit: angleX vs rx, ry')
+    ax.legend()
     plt.show()
+    # Save the coefficients to a text file
+    with open("2d_polynomial_fit_coeffs.txt", "w") as file:
+        file.write("3rd-Degree 2D Polynomial Fit Coefficients:\n\n")
 
-    # Plot angleX vs ry
-    plt.figure(figsize=(10, 5))
-    plt.scatter(ry_values, angleX_values, color='purple', label='Data points', alpha=0.8)
-    plt.plot(ry_smooth, fit_angleX_ry_poly(ry_smooth), color='red', label='3rd-degree polynomial fit')
-    plt.xlabel('ry (Red Point Y-coordinate)')
-    plt.ylabel('angleX (Servo Angle X)')
-    plt.title('Servo Angle X vs Red Point Y-coordinate')
-    plt.legend()
-    plt.grid(True)
-    plt.show()
+        file.write("angleY = c0 + c1*x + c2*y + c3*x^2 + c4*x*y + c5*y^2 + c6*x^3 + c7*x^2*y + c8*x*y^2 + c9*y^3\n")
+        file.write("Coefficients for angleY vs rx, ry:\n")
+        for i, coeff in enumerate(coeffs_angleY):
+            file.write(f"c{i}: {coeff:.5e}\n")
+        file.write("\n")
 
-    # Plot angleY vs rx
-    plt.figure(figsize=(10, 5))
-    plt.scatter(rx_values, angleY_values, color='orange', label='Data points', alpha=0.8)
-    plt.plot(rx_smooth, fit_angleY_rx_poly(rx_smooth), color='red', label='3rd-degree polynomial fit')
-    plt.xlabel('rx (Red Point X-coordinate)')
-    plt.ylabel('angleY (Servo Angle Y)')
-    plt.title('Servo Angle Y vs Red Point X-coordinate')
-    plt.legend()
-    plt.grid(True)
-    plt.show()
-
-
+        file.write("angleX = c0 + c1*x + c2*y + c3*x^2 + c4*x*y + c5*y^2 + c6*x^3 + c7*x^2*y + c8*x*y^2 + c9*y^3\n")
+        file.write("Coefficients for angleX vs rx, ry:\n")
+        for i, coeff in enumerate(coeffs_angleX):
+            file.write(f"c{i}: {coeff:.5e}\n")
 if __name__ == '__main__':
     main()
 
