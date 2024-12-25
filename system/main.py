@@ -1,7 +1,13 @@
 import time
-import cv2
-import numpy as np
 import threading
+
+from import_defence import ImportDefence
+
+with ImportDefence():
+    import cv2
+    import numpy as np
+    from pyfirmata import Arduino, util
+    import matplotlib.pyplot as plt
 
 from contours import ContoursHandler
 from changes import ChangesHandler
