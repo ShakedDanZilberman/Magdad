@@ -129,6 +129,60 @@ def find_red_point(frame):
     cY = int(M["m01"] / M["m00"])  # y-coordinate
 
     return cX, cY
+def polyfit2d(x, y, z, kx=3, ky=3, order=None):
+    '''
+    Two dimensional polynomial fitting by least squares.
+    Fits the functional form f(x,y) = z.
+
+    Notes
+    -----
+    Resultant fit can be plotted with:
+    np.polynomial.polynomial.polygrid2d(x, y, soln.reshape((kx+1, ky+1)))
+
+    Parameters
+    ----------
+    x, y: array-like, 1d
+        x and y coordinates.
+    z: np.ndarray, 2d
+        Surface to fit.
+    kx, ky: int, default is 3
+        Polynomial order in x and y, respectively.
+    order: int or None, default is None
+        If None, all coefficients up to maxiumum kx, ky, ie. up to and including x^kx*y^ky, are considered.
+        If int, coefficients up to a maximum of kx+ky <= order are considered.
+
+    Returns
+    -------
+    Return paramters from np.linalg.lstsq.
+
+    soln: np.ndarray
+        Array of polynomial coefficients.
+    residuals: np.ndarray
+    rank: int
+    s: np.ndarray
+
+    '''
+
+    # grid coords
+    x, y = np.meshgrid(x, y)
+    # coefficient array, up to x^kx, y^ky
+    coeffs = np.ones((kx+1, ky+1))
+
+    # solve array
+    a = np.zeros((coeffs.size, x.size))
+
+    # for each coefficient produce array x^i, y^j
+    for index, (j, i) in enumerate(np.ndindex(coeffs.shape)):
+        # do not include powers greater than order
+        if order is not None and i + j > order:
+            arr = np.zeros_like(x)
+        else:
+            arr = coeffs[i, j] * x**i * y**j
+        a[index] = arr.ravel()
+
+    # do leastsq fitting and return leastsq result
+    return np.linalg.lstsq(a.T, np.ravel(z), rcond=None)
+
 
 def bilerp(x0, y0):
     # Extract the x, y, thetaX, and thetaY values from MEASUREMENTS
@@ -145,7 +199,7 @@ def bilerp(x0, y0):
 
     # Cubic interpolate the four closest points to get the value at the black point
     # Make sure to normalise it correctly
-    
+
     angleX0 = 0
     angleY0 = 0
     for i in closest_points:
@@ -171,8 +225,8 @@ def offlineAnalysis():
 
     for i in range(100):
         for j in range(100):
-            thetaXspace[i, j], thetaYspace[i, j] = bilerp(X[i, j], Y[i, j])
-    
+            thetaXspace[i, j], thetaYspace[i, j] = getAngles(X[i, j], Y[i, j])
+
 
     # Display a heatmap with x and y as the spatial coordinates, and value thetaXspace, with pcolormesh
     fig, (ax1, ax2) = plt.subplots(2)
@@ -189,7 +243,7 @@ def offlineAnalysis():
     ax2.set_xlabel('rx')
     ax2.set_ylabel('ry')
     ax2.set_title('Heatmap of thetaY')
-    
+
     plt.show()
 def polyfit2d(x, y, z, degree=3):
     """
@@ -300,15 +354,14 @@ def main():
     board.exit()
 
     # Extract rx and angleX values from angleX_rx_values
-    rx_values = [itemX[0] for itemX in angleX_rx_values]
-    angleX_values = [itemX[1] for itemX in angleX_rx_values]
-    ry_values = [itemY[0] for itemY in angleY_ry_values]
-    angleY_values = [itemY[1] for itemY in angleY_ry_values]
-    # rx_values = [item[0] for item in MEASUREMENTS]
-    # ry_values = [item[1] for item in MEASUREMENTS]
-    # angleX_values = [item[2] for item in MEASUREMENTS]
-    # angleY_values = [item[3] for item in MEASUREMENTS]
-
+    # rx_values = [item[0] for item in angleX_rx_values]
+    # angleX_values = [item[1] for item in angleX_rx_values]
+    rx_values = [item[0] for item in MEASUREMENTS]
+    ry_values = [item[1] for item in MEASUREMENTS]
+    angleX_values = [item[2] for item in MEASUREMENTS]
+    angleY_values = [item[3] for item in MEASUREMENTS]
+    angleX_fit = polyfit2d(rx_values,ry_values,angleX_values)
+    angleY_fit = polyfit2d(rx_values, ry_values, angleY_values)
 
     # Extract ry and angleY values from angleY_ry_values
     ry_values = [item[0] for item in angleY_ry_values]
