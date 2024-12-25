@@ -7,33 +7,32 @@ import matplotlib.pyplot as plt
 from abc import ABC, abstractmethod
 from pyfirmata import Arduino, util
 import threading
-
 CAMERA_INDEX = 1
 MAX_CAMERAS = 10
 timestep = 0
 centers = [[90, 90]]
 # Parameters to play with in calibration
 INITIAL_BLURRING_KERNEL = (3, 3)
-EDGE_DETECTION_MINTHRESH = 100
-EDGE_DETECTION_MAXTHRESH = 130
+EDGE_DETECTION_MINTHRESH = 150
+EDGE_DETECTION_MAXTHRESH = 180
 
-HIGH_CEP_INDEX = 0.5
-LOW_CEP_INDEX = 0.2
+HIGH_CEP_INDEX = 0.9
+LOW_CEP_INDEX = 0.5
 DILATION_ITERATIONS = 2
-EROSION_ITERATIONS = 5
+EROSION_ITERATIONS = 2
+
 
 DILATION_KERNEL = (5, 5)
-OPENING_KERNEL = (9, 9)
-CLOSING_KERNEL = (5, 5)
+OPENING_KERNEL = (5, 5)
+CLOSING_KERNEL = (3, 3)
 EROSION_KERNEL = (3, 3)
+
 
 CONTOUR_EXTRACTION_M0DE = cv2.RETR_EXTERNAL
 CONTOUR_EXTRACTION_METHOD = cv2.CHAIN_APPROX_SIMPLE
 CONTOUR_THICKNESS = cv2.FILLED
 CONTOUR_HEATMAP_BLUR_KERNEL = (15, 15)
 CONTOUR_HEATMAP_STDEV = 15
-
-laser_point = None
 
 IMG_WIDTH = 240
 IMG_HEIGHT = 320
@@ -68,13 +67,22 @@ class ContoursHandler(Handler):
         closing_kernel = np.ones(CLOSING_KERNEL, np.uint8)
         erosion_kernel = np.ones(EROSION_KERNEL, np.uint8)
         dilated_edges = cv2.dilate(
-            edges, dilation_kernel, iterations=DILATION_ITERATIONS
+            edges, dilation_kernel, iterations=1
         )
         opening = cv2.morphologyEx(dilated_edges, cv2.MORPH_OPEN, opening_kernel)
         closing = cv2.morphologyEx(opening, cv2.MORPH_CLOSE, closing_kernel)
-        return cv2.erode(closing, erosion_kernel, iterations=EROSION_ITERATIONS)
+        erode = cv2.erode(closing, erosion_kernel, iterations=EROSION_ITERATIONS)
+        cv2.imshow("edges", edges)
+        cv2.imshow("dilation", dilated_edges)
+        cv2.imshow("opening", opening)
+        cv2.imshow("closing", closing)
+        cv2.imshow("erode", erode)
+        return erode
 
     def add(self, img):
+        erosion_kernel = np.ones(EROSION_KERNEL, np.uint8)
+        dilation_kernel = np.ones(DILATION_KERNEL, np.uint8)
+
         gray = ImageParse.toGrayscale(img)
         height, width = img.shape
         black_canvas = np.zeros((height, width, 3), dtype=np.uint8)
@@ -86,6 +94,8 @@ class ContoursHandler(Handler):
             optimized, CONTOUR_EXTRACTION_M0DE, CONTOUR_EXTRACTION_METHOD
         )
         cv2.drawContours(black_canvas, contours, -1, (255, 255, 255), CONTOUR_THICKNESS)
+        black_canvas = cv2.erode(black_canvas, erosion_kernel, iterations=EROSION_ITERATIONS)
+        black_canvas = cv2.dilate(black_canvas, dilation_kernel, iterations=DILATION_ITERATIONS)
         binary_heat_map = ImageParse.toGrayscale(black_canvas)
         # heat_map = cv2.GaussianBlur(black_canvas, CONTOUR_HEATMAP_BLUR_KERNEL, CONTOUR_HEATMAP_STDEV)
         self.static = binary_heat_map
@@ -743,12 +753,13 @@ class DecisionMaker:
         if (isinstance(changes_map, np.ndarray) and changes_map.size > 1) and (
             isinstance(contours_map, np.ndarray) and contours_map.size > 1
         ):
-            if np.mean(changes_map) < 20:
+            if np.mean(changes_map) == 0:
                 return contours_map
-            if np.mean(contours_map) < 20:
+            if np.mean(contours_map) == 0:
                 return changes_map
-            result = changes_map + contours_map
-            result = np.clip(result, 0, 255)
+            # result = changes_map + contours_map
+            #result = np.clip(result, 0, 255)
+            result = changes_map
             return result
         if isinstance(changes_map, np.ndarray) and changes_map.size > 1:
             return changes_map
@@ -757,7 +768,6 @@ class DecisionMaker:
         return np.zeros((IMG_HEIGHT, IMG_WIDTH, 1), dtype=np.uint8)
 
 def show_targets(average):
-    global laser_point
     average = cv2.cvtColor(average, cv2.COLOR_GRAY2BGR)
     circles_high, circles_low, centers = ImageParse.generate_targets(average)
     for circle in circles_low:
@@ -773,13 +783,11 @@ def show_targets(average):
             average,
             (int(circle[0][0]), int(circle[0][1])),
             int(circle[1]),
-            (255, 0, 255),
+            (0, 0, 255),
             1,
         )
     for center in centers:
         cv2.circle(average, center, radius=1, color=(255, 0, 0), thickness=-1)
-    if laser_point is not None:
-        cv2.circle(average, laser_point, radius=7, color=(0, 0, 255), thickness=-1)
     cv2.imshow("average", average)
     return circles_high, circles_low, centers
 

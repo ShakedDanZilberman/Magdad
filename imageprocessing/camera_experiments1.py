@@ -20,12 +20,12 @@ EDGE_DETECTION_MAXTHRESH = 180
 HIGH_CEP_INDEX = 0.9
 LOW_CEP_INDEX = 0.5
 DILATION_ITERATIONS = 2
-EROSION_ITERATIONS = 3
+EROSION_ITERATIONS = 2
 
 
 DILATION_KERNEL = (5, 5)
 OPENING_KERNEL = (5, 5)
-CLOSING_KERNEL = (11, 11)
+CLOSING_KERNEL = (3, 3)
 EROSION_KERNEL = (3, 3)
 
 
@@ -68,7 +68,7 @@ class ContoursHandler(Handler):
         closing_kernel = np.ones(CLOSING_KERNEL, np.uint8)
         erosion_kernel = np.ones(EROSION_KERNEL, np.uint8)
         dilated_edges = cv2.dilate(
-            edges, dilation_kernel, iterations=DILATION_ITERATIONS
+            edges, dilation_kernel, iterations=1
         )
         opening = cv2.morphologyEx(dilated_edges, cv2.MORPH_OPEN, opening_kernel)
         closing = cv2.morphologyEx(opening, cv2.MORPH_CLOSE, closing_kernel)
