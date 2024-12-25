@@ -50,6 +50,8 @@ def fit_3d_polynomial(x, y, z, degree=3):
     """
     Fits a 3rd-degree 2D polynomial f(x, y) = z using least squares regression.
     """
+    # TODO: need to make sure there are all the same length
+
     x = np.array(x)
     y = np.array(y)
     z = np.array(z)
@@ -62,11 +64,13 @@ def fit_3d_polynomial(x, y, z, degree=3):
 
     # Combine terms into design matrix A
     A = np.vstack(terms).T
+    # TODO: change to hastack
+    # why??? just hstack????
 
     # Solve the least squares problem to find the coefficients
     coeffs, residuals, rank, s = np.linalg.lstsq(A, z, rcond=None)
-
     return coeffs
+
 def print_polynomial(coeffs, degree=3, var1='x', var2='y'):
     """
     Prints the polynomial equation given the coefficients.
@@ -89,18 +93,18 @@ def evaluate_polynomial(x, y, coeffs, degree=3):
     x = np.array(x)
     y = np.array(y)
     z = np.zeros_like(x, dtype=float)
-
+    # TODO: degree is dictated by the coeeffs
     term_idx = 0
     for i in range(degree + 1):
         for j in range(degree + 1 - i):
             z += coeffs[term_idx] * (x ** i) * (y ** j)
             term_idx += 1
-
+    # TODO: linalg
+    # why??? can use linalg!!!
     return z
 
 
-def main():
-    # Extract values from MEASUREMENTS
+def get_coeefs():
     rx_values = np.array([item[0] for item in MEASUREMENTS])
     ry_values = np.array([item[1] for item in MEASUREMENTS])
     angleX_values = np.array([item[2] for item in MEASUREMENTS])
@@ -109,7 +113,14 @@ def main():
     # Fit the 3D polynomial to the data
     coeffsX = fit_3d_polynomial(rx_values, ry_values, angleX_values, degree=3)
     coeffsY = fit_3d_polynomial(rx_values, ry_values, angleY_values, degree=3)
+    return coeffsX, coeffsY
 
+def main():
+    coeffsX, coeffsY = get_coeefs()
+    rx_values = np.array([item[0] for item in MEASUREMENTS])
+    ry_values = np.array([item[1] for item in MEASUREMENTS])
+    angleX_values = np.array([item[2] for item in MEASUREMENTS])
+    angleY_values = np.array([item[3] for item in MEASUREMENTS])
     # Create a meshgrid for evaluating the polynomial surface
     x_eval, y_eval = np.meshgrid(np.linspace(min(rx_values), max(rx_values), 50),
                                  np.linspace(min(ry_values), max(ry_values), 50))
@@ -145,9 +156,10 @@ def main():
 
     print("Polynomial for angleX:")
     print(print_polynomial(coeffsX, degree=3, var1='rx', var2='ry'))
+    print(coeffsX)
     print("\nPolynomial for angleY:")
     print(print_polynomial(coeffsY, degree=3, var1='rx', var2='ry'))
-
+    print(coeffsY)
 
 if __name__ == '__main__':
     main()
