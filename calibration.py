@@ -28,8 +28,8 @@ it.start()
 servoH.write(9)
 servoV.write(9)
 sleep(1)
-STARTX = 60
-STARTY = 55
+STARTX = 55
+STARTY = 45
 deltaX = 30
 deltaY = 10
 
@@ -80,10 +80,11 @@ mx, my = 0, 0
 
 
 def click_event(event, x, y, flags, param):
-    global mx, my
+    global mx, my, click_flag
     if event == cv2.EVENT_LBUTTONDOWN:
         # print(f"Clicked coordinates: {relative_x}, {relative_y}")
         mx, my = x, y
+        click_flag = True  # Set flag to indicate a valid click
 
 
 def find_red_point(frame):
@@ -242,38 +243,62 @@ def main():
     cam = cv2.VideoCapture(CAMERA_INDEX)
     cv2.namedWindow(WINDOW_NAME)
 
-    ret_val, img = cam.read()
-    sleep(1)
-    global mx, my
+    global mx, my, click_flag
 
+    # Initialize variables for clicked coordinates and flag
+    mx, my = 0, 0
+    click_flag = False
+
+    # Set mouse callback
     cv2.setMouseCallback(WINDOW_NAME, click_event)
-    if True:
-        for j in range(NUM_ITERY+1):
-            for i in range(NUM_ITERX+1):
-                angleX = STARTX - deltaX + i*2*deltaX/NUM_ITERX
-                print(angleX)
-                angleY = STARTY - deltaY + j*2*deltaY/NUM_ITERY
-                print(angleY)
-                servoH.write(angleX)
-                servoV.write(angleY)
-                sleep(1)
-                ret_val, img = cam.read()
-                rx, ry = find_red_point(img)
-                cv2.circle(img, (rx, ry), 10, (0, 0, 255), -1)
-                angleX_rx_values.append([rx, angleX])
-                angleY_ry_values.append([ry, angleY])
-                sleep(0.5)
-                # Press Escape or close the window to exit
-                if cv2.waitKey(1) == 27:
-                    break
-                if cv2.getWindowProperty(WINDOW_NAME, cv2.WND_PROP_VISIBLE) < 1:
+
+    for j in range(NUM_ITERY + 1):
+        for i in range(NUM_ITERX + 1):
+            # Compute servo angles
+            angleX = STARTX - deltaX + i * 2 * deltaX / NUM_ITERX
+            angleY = STARTY - deltaY + j * 2 * deltaY / NUM_ITERY
+            print(f"Servo angles: angleX={angleX}, angleY={angleY}")
+
+            # Move the servos
+            servoH.write(angleX)
+            servoV.write(angleY)
+
+            # Wait for the servos to stabilize
+            sleep(1)
+
+            # Capture the current frame from the camera
+            ret_val, img = cam.read()
+            if not ret_val:
+                print("Failed to capture frame from camera.")
+                continue
+
+            # Reset click_flag and display the image until a click is detected
+            click_flag = False
+            while not click_flag:
+                cv2.imshow(WINDOW_NAME, img)
+                if cv2.waitKey(1) == 27:  # Break if 'ESC' is pressed
                     break
 
-                # angleX, angleY = angle_calc([mx-rx,my-ry])
-                # magic numbers!!!
-                cv2.imshow(WINDOW_NAME, img)
+            # Mark the clicked point on the image
+            cv2.circle(img, (mx, my), 10, (0, 0, 255), -1)
+
+            # Save the clicked coordinates with corresponding servo angles
+            angleX_rx_values.append([mx, angleX])
+            angleY_ry_values.append([my, angleY])
+
+            print(f"Saved click: mx={mx}, my={my}, angleX={angleX}, angleY={angleY}")
+
+            # Wait briefly before moving to the next position
+            sleep(0.5)
+
+            # Check if the window is closed
+            if cv2.getWindowProperty(WINDOW_NAME, cv2.WND_PROP_VISIBLE) < 1:
+                break
+
+    # Cleanup
     cv2.destroyAllWindows()
     board.exit()
+
     # Extract rx and angleX values from angleX_rx_values
     rx_values = [itemX[0] for itemX in angleX_rx_values]
     angleX_values = [itemX[1] for itemX in angleX_rx_values]
