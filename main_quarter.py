@@ -33,6 +33,8 @@ CONTOUR_THICKNESS = cv2.FILLED
 CONTOUR_HEATMAP_BLUR_KERNEL = (15, 15)
 CONTOUR_HEATMAP_STDEV = 15
 
+laser_point = None
+
 IMG_WIDTH = 240
 IMG_HEIGHT = 320
 
@@ -592,7 +594,7 @@ class CameraIO:
 class LaserPointer:
     def __init__(self):
         self.point = (0, 0)
-        self.board = Arduino("COM6")
+        self.board = Arduino("COM8")
 
         # Define the pins for the servos and the laser
         servoV_pin = 5
@@ -607,8 +609,8 @@ class LaserPointer:
         it = util.Iterator(self.board)
         it.start()
         # Coefficients for angleX polynomial
-        self.AX = 113.9773
-        self.BX = -0.0588
+        self.AX = 70
+        self.BX = -0.05
         self.CX = 0.0001
         self.DX = 0
         self.EX = -0.1736
@@ -619,7 +621,7 @@ class LaserPointer:
         self.JX = 0
 
         # Coefficients for angleY polynomial
-        self.AY = 69.3912
+        self.AY = 55.3912
         self.BY = -0.1502
         self.CY = 0.0001
         self.DY = 0
@@ -755,6 +757,7 @@ class DecisionMaker:
         return np.zeros((IMG_HEIGHT, IMG_WIDTH, 1), dtype=np.uint8)
 
 def show_targets(average):
+    global laser_point
     average = cv2.cvtColor(average, cv2.COLOR_GRAY2BGR)
     circles_high, circles_low, centers = ImageParse.generate_targets(average)
     for circle in circles_low:
@@ -770,22 +773,29 @@ def show_targets(average):
             average,
             (int(circle[0][0]), int(circle[0][1])),
             int(circle[1]),
-            (0, 0, 255),
+            (255, 0, 255),
             1,
         )
     for center in centers:
         cv2.circle(average, center, radius=1, color=(255, 0, 0), thickness=-1)
+    if laser_point is not None:
+        cv2.circle(average, laser_point, radius=7, color=(0, 0, 255), thickness=-1)
     cv2.imshow("average", average)
     return circles_high, circles_low, centers
 
 
 def laser_thread():
-    global centers
+    print("Laser thread started")
+    global centers, laser_point
     laser_pointer = LaserPointer()
     while True:
-        for center in centers:
-            laser_pointer.move()
+        my_centers = centers.copy()
+        my_centers = sorted(my_centers, key=lambda x: x[0])
+        for center in my_centers:
+            laser_pointer.move(center)
+            laser_point = center
             time.sleep(0.3)
+        time.sleep(0.2)
 
 
 def main():
