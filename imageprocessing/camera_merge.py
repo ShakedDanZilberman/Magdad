@@ -591,7 +591,7 @@ def main():
             handler.display(img)
         # changes_heat_map = accumulator.add(newPixelsHandler.get())
         # contours_heat_map = accumulator.add_static(contoursHandler.get(), number_of_frames)     
-        average = DecisionMaker.avg_heat_maps(newPixelsHandler.get(), contoursHandler.get())
+        average = DecisionMaker.avg_heat_maps(newPixelsHandler.get(img), contoursHandler.get())
         circles_high, circles_low, centers = show_targets(average=average)
         # for i in range(len(centers)):
         #     laser_pointer.move(centers[i])
