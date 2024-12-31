@@ -30,7 +30,8 @@ CHECK_FOR_NEW_OBJECTS = 12
 
 
 def shoot(target):
-    print(target)
+    #print(target)
+    pass
 
 
 def laser_thread():
@@ -81,10 +82,16 @@ def main():
         img_changes = changesHandler.get(img)
         circles_high, circles_low, centers_contours = get_targets(img_contours)
         targets_contours = circles_high, circles_low, centers_contours
-        circles_high, circles_low, centers_changes = get_targets(img_changes)
-        targets_changes = circles_high, circles_low, centers_changes
-        circles_high, circles_low, centers_contours = show_targets("img_contours", img_contours, targets_contours)
-        circles_high, circles_low, centers_changes = show_targets("img_changes", img_changes, targets_changes)
+        
+        if isinstance(img_changes, np.ndarray) and img_changes.size > 1:
+            print(img_changes)
+            circles_high, circles_low, centers_changes = get_targets(img_changes)
+            targets_changes = circles_high, circles_low, centers_changes
+            circles_high, circles_low, centers_changes = show_targets("img_changes", img_changes, targets_changes)
+        else:
+            circles_high, circles_low, centers_changes = [], [], []
+            targets_changes = circles_high, circles_low, centers_changes
+            circles_high, circles_low, centers_changes = show_targets("img_changes", img_changes, targets_changes)
         if number_of_frames == INITIAL_CONTOUR_EXTRACT_FRAME_NUM:
             for center in centers_contours:
                 target_queue.append(center)
@@ -93,13 +100,14 @@ def main():
                     target_queue.append(center)
                 changesHandler.clear()
                 img_changes = changesHandler.get(img)
-        print("queue", target_queue)
+        #print("queue", target_queue)
         if cv2.waitKey(1) == 32:  # Whitespace
             changesHandler.clear()
         if number_of_frames % CHECK_FOR_NEW_OBJECTS == 0 and len(target_queue) > 0:
             target = target_queue.pop(0)
             if not target == None:
-                shoot(target)
+                global centers
+                centers.append(target)
                 target = None
         
         if cv2.waitKey(1) == 32:  # Whitespace
