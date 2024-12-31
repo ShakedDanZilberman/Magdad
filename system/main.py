@@ -22,9 +22,6 @@ from object_finder import average_of_heatmaps
 timestep = 0
 centers = [[90, 90]]
 
-IMG_WIDTH = 240
-IMG_HEIGHT = 320
-
 CAMERA_INDEX = 1
 
 

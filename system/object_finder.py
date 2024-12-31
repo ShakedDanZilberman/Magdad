@@ -1,5 +1,5 @@
 import numpy as np
-from main import IMG_HEIGHT, IMG_WIDTH
+from constants import IMG_HEIGHT, IMG_WIDTH
 import cv2
 
 INITIAL_BLURRING_KERNEL = (3, 3)
