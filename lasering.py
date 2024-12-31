@@ -5,7 +5,7 @@ import time
 from pyfirmata import Arduino, util
 from time import sleep
 import fit
-
+import pid
 
 CAMERA_INDEX = 1 
 
@@ -78,37 +78,6 @@ def find_red_point(frame):
     cY = int(M["m01"] / M["m00"])  # y-coordinate
 
     return cX, cY
-
-
-# PID constants
-Kp = 0.1
-Ki = 0.1
-Kd = 0
-
-# Initialize previous values for PID
-time_prev = time.time() / 100
-integral = np.array([0, 0])
-error_prev = np.array([0, 0])
-
-
-def PID(target, curr, Kp=Kp, Ki=Ki, Kd=Kd):
-    # target and curr are (x, y)
-    global integral, time_prev, error_prev
-
-    now = time.time() / 100
-    error = np.array([target - curr])
-
-    P = Kp * error
-    integral = integral + Ki * error * (now - time_prev)
-    D = Kd * (error - error_prev) / (now - time_prev)
-    delta = P + integral + D
-
-    error_prev = error
-    time_prev = now
-    # offset for the angles
-    delta = 90 - delta
-    return delta
-
 
 mouse_x, mouse_y = 0, 0
 def click_event(event, x, y, flags, param):
