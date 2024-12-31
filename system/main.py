@@ -41,6 +41,7 @@ def laser_thread():
     while True:
         my_centers = centers.copy()
         my_centers = sorted(my_centers, key=lambda x: x[0])
+        print("distance" + self.distance())
         for center in my_centers:
             laser_pointer.move(center)
             laser_point = center
