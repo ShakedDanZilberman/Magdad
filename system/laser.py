@@ -1,12 +1,8 @@
 from pyfirmata import Arduino, util
 import cv2
 import numpy as np
-
-STARTX = 60
-STARTY = 40
-deltaX = 30
-deltaY = 20
-NUMITER = 10
+import fit
+# TODO - change import to class? maybe not? maybe it's okay
 
 class LaserPointer:
     """
@@ -24,8 +20,10 @@ class LaserPointer:
         2. Define the pins for the servos and the laser.
         3. Attach the servos to the board.
         4. Start an iterator thread to read analog inputs.
+        5. Create polynom for fitting
         """
         self.point = (0, 0)
+        # you can check the correct port in the CMD with the command: mode
         self.board = Arduino("COM8")
 
         self.board.digital[LaserPointer.laser_pin].write(1)
@@ -36,6 +34,10 @@ class LaserPointer:
         # Start an iterator thread to read analog inputs
         it = util.Iterator(self.board)
         it.start()
+
+        # get polyonm
+        # measure?
+        self.coeffsX, self.coeffsY = fit.get_coeefs()
 
 
     def angle_from_coordinates(self, coordinates):
@@ -49,14 +51,11 @@ class LaserPointer:
         Returns:
             tuple: The angles for the servos: (angleX, angleY)
         """
-        X = coordinates[0]  # rx
-        Y = coordinates[1]  # ry
-
         # Calculate angleX using the full polynomial expression
-        angleX = 0
+        angleX = fit.evaluate_polynomial(coordinates[0], coordinates[1], self.coeffsX)
 
         # Calculate angleY using the full polynomial expression
-        angleY = 0
+        angleY = fit.evaluate_polynomial(coordinates[0], coordinates[1], self.coeffsY)
 
         return angleX, angleY
 
@@ -69,7 +68,6 @@ class LaserPointer:
         """
         self.point = point
         angleX, angleY = self.angle_from_coordinates(point)
-        # print(angleX, angleY)
         self.servoH.write(angleX)
         self.servoV.write(angleY)
 
@@ -84,3 +82,9 @@ class LaserPointer:
         Turn on the laser pointer.
         """
         self.board.digital[LaserPointer.laser_pin].write(1)
+        
+    def exit(self):
+        """
+        Exit the Arduino board.
+        """
+        self.board.exit()
