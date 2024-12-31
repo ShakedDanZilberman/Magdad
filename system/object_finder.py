@@ -7,7 +7,7 @@ INITIAL_BLURRING_KERNEL = (3, 3)
 HIGH_CEP_INDEX = 0.9
 LOW_CEP_INDEX = 0.5
 
-def average_of_heatmaps(changes_map, contours_map):
+def average_of_heatmaps(ttchanges_map, contours_map):
     """Intersect two heatmaps
 
     Args:
@@ -36,7 +36,7 @@ def average_of_heatmaps(changes_map, contours_map):
     return np.zeros((IMG_HEIGHT, IMG_WIDTH, 1), dtype=np.uint8)
 
 
-def show_targets(image, targets):
+def show_targets(title, image, targets):
     circles_high, circles_low, centers = targets
     img = image.copy()
     LOW_COLOR = (0, 255, 0)
@@ -60,7 +60,7 @@ def show_targets(image, targets):
         )
     for center in centers:
         cv2.circle(img, center, radius=1, color=CENTER_COLOR, thickness=-1)
-    cv2.imshow("Object Finding", img)
+    cv2.imshow(title, img)
     return circles_high, circles_low, centers
 
 

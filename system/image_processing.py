@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 import cv2
 import numpy as np
 
-from main import IMG_WIDTH, IMG_HEIGHT
+from constants import IMG_WIDTH, IMG_HEIGHT
 
 class Handler(ABC):
     @abstractmethod
@@ -70,10 +70,10 @@ class RawHandler(Handler):
     def get(self):
         return self.img
 
-    def display(self, img):
+    def display(self):
         if self.img is None:
             return
-        cv2.imshow(RawHandler.TITLE, img)
+        cv2.imshow(RawHandler.TITLE, self.img)
 
     def clear(self):
         self.img = None
@@ -144,3 +144,7 @@ class ImageParse:
             np.ndarray: The thresholded image
         """
         return cv2.threshold(img, threshold, 255, cv2.THRESH_TOZERO)[1]
+    
+    @staticmethod
+    def image_sum(img):
+        return np.sum(img)  

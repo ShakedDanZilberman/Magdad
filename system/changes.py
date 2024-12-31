@@ -20,7 +20,7 @@ class ChangesHandler(Handler):
     first_images = []
 
     def __init__(self):
-        self.images = [None] * ChangesHandler.N
+        self.images = [None] * FRAMES_FOR_INITIALISATION
         self.index = 0
         self.loading_img = None
         self.title = f"Average of First {FRAMES_FOR_INITIALISATION} Frames"
@@ -35,7 +35,7 @@ class ChangesHandler(Handler):
             return
 
         # Skip images that are too bright
-        if np.mean(img) > self.BRIGHTNESS_THRESHOLD:
+        if np.mean(img) > BRIGHTNESS_THRESHOLD:
             return
 
         # Add image to the list
