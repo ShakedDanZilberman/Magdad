@@ -11,6 +11,8 @@ class LaserPointer:
     servoV_pin = 5
     servoH_pin = 3
     laser_pin = 8
+    sensorPin = 20
+
 
     def __init__(self):
         """
@@ -88,3 +90,18 @@ class LaserPointer:
         Exit the Arduino board.
         """
         self.board.exit()
+
+    def distance(self):
+        """
+        Get the distance from the sensor.
+        """
+        #Read the analog value from sensor
+        sensorValue = self.board.get_pin(f"a:{LaserPointer.sensorPin}:i").read()
+
+        #Convert the analog value to voltage
+        voltage = sensorValue * (5.0 / 1023.0)
+
+        #Convert the voltage to distance (cm)
+        distance = 0.6301 * pow(voltage, -1.17)
+
+        return distance
