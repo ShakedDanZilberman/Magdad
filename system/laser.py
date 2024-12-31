@@ -1,7 +1,10 @@
 from pyfirmata import Arduino, util
 import cv2
 import numpy as np
+import serial
 import fit
+import sys
+import os
 # TODO - change import to class? maybe not? maybe it's okay
 
 class LaserPointer:
@@ -26,7 +29,13 @@ class LaserPointer:
         """
         self.point = (0, 0)
         # you can check the correct port in the CMD with the command: mode
-        self.board = Arduino("COM8")
+        try:
+            self.board = Arduino("COM8")
+        except serial.serialutil.SerialException as e:
+            print("Arduino not connected or COM port is wrong")
+            # print the output of "mode" command in the CMD
+            os.system("mode")
+            # sys.exit()
 
         self.board.digital[LaserPointer.laser_pin].write(1)
         # Attach the servo to the board
