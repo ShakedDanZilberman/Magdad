@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from abc import ABC, abstractmethod
 from pyfirmata import Arduino, util
 import threading
+from queue import Queue
 CAMERA_INDEX = 1
 MAX_CAMERAS = 10
 timestep = 0
@@ -33,6 +34,10 @@ CONTOUR_EXTRACTION_METHOD = cv2.CHAIN_APPROX_SIMPLE
 CONTOUR_THICKNESS = cv2.FILLED
 CONTOUR_HEATMAP_BLUR_KERNEL = (15, 15)
 CONTOUR_HEATMAP_STDEV = 15
+
+DIFF_THRESH = 0
+INITIAL_CONTOUR_EXTRACT_FRAME_NUM = 30
+CHECK_FOR_NEW_OBJECTS = 12
 
 IMG_WIDTH = 240
 IMG_HEIGHT = 320
@@ -72,11 +77,11 @@ class ContoursHandler(Handler):
         opening = cv2.morphologyEx(dilated_edges, cv2.MORPH_OPEN, opening_kernel)
         closing = cv2.morphologyEx(opening, cv2.MORPH_CLOSE, closing_kernel)
         erode = cv2.erode(closing, erosion_kernel, iterations=EROSION_ITERATIONS)
-        cv2.imshow("edges", edges)
-        cv2.imshow("dilation", dilated_edges)
-        cv2.imshow("opening", opening)
-        cv2.imshow("closing", closing)
-        cv2.imshow("erode", erode)
+        # cv2.imshow("edges", edges)
+        # cv2.imshow("dilation", dilated_edges)
+        # cv2.imshow("opening", opening)
+        # cv2.imshow("closing", closing)
+        # cv2.imshow("erode", erode)
         return erode
 
     def add(self, img):
@@ -180,10 +185,10 @@ class RawHandler(Handler):
     def get(self):
         return self.img
 
-    def display(self, img):
+    def display(self):
         if self.img is None:
             return
-        cv2.imshow(RawHandler.TITLE, img)
+        cv2.imshow(RawHandler.TITLE, self.img)
 
     def clear(self):
         self.img = None
@@ -767,12 +772,12 @@ class DecisionMaker:
             return contours_map
         return np.zeros((IMG_HEIGHT, IMG_WIDTH, 1), dtype=np.uint8)
 
-def show_targets(average):
-    average = cv2.cvtColor(average, cv2.COLOR_GRAY2BGR)
-    circles_high, circles_low, centers = ImageParse.generate_targets(average)
+def show_targets(title, img):
+    img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+    circles_high, circles_low, centers = ImageParse.generate_targets(img)
     for circle in circles_low:
         cv2.circle( 
-            average,
+            img,
             (int(circle[0][0]), int(circle[0][1])),
             int(circle[1]),
             (0, 255, 0),
@@ -780,15 +785,15 @@ def show_targets(average):
         )
     for circle in circles_high:
         cv2.circle(
-            average,
+            img,
             (int(circle[0][0]), int(circle[0][1])),
             int(circle[1]),
             (0, 0, 255),
             1,
         )
     for center in centers:
-        cv2.circle(average, center, radius=1, color=(255, 0, 0), thickness=-1)
-    cv2.imshow("average", average)
+        cv2.circle(img, center, radius=1, color=(255, 0, 0), thickness=-1)
+    cv2.imshow(title, img)
     return circles_high, circles_low, centers
 
 
@@ -806,6 +811,25 @@ def laser_thread():
         time.sleep(0.2)
 
 
+def image_sum(img):
+    return np.sum(img)    
+
+
+def decision_algorithm(contours_heatmap, changes_heatmap, motion_img):
+    '''
+    1. identify all objects using contour detection.
+    2. create a queue of object centers
+    3. add all objects from the contour identification to the queue
+    4. shoot and pop from queue - ongoing loop
+    5. add objects from changes-heatmap to the queue
+    6. reset the changes-heatmap
+    '''
+    pass
+
+def shoot(target):
+    print(target)
+
+
 def main():
     global CAMERA_INDEX, timestep, centers
     CameraIO.detectCameras()
@@ -815,9 +839,10 @@ def main():
     differenceHandler = DifferenceHandler()
     contoursHandler = ContoursHandler()
     accumulator_contours = Accumulator()
-    laser = threading.Thread(target=laser_thread)
-    laser.start()
-
+    # laser = threading.Thread(target=laser_thread)
+    # laser.start()
+    target_queue = []
+    target = None
     
     number_of_frames = 0
     while True:
@@ -848,22 +873,34 @@ def main():
         ]:
             handler.add(img)
             handler.display(img)
-        
         # accumulator_changes.add(newPixelsHandler.get(), 0.9, 0.1)
         # changes_heat_map = newPixelsHandler.get()
         accumulator_contours.add(contoursHandler.get(), 0.99, 0.01)
         # show accumulated heatmaps
         # cv2.imshow("acc changes", accumulator_changes.get())
-        cv2.imshow("acc contours", accumulator_contours.get())
-
-        average = DecisionMaker.avg_heat_maps(newPixelsHandler.get(img), contoursHandler.get())
-        cv2.imshow("newPixelsHandler.get()", newPixelsHandler.get(img))
-        cv2.imshow("average before", average)
-        circles_high, circles_low, centers = show_targets(average=average)
-        
+        # average = DecisionMaker.avg_heat_maps(newPixelsHandler.get(img), contoursHandler.get())
+        # cv2.imshow("newPixelsHandler.get()", newPixelsHandler.get(img))
+        # cv2.imshow("average before", average)
+        img_contours = contoursHandler.get()
+        img_changes = newPixelsHandler.get(img)
+        circles_high, circles_low, centers_contours = show_targets("img_contours", img_contours)
+        circles_high, circles_low, centers_changes = show_targets("img_changes", img_changes)
+        if number_of_frames == INITIAL_CONTOUR_EXTRACT_FRAME_NUM:
+            for center in centers_contours:
+                target_queue.append(center)
+        elif number_of_frames%CHECK_FOR_NEW_OBJECTS == CHECK_FOR_NEW_OBJECTS-1 and image_sum(differenceHandler.get()) <= DIFF_THRESH:
+                for center in centers_changes:
+                    target_queue.append(center)
+                newPixelsHandler.clear()
+                img_changes = newPixelsHandler.get(img)
+        print("queue", target_queue)
         if cv2.waitKey(1) == 32:  # Whitespace
             newPixelsHandler.clear()
-
+        if number_of_frames % CHECK_FOR_NEW_OBJECTS == 0 and len(target_queue) > 0:
+            target = target_queue.pop(0)
+            if not target == None:
+                shoot(target)
+                target = None
         # Press Escape to exit
         if cv2.waitKey(1) == 27:
             break

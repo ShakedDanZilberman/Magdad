@@ -12,7 +12,7 @@ with ImportDefence():
 from contours import ContoursHandler
 from changes import ChangesHandler
 from cameraIO import detectCameras
-from image_processing import RawHandler
+from image_processing import RawHandler, ImageParse
 from object_finder import show_targets, get_targets
 from motion import DifferenceHandler
 from laser import LaserPointer
@@ -23,6 +23,14 @@ timestep = 0
 centers = [[90, 90]]
 
 CAMERA_INDEX = 1
+
+DIFF_THRESH = 0
+INITIAL_CONTOUR_EXTRACT_FRAME_NUM = 30
+CHECK_FOR_NEW_OBJECTS = 12
+
+
+def shoot(target):
+    print(target)
 
 
 def laser_thread():
@@ -49,6 +57,8 @@ def main():
     contoursHandler = ContoursHandler()
     laser = threading.Thread(target=laser_thread)
     laser.start()
+    target_queue = []
+    target = None
 
     
     number_of_frames = 0
@@ -63,15 +73,34 @@ def main():
             contoursHandler,
         ]:
             handler.add(img)
-            handler.display(img)
+            handler.display()
         
         # changes_heat_map = newPixelsHandler.get()
 
-        average = average_of_heatmaps(changesHandler.get(img), contoursHandler.get())
-        cv2.imshow("changesHandler.get()", changesHandler.get(img))
-        cv2.imshow("Average of Heatmaps", average)
-        circles_high, circles_low, centers = get_targets(average)
-        show_targets(img, (circles_high, circles_low, centers))
+        img_contours = contoursHandler.get()
+        img_changes = changesHandler.get(img)
+        circles_high, circles_low, centers_contours = get_targets(img_contours)
+        targets_contours = circles_high, circles_low, centers_contours
+        circles_high, circles_low, centers_changes = get_targets(img_changes)
+        targets_changes = circles_high, circles_low, centers_changes
+        circles_high, circles_low, centers_contours = show_targets("img_contours", img_contours, targets_contours)
+        circles_high, circles_low, centers_changes = show_targets("img_changes", img_changes, targets_changes)
+        if number_of_frames == INITIAL_CONTOUR_EXTRACT_FRAME_NUM:
+            for center in centers_contours:
+                target_queue.append(center)
+        elif number_of_frames%CHECK_FOR_NEW_OBJECTS == CHECK_FOR_NEW_OBJECTS-1 and ImageParse.image_sum(differenceHandler.get()) <= DIFF_THRESH:
+                for center in centers_changes:
+                    target_queue.append(center)
+                changesHandler.clear()
+                img_changes = changesHandler.get(img)
+        print("queue", target_queue)
+        if cv2.waitKey(1) == 32:  # Whitespace
+            changesHandler.clear()
+        if number_of_frames % CHECK_FOR_NEW_OBJECTS == 0 and len(target_queue) > 0:
+            target = target_queue.pop(0)
+            if not target == None:
+                shoot(target)
+                target = None
         
         if cv2.waitKey(1) == 32:  # Whitespace
             changesHandler.clear()
