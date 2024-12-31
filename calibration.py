@@ -11,40 +11,10 @@ CAMERA_INDEX = 1
 WINDOW_NAME = 'Camera Connection'
 MAX_CAMERAS = 10
 
-# Set up the Arduino board (replace 'COM8' with your Arduino's COM port)
-board = Arduino('COM8')  # Adjust the COM port based on your system
-
-# Define the pin for the servo (usually PWM pins)
-servoV_pin = 5
-servoH_pin = 3  # Servo control pin (could be any PWM pin)
-laser_pin = 8
-board.digital[laser_pin].write(1)
-# Attach the servo to the board
-servoV = board.get_pin(f'd:{servoV_pin}:s')  # 's' means it's a servo
-servoH = board.get_pin(f'd:{servoH_pin}:s')
-# Start an iterator thread to read analog inputs
-it = util.Iterator(board)
-it.start()
-servoH.write(9)
-servoV.write(9)
-sleep(1)
 STARTX = 55
 STARTY = 45
 deltaX = 30
 deltaY = 10
-
-NUM_ITERX = 8
-
-NUM_ITERY = 3
-A0 = 0
-B0 = 0
-C0 = 0.5
-D0 = 90
-
-A1 = 0
-B1 = 0
-C1 = 0.5
-D1 = 90
 
 MEASUREMENTS = [(575, 416, 30.0, 20.0), (526, 413, 36.0, 20.0), (482, 410, 42.0, 20.0), (434, 407, 48.0, 20.0), (387, 403, 54.0, 20.0), (337, 402, 60.0, 20.0), (287, 400, 66.0, 20.0), (241, 398,
 72.0, 20.0), (197, 397, 78.0, 20.0), (153, 396, 84.0, 20.0), (114, 396, 90.0, 20.0), (582, 394, 30.0, 24.0), (530, 389, 36.0, 24.0), (485, 385, 42.0, 24.0), (438, 381, 48.0, 24.0),
@@ -93,7 +63,7 @@ def bilerp(x0, y0):
     distances_squared = np.array([distance_squared(x0, y0, x[i], y[i]) for i in range(len(x))])
     closest_points = np.argsort(distances_squared)[:4]
 
-    # Cubic interpolate the four closest points to get the value at the black point
+    # Linearly interpolate the four closest points to get the value at the black point
     # Make sure to normalise it correctly
 
     angleX0 = 0
@@ -209,7 +179,7 @@ def main():
     board.exit()
 
 if __name__ == '__main__':
-    main()
+    offlineAnalysis()
 
 
 
