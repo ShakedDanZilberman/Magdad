@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
+
 # Full MEASUREMENTS data (not truncated)
 MEASUREMENTS = [(575, 416, 30.0, 20.0), (526, 413, 36.0, 20.0), (482, 410, 42.0, 20.0),
                 (434, 407, 48.0, 20.0), (387, 403, 54.0, 20.0), (337, 402, 60.0, 20.0),
@@ -104,11 +105,11 @@ def evaluate_polynomial(x, y, coeffs, degree=3):
     return z
 
 
-def get_coeefs():
-    rx_values = np.array([item[0] for item in MEASUREMENTS])
-    ry_values = np.array([item[1] for item in MEASUREMENTS])
-    angleX_values = np.array([item[2] for item in MEASUREMENTS])
-    angleY_values = np.array([item[3] for item in MEASUREMENTS])
+def get_coeefs(measurements=MEASUREMENTS):
+    rx_values = np.array([item[0] for item in measurements])
+    ry_values = np.array([item[1] for item in measurements])
+    angleX_values = np.array([item[2] for item in measurements])
+    angleY_values = np.array([item[3] for item in measurements])
 
     # Fit the 3D polynomial to the data
     coeffsX = fit_3d_polynomial(rx_values, ry_values, angleX_values, degree=3)
@@ -116,7 +117,7 @@ def get_coeefs():
     return coeffsX, coeffsY
 
 def main():
-    coeffsX, coeffsY = get_coeefs()
+    coeffsX, coeffsY = get_coeefs(MEASUREMENTS)
     rx_values = np.array([item[0] for item in MEASUREMENTS])
     ry_values = np.array([item[1] for item in MEASUREMENTS])
     angleX_values = np.array([item[2] for item in MEASUREMENTS])
