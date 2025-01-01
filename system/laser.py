@@ -28,7 +28,7 @@ class LaserPointer:
         4. Start an iterator thread to read analog inputs.
         5. Create polynom for fitting
         """
-        self.point = (0, 0)
+        self.point = (60, 30)
         # you can check the correct port in the CMD with the command: mode
         try:
             self.board = Arduino("COM6")
@@ -116,6 +116,6 @@ class LaserPointer:
         if voltage <= 0:
             return 0
         # Convert the voltage to distance (cm)
-        distance = 0.6301 * pow(voltage, -1.17)
+        distance = 0.6301 * pow(voltage / 2.0, -1.17)
 
         return distance
