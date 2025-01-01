@@ -58,8 +58,8 @@ def main():
     changesHandler = ChangesHandler()
     differenceHandler = DifferenceHandler()
     contoursHandler = ContoursHandler()
-    # laser = threading.Thread(target=laser_thread)
-    # laser.start()
+    laser = threading.Thread(target=laser_thread)
+    laser.start()
     target_queue = []
     target = None
 

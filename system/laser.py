@@ -108,14 +108,14 @@ class LaserPointer:
         """
         # Read the analog value from sensor
         sensorValue = self.lidarPin.read()
-        print("analog read (voltage) value:", sensorValue)
         if sensorValue is None:
             return 0
         # Convert the analog value to voltage
-        voltage = sensorValue * (5.0 / 1023.0)
+        voltage = sensorValue * (5.0 / 1023.0) * 1000
+        print("analog read (voltage) value:", voltage)
         if voltage <= 0:
             return 0
-        # Convert the voltage to distance (cm)
-        distance = 0.6301 * pow(voltage / 2.0, -1.17)
+        # Convert the voltage to distance (m)
+        distance = 0.6301 * pow(voltage, -1.17)
 
         return distance
