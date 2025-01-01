@@ -3,7 +3,7 @@ from image_processing import Handler, ImageParse
 import numpy as np
 
 FRAMES_FOR_INITIALISATION = 30
-BRIGHTNESS_THRESHOLD = 230
+BRIGHTNESS_THRESHOLD = 240
 
 class ChangesHandler(Handler):
     """
@@ -31,46 +31,37 @@ class ChangesHandler(Handler):
         self.img = img
 
         # Skip if index is -1
-        if self.index == -1:
-            return
+        if self.index != -1:
+            # Skip images that are too bright
+            if np.mean(img) > BRIGHTNESS_THRESHOLD:
+                return
 
-        # Skip images that are too bright
-        if np.mean(img) > BRIGHTNESS_THRESHOLD:
-            return
+            # Add image to the list
+            if img is not None:
+                self.images[self.index] = img
+                self.index += 1
 
-        # Add image to the list
-        if img is not None:
-            self.images[self.index] = img
-            self.index += 1
-
-        # Reset index if it exceeds N
-        if self.index == FRAMES_FOR_INITIALISATION:
+            # Reset index if it exceeds N
+            if self.index < FRAMES_FOR_INITIALISATION:
+                return
+            
             self.index = -1
-            self.get(img)
+            self.avg = np.zeros_like(self.images[0])
+            for i in range(FRAMES_FOR_INITIALISATION):
+                self.avg = cv2.addWeighted(self.avg, 1, self.images[i], 1 / FRAMES_FOR_INITIALISATION, 0)
+        
+        self.diff = ImageParse.differenceImage(img, self.avg)
+        self.diff = ImageParse.blurImage(self.diff, 20)
+        self.diff = ImageParse.aboveThreshold(self.diff, 40)
 
-    def get(self, img):
+    def get(self):
         """Calculates the average of the first N frames and returns the difference between the current frame and the average of the first N frames"""
         # Return the average if it has already been calculated
-        if hasattr(self, "avg") and self.avg is not None:
-            diff = ImageParse.differenceImage(img, self.avg)
-            diff = ImageParse.blurImage(diff, 20)
-            diff = ImageParse.aboveThreshold(diff, 50)
-            return diff
+        if hasattr(self, "diff") and self.diff is not None:
+            return self.diff
 
         if len(self.images) < FRAMES_FOR_INITIALISATION:
             return None
-
-        # Calculate the average
-        self.avg = np.zeros_like(self.images[0])
-        # Average only the non-None images
-        for i in range(FRAMES_FOR_INITIALISATION):
-            # Add the image to the average with a weight of 1/N_effective
-            if self.images[i] is not None:
-                self.avg = cv2.addWeighted(
-                    self.avg, 1, self.images[i], 1 / FRAMES_FOR_INITIALISATION, 0
-                )
-
-        return self.avg
 
     def clear(self):
         """Clears the images and the average, and resets the index"""
@@ -89,4 +80,4 @@ class ChangesHandler(Handler):
             LOADING_IMAGE = np.ones(self.img.shape, np.uint8) * 128
             cv2.imshow(TITLE, LOADING_IMAGE)
         else:
-            cv2.imshow(TITLE, self.get(self.img))
+            cv2.imshow(TITLE, self.avg)
