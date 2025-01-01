@@ -14,7 +14,8 @@ class LaserPointer:
     servoV_pin = 5
     servoH_pin = 3
     laser_pin = 8
-    sensorPin = 20
+    # Define pin A6 as an analog input
+    sensor_pin = 'a:6:i'
 
 
     def __init__(self):
@@ -105,7 +106,7 @@ class LaserPointer:
         Get the distance from the sensor.
         """
         #Read the analog value from sensor
-        sensorValue = self.board.get_pin(f"a:{LaserPointer.sensorPin}:i").read()
+        sensorValue = self.board.get_pin(LaserPointer.sensor_pin).read()
 
         #Convert the analog value to voltage
         voltage = sensorValue * (5.0 / 1023.0)

@@ -41,7 +41,7 @@ def laser_thread():
     while True:
         my_centers = centers.copy()
         my_centers = sorted(my_centers, key=lambda x: x[0])
-        print("distance" + self.distance())
+        print("distance:", laser_pointer.distance())
         for center in my_centers:
             laser_pointer.move(center)
             laser_point = center
@@ -85,7 +85,7 @@ def main():
         targets_contours = circles_high, circles_low, centers_contours
         
         if isinstance(img_changes, np.ndarray) and img_changes.size > 1:
-            print(img_changes)
+            #print(img_changes)
             circles_high, circles_low, centers_changes = get_targets(img_changes)
             targets_changes = circles_high, circles_low, centers_changes
             circles_high, circles_low, centers_changes = show_targets("img_changes", img_changes, targets_changes)
