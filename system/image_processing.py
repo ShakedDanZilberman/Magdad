@@ -148,3 +148,9 @@ class ImageParse:
     @staticmethod
     def image_sum(img):
         return np.sum(img)  
+    
+    @staticmethod
+    def increase_contrast(img, factor):
+        img = cv2.convertScaleAbs(img, factor, 0)
+        print(img)
+        return img
