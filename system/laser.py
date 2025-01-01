@@ -14,8 +14,8 @@ class LaserPointer:
     servoV_pin = 5
     servoH_pin = 3
     laser_pin = 8
-    # Define pin A6 as an analog input
-    sensor_pin = 'a:6:i'
+    # Define pin A0 as an analog input
+    sensor_pin = 0
 
 
     def __init__(self):
@@ -28,10 +28,10 @@ class LaserPointer:
         4. Start an iterator thread to read analog inputs.
         5. Create polynom for fitting
         """
-        self.point = (0, 0)
+        self.point = (60, 30)
         # you can check the correct port in the CMD with the command: mode
         try:
-            self.board = Arduino("COM8")
+            self.board = Arduino("COM6")
         except serial.serialutil.SerialException as e:
             print("Arduino not connected or COM port is wrong")
             # print the output of "mode" command in the CMD
@@ -42,6 +42,7 @@ class LaserPointer:
         # Attach the servo to the board
         self.servoV = self.board.get_pin(f"d:{LaserPointer.servoV_pin}:s")  # 's' means it's a servo
         self.servoH = self.board.get_pin(f"d:{LaserPointer.servoH_pin}:s")
+        self.lidarPin = self.board.get_pin(f"a:{LaserPointer.sensor_pin}:i")  # 'i' means it's an input, 'a' means it's analog
 
         # Start an iterator thread to read analog inputs
         it = util.Iterator(self.board)
@@ -105,13 +106,16 @@ class LaserPointer:
         """
         Get the distance from the sensor.
         """
-        #Read the analog value from sensor
-        sensorValue = self.board.get_pin(LaserPointer.sensor_pin).read()
-
-        #Convert the analog value to voltage
+        # Read the analog value from sensor
+        sensorValue = self.lidarPin.read()
+        print("analog read (voltage) value:", sensorValue)
+        if sensorValue is None:
+            return 0
+        # Convert the analog value to voltage
         voltage = sensorValue * (5.0 / 1023.0)
-
-        #Convert the voltage to distance (cm)
-        distance = 0.6301 * pow(voltage, -1.17)
+        if voltage <= 0:
+            return 0
+        # Convert the voltage to distance (cm)
+        distance = 0.6301 * pow(voltage / 2.0, -1.17)
 
         return distance
