@@ -53,6 +53,8 @@ class ChangesHandler(Handler):
         self.diff = ImageParse.differenceImage(img, self.avg)
         self.diff = ImageParse.blurImage(self.diff, 20)
         self.diff = ImageParse.aboveThreshold(self.diff, 40)
+        self.diff = ImageParse.increase_contrast(self.diff, 1.5)
+
 
     def get(self):
         """Calculates the average of the first N frames and returns the difference between the current frame and the average of the first N frames"""
@@ -80,4 +82,4 @@ class ChangesHandler(Handler):
             LOADING_IMAGE = np.ones(self.img.shape, np.uint8) * 128
             cv2.imshow(TITLE, LOADING_IMAGE)
         else:
-            cv2.imshow(TITLE, self.avg)
+            cv2.imshow(TITLE, self.diff)
