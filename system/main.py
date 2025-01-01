@@ -58,8 +58,8 @@ def main():
     changesHandler = ChangesHandler()
     differenceHandler = DifferenceHandler()
     contoursHandler = ContoursHandler()
-    laser = threading.Thread(target=laser_thread)
-    laser.start()
+    # laser = threading.Thread(target=laser_thread)
+    # laser.start()
     target_queue = []
     target = None
 
@@ -77,14 +77,15 @@ def main():
         ]:
             handler.add(img)
             handler.display()
-        
+        # rawHandler.display()
         # changes_heat_map = newPixelsHandler.get()
-
+        # changesHandler.display()
         img_contours = contoursHandler.get()
-        img_changes = changesHandler.get(img)
+        img_changes = changesHandler.get( )
         circles_high, circles_low, centers_contours = get_targets(img_contours)
         targets_contours = circles_high, circles_low, centers_contours
-        
+        circles_high, circles_low, centers_changes = show_targets("img_contours", img_contours, targets_contours)
+
         if isinstance(img_changes, np.ndarray) and img_changes.size > 1:
             #print(img_changes)
             circles_high, circles_low, centers_changes = get_targets(img_changes)
@@ -93,18 +94,15 @@ def main():
         else:
             circles_high, circles_low, centers_changes = [], [], []
             targets_changes = circles_high, circles_low, centers_changes
-            circles_high, circles_low, centers_changes = show_targets("img_changes", img_changes, targets_changes)
         if number_of_frames == INITIAL_CONTOUR_EXTRACT_FRAME_NUM:
             for center in centers_contours:
                 target_queue.append(center)
-        elif number_of_frames%CHECK_FOR_NEW_OBJECTS == CHECK_FOR_NEW_OBJECTS-1 and ImageParse.image_sum(differenceHandler.get()) <= DIFF_THRESH:
-                for center in centers_changes:
-                    target_queue.append(center)
-                changesHandler.clear()
-                img_changes = changesHandler.get(img)
+        # elif number_of_frames%CHECK_FOR_NEW_OBJECTS == CHECK_FOR_NEW_OBJECTS-1 and ImageParse.image_sum(differenceHandler.get()) <= DIFF_THRESH:
+        #         for center in centers_changes:
+        #             target_queue.append(center)
+        #         changesHandler.clear()
+        #         img_changes = changesHandler.get(img)
         #print("queue", target_queue)
-        if cv2.waitKey(1) == 32:  # Whitespace
-            changesHandler.clear()
         if number_of_frames % CHECK_FOR_NEW_OBJECTS == 0 and len(target_queue) > 0:
             target = target_queue.pop(0)
             if not target == None:

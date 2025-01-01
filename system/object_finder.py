@@ -37,6 +37,7 @@ def average_of_heatmaps(ttchanges_map, contours_map):
 
 
 def show_targets(title, image, targets):
+    image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
     circles_high, circles_low, centers = targets
     img = image.copy()
     LOW_COLOR = (0, 255, 0)
