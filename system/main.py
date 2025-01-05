@@ -52,8 +52,9 @@ def laser_thread():
             previous_distances.append(distance)
             previous_distances.pop(0)
             measured_distance = sum(previous_distances) / 3
-            graph.add_distance(measured_distance)
-            graph.plot()
+            print("Measured distance:", measured_distance)
+            # graph.add_distance(measured_distance)
+            # graph.plot()
 
             time.sleep(0.1)
         time.sleep(0.1)
