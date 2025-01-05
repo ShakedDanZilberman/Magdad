@@ -45,8 +45,8 @@ def laser_thread():
         my_centers = centers.copy()
         my_centers = sorted(my_centers, key=lambda x: x[0])
         for center in my_centers:
-            # laser_pointer.move(center)
-            laser_pointer.move((300, 190))
+            laser_pointer.move(center)
+            # laser_pointer.move((300, 190))
 
             distance = laser_pointer.distance()
             previous_distances.append(distance)
@@ -55,8 +55,8 @@ def laser_thread():
             graph.add_distance(measured_distance)
             graph.plot()
 
-            time.sleep(0.2)
-        time.sleep(0.2)
+            time.sleep(0.1)
+        time.sleep(0.1)
 
     plt.ioff()
     plt.show()

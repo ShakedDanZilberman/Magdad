@@ -131,7 +131,7 @@ def measure():
         # Get the feed from the camera
         if nextAngleFlag:
             angleX, angleY = next(angles)
-            laser_pointer.move(angleX, angleY)
+            laser_pointer.move((angleX, angleY))
             time.sleep(0.7)
             nextAngleFlag = False
 
