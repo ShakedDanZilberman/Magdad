@@ -84,6 +84,17 @@ class LaserPointer:
         self.servoH.write(angleX)
         self.servoV.write(angleY)
 
+    def move_raw(self, angleX, angleY):
+        """
+        Move the laser pointer to the given angles.
+
+        Args:
+            angleX (float): The angle for the horizontal servo
+            angleY (float): The angle for the vertical servo
+        """
+        self.servoH.write(angleX)
+        self.servoV.write(angleY)
+
     def turn_off(self):
         """
         Turn off the laser pointer.

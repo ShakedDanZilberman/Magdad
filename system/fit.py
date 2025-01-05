@@ -71,7 +71,10 @@ def measure():
             A tuple (x, y) representing the center of the red point if found, or None if no red point is detected.
         """
         # Convert the frame to HSV color space
-        hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+        try:
+            hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+        except cv2.error:
+            return None, None
 
         # Define the lower and upper bounds for red in HSV
         lower_red1 = np.array([0, 120, 70])  # Lower range for red
@@ -96,7 +99,7 @@ def measure():
         # Get the center of the red point
         M = cv2.moments(largest_contour)
         if M["m00"] == 0:
-            return (0, 0)  # Avoid division by zero
+            return None, None  # Avoid division by zero
 
         cX = int(M["m10"] / M["m00"])  # x-coordinate
         cY = int(M["m01"] / M["m00"])  # y-coordinate
@@ -131,14 +134,16 @@ def measure():
         # Get the feed from the camera
         if nextAngleFlag:
             angleX, angleY = next(angles)
-            laser_pointer.move((angleX, angleY))
-            time.sleep(0.7)
+            print("Next angle: ", angleX, angleY)
+            laser_pointer.move_raw(angleX, angleY)
+            time.sleep(0.3)
             nextAngleFlag = False
 
         frame = camera.read()
         cv2.circle(frame, (mouseX, mouseY), 7, (255, 0, 0), -1)
         laserX, laserY = find_red_point(frame)
-        cv2.circle(frame, (laserX, laserY), 7, (0, 0, 255), -1)
+        if laserX is not None and laserY is not None:
+            cv2.circle(frame, (laserX, laserY), 7, (0, 0, 255), -1)
         cv2.imshow(title, frame)
 
         # if user presses Enter then add the red point to the measurements
