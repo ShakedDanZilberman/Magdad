@@ -31,12 +31,12 @@ class LaserPointer:
         self.point = (60, 30)
         # you can check the correct port in the CMD with the command: mode
         try:
-            self.board = Arduino("COM6")
+            self.board = Arduino("COM5")
         except serial.serialutil.SerialException as e:
             print("Arduino not connected or COM port is wrong")
             # print the output of "mode" command in the CMD
             os.system("mode")
-            # sys.exit()
+            sys.exit()
 
         self.board.digital[LaserPointer.laser_pin].write(1)
         # Attach the servo to the board

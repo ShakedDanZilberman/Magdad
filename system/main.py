@@ -18,9 +18,10 @@ from motion import DifferenceHandler
 from laser import LaserPointer
 from cameraIO import Camera
 from object_finder import average_of_heatmaps
+from gui import LIDARDistancesGraph
 
 timestep = 0
-centers = [(90, 90)]
+centers = [(30, 60)]
 
 CAMERA_INDEX = 1
 
@@ -38,16 +39,27 @@ def laser_thread():
     print("Laser thread started")
     global centers, laser_point
     laser_pointer = LaserPointer()
+    graph = LIDARDistancesGraph()
+    previous_distances = [0] * 3
     while True:
         my_centers = centers.copy()
         my_centers = sorted(my_centers, key=lambda x: x[0])
         for center in my_centers:
-            #laser_pointer.move(center)
-            laser_pointer.move((120, 160))
-            laser_point = center
-            print("distance:", laser_pointer.distance())
-            time.sleep(0.3)
+            # laser_pointer.move(center)
+            laser_pointer.move((300, 190))
+
+            distance = laser_pointer.distance()
+            previous_distances.append(distance)
+            previous_distances.pop(0)
+            measured_distance = sum(previous_distances) / 3
+            graph.add_distance(measured_distance)
+            graph.plot()
+
+            time.sleep(0.2)
         time.sleep(0.2)
+
+    plt.ioff()
+    plt.show()
 
 
 def main():
@@ -102,7 +114,7 @@ def main():
                     target_queue.append(center)
                 changesHandler.clear()
                 img_changes = changesHandler.get(img)
-        print("queue:", centers)
+        # print("queue:", centers)
         if number_of_frames % CHECK_FOR_NEW_OBJECTS == 0 and len(target_queue) > 0:
             target = target_queue.pop(0)
             
