@@ -152,5 +152,5 @@ class ImageParse:
     @staticmethod
     def increase_contrast(img, factor):
         img = cv2.convertScaleAbs(img, factor, 0)
-        print(img)
+        # print(img)
         return img

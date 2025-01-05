@@ -31,12 +31,12 @@ class LaserPointer:
         self.point = (60, 30)
         # you can check the correct port in the CMD with the command: mode
         try:
-            self.board = Arduino("COM6")
+            self.board = Arduino("COM5")
         except serial.serialutil.SerialException as e:
             print("Arduino not connected or COM port is wrong")
             # print the output of "mode" command in the CMD
             os.system("mode")
-            # sys.exit()
+            sys.exit()
 
         self.board.digital[LaserPointer.laser_pin].write(1)
         # Attach the servo to the board
@@ -84,6 +84,17 @@ class LaserPointer:
         self.servoH.write(angleX)
         self.servoV.write(angleY)
 
+    def move_raw(self, angleX, angleY):
+        """
+        Move the laser pointer to the given angles.
+
+        Args:
+            angleX (float): The angle for the horizontal servo
+            angleY (float): The angle for the vertical servo
+        """
+        self.servoH.write(angleX)
+        self.servoV.write(angleY)
+
     def turn_off(self):
         """
         Turn off the laser pointer.
@@ -108,14 +119,14 @@ class LaserPointer:
         """
         # Read the analog value from sensor
         sensorValue = self.lidarPin.read()
-        print("analog read (voltage) value:", sensorValue)
         if sensorValue is None:
             return 0
         # Convert the analog value to voltage
-        voltage = sensorValue * (5.0 / 1023.0)
+        voltage = sensorValue * (5.0 / 1023.0) * 1000
+        print("analog read (voltage) value:", voltage)
         if voltage <= 0:
             return 0
-        # Convert the voltage to distance (cm)
-        distance = 0.6301 * pow(voltage / 2.0, -1.17)
+        # Convert the voltage to distance (m)
+        distance = 0.6301 * pow(voltage, -1.17)
 
         return distance
