@@ -58,6 +58,45 @@ MEASUREMENTS = [
 ]
 
 
+
+def find_red_point(frame):
+    """
+    Finds the (x, y) coordinates of the single red point in the image.
+
+    Args:
+        frame: The input image (BGR format).
+
+    Returns:
+        A tuple (x, y) representing the center of the red point if found, or None if no red point is detected.
+    """
+    # Convert the frame to HSV color space
+    # Define the lower and upper bounds for red in grayscale
+    lower_red = 120  # Lower range for red in grayscale
+    upper_red = 255  # Upper range for red in grayscale
+
+    # Create mask for red
+    mask = cv2.inRange(frame, lower_red, upper_red)
+
+    # Find contours of the mask
+    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    if len(contours) == 0:
+        return (0, 0)  # No red point found
+
+    # Assume the largest contour is the red point (adjust as needed)
+    largest_contour = max(contours, key=cv2.contourArea)
+
+    # Get the center of the red point
+    M = cv2.moments(largest_contour)
+    if M["m00"] == 0:
+        return None, None  # Avoid division by zero
+
+    cX = int(M["m10"] / M["m00"])  # x-coordinate
+    cY = int(M["m01"] / M["m00"])  # y-coordinate
+
+    return cX, cY
+
+
 def measure():
     mouseX, mouseY = 0, 0
     from laser import LaserPointer
@@ -68,59 +107,10 @@ def measure():
     camera = Camera(CAMERA_INDEX)
     title = "Camera Feed"
 
-    def find_red_point(frame):
-        """
-        Finds the (x, y) coordinates of the single red point in the image.
-
-        Args:
-            frame: The input image (BGR format).
-
-        Returns:
-            A tuple (x, y) representing the center of the red point if found, or None if no red point is detected.
-        """
-        # Convert the frame to HSV color space
-        try:
-            hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-        except cv2.error:
-            return None, None
-
-        # Define the lower and upper bounds for red in HSV
-        lower_red1 = np.array([0, 120, 70])  # Lower range for red
-        upper_red1 = np.array([10, 255, 255])  # Upper range for red
-        lower_red2 = np.array(
-            [170, 120, 70]
-        )  # Lower range for red (wrapping around 180 degrees)
-        upper_red2 = np.array([180, 255, 255])  # Upper range for red
-
-        # Create masks for red
-        mask1 = cv2.inRange(hsv, lower_red1, upper_red1)
-        mask2 = cv2.inRange(hsv, lower_red2, upper_red2)
-        mask = cv2.bitwise_or(mask1, mask2)  # Combine masks
-
-        # Find contours of the mask
-        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-        if len(contours) == 0:
-            return (0, 0)  # No red point found
-
-        # Assume the largest contour is the red point (adjust as needed)
-        largest_contour = max(contours, key=cv2.contourArea)
-
-        # Get the center of the red point
-        M = cv2.moments(largest_contour)
-        if M["m00"] == 0:
-            return None, None  # Avoid division by zero
-
-        cX = int(M["m10"] / M["m00"])  # x-coordinate
-        cY = int(M["m01"] / M["m00"])  # y-coordinate
-
-        return cX, cY
-
     def on_mouse(event, x, y, flags, param):
         nonlocal mouseX, mouseY
         if event == cv2.EVENT_LBUTTONDOWN:
             mouseX, mouseY = x, y
-
     cv2.namedWindow(title)
     cv2.setMouseCallback(title, on_mouse)
     measurements = []
@@ -150,14 +140,21 @@ def measure():
                 angleX, angleY = next(angles)
                 print("Next angle: ", angleX, angleY)
                 laser_pointer.move_raw(angleX, angleY)
+                laser_pointer.turn_on()
                 time.sleep(0.3)
                 nextAngleFlag = False
 
             frame = camera.read()
-            cv2.circle(frame, (mouseX, mouseY), 7, (255, 0, 0), -1)
             laserX, laserY = find_red_point(frame)
+            # convert the frame to BGR for display
+            frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+            cv2.circle(frame, (mouseX, mouseY), 7, (255, 0, 0), -1)
             if laserX is not None and laserY is not None:
                 cv2.circle(frame, (laserX, laserY), 7, (0, 0, 255), -1)
+            # add text at the top left corner
+            text = "Enter chooses RED\nSpace chooses MOUSE\nBackspace skips angle"
+            for i, line in enumerate(text.split("\n")):
+                cv2.putText(frame, line, (10, 20 + 20 * i), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
             cv2.imshow(title, frame)
 
             # if user presses Enter then add the red point to the measurements
@@ -171,6 +168,10 @@ def measure():
                 measurements.append((mouseX, mouseY, angleX, angleY))
                 nextAngleFlag = True
                 print(f"Added measurement: ({mouseX}, {mouseY}, {angleX}, {angleY})")
+            # If the user presses backspace, skip the current angle
+            if key == 8:
+                nextAngleFlag = True
+                print("Skipped angle")
             # Esc key to exit
             if key == ESC:
                 break
@@ -179,9 +180,8 @@ def measure():
         laser_pointer.exit()
         raise
     except StopIteration:
-        print(measurements)
         laser_pointer.exit()
-        print("All angles measured.")
+        print("All angles measured:")
 
     print(measurements)
     cv2.destroyAllWindows()
