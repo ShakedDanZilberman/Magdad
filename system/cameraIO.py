@@ -91,5 +91,4 @@ class Camera:
     def read(self):
         ret_val, self.img = self.cam.read()
         self.img = ImageParse.toGrayscale(self.img)
-        print("yay")
         return self.img
