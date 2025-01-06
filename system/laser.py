@@ -81,6 +81,11 @@ class LaserPointer:
         """
         self.point = point
         angleX, angleY = self.angle_from_coordinates(point)
+        print("Moving to angles:", angleX, angleY)
+        if angleX is None or angleY is None:
+            return
+        angleX = max(0, min(180, angleX))
+        angleY = max(0, min(180, angleY))
         self.servoH.write(angleX)
         self.servoV.write(angleY)
 
