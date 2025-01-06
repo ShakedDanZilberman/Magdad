@@ -63,7 +63,7 @@ def laser_thread():
 
 
 class MouseCameraHandler(Handler):
-    TITLE = "Camera Connection"
+    TITLE = "Camera View"
 
     def __init__(self):
         super().__init__()
@@ -81,7 +81,7 @@ class MouseCameraHandler(Handler):
     def display(self):
         if self.img is None:
             return
-        cv2.imshow(RawHandler.TITLE, self.img)
+        cv2.imshow(MouseCameraHandler.TITLE, self.img)
 
     def mouse_callback(self, event, x, y, flags, param):
         if event == cv2.EVENT_LBUTTONDOWN:
