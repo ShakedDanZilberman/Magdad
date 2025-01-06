@@ -7,56 +7,41 @@ import time
 
 ENTER = 13
 ESC = 27
+BACKSPACE = 8
 
 # Full MEASUREMENTS data (not truncated)
 MEASUREMENTS = [
-    (607, 255, 25.0, 35.0),
-    (589, 243, 25.0, 40.0),
-    (592, 208, 25.0, 45.0),
-    (597, 168, 25.0, 50.0),
-    (596, 135, 25.0, 55.0),
-    (555, 249, 32.5, 35.0),
-    (543, 237, 32.5, 40.0),
-    (544, 203, 32.5, 45.0),
-    (547, 164, 32.5, 50.0),
-    (549, 130, 32.5, 55.0),
-    (483, 241, 40.0, 35.0),
-    (474, 225, 40.0, 40.0),
-    (476, 194, 40.0, 45.0),
-    (479, 157, 40.0, 50.0),
-    (482, 122, 40.0, 55.0),
-    (417, 233, 47.5, 35.0),
-    (411, 221, 47.5, 40.0),
-    (416, 186, 47.5, 45.0),
-    (420, 149, 47.5, 50.0),
-    (420, 117, 47.5, 55.0),
-    (342, 225, 55.0, 35.0),
-    (340, 210, 55.0, 40.0),
-    (344, 180, 55.0, 45.0),
-    (348, 143, 55.0, 50.0),
-    (352, 103, 55.0, 55.0),
-    (276, 217, 62.5, 35.0),
-    (280, 205, 62.5, 40.0),
-    (280, 174, 62.5, 45.0),
-    (287, 137, 62.5, 50.0),
-    (293, 104, 62.5, 55.0),
-    (206, 211, 70.0, 35.0),
-    (216, 196, 70.0, 40.0),
-    (216, 171, 70.0, 45.0),
-    (220, 133, 70.0, 50.0),
-    (228, 99, 70.0, 55.0),
-    (146, 205, 77.5, 35.0),
-    (158, 199, 77.5, 40.0),
-    (163, 169, 77.5, 45.0),
-    (168, 132, 77.5, 50.0),
-    (175, 97, 77.5, 55.0),
-    (83, 202, 85.0, 35.0),
-    (95, 189, 85.0, 40.0),
-    (100, 161, 85.0, 45.0),
-    (105, 121, 85.0, 50.0),
-    (114, 88, 85.0, 55.0),
+    (624, 235, 20, 42),
+    (628, 176, 20, 50),
+    (627, 119, 20, 58),
+    (621, 369, 35, 10),
+    (595, 334, 35, 18),
+    (551, 284, 35, 26),
+    (521, 253, 35, 34),
+    (501, 223, 35, 42),
+    (505, 164, 35, 50),
+    (509, 107, 35, 58),
+    (443, 372, 50, 10),
+    (421, 321, 50, 18),
+    (399, 268, 50, 26),
+    (387, 237, 50, 34),
+    (376, 211, 50, 42),
+    (384, 151, 50, 50),
+    (389, 95, 50, 58),
+    (179, 370, 65, 10),
+    (200, 306, 65, 18),
+    (220, 253, 65, 26),
+    (233, 223, 65, 34),
+    (243, 197, 65, 42),
+    (248, 144, 65, 50),
+    (257, 87, 65, 58),
+    (38, 287, 80, 18),
+    (77, 240, 80, 26),
+    (107, 213, 80, 34),
+    (132, 193, 80, 42),
+    (139, 139, 80, 50),
+    (150, 81, 80, 58),
 ]
-
 
 
 def find_red_point(frame):
@@ -111,26 +96,23 @@ def measure():
         nonlocal mouseX, mouseY
         if event == cv2.EVENT_LBUTTONDOWN:
             mouseX, mouseY = x, y
+
     cv2.namedWindow(title)
     cv2.setMouseCallback(title, on_mouse)
     measurements = []
     WAIT_FOR_KEY = 1  # milliseconds
 
-    STARTX = 55
-    STARTY = 45
-    deltaX = 30
-    deltaY = 10
-    NUM_ITERX = 8
-    NUM_ITERY = 4
+    STARTX = 20
+    STARTY = 10
+    deltaX = 15
+    deltaY = 8
+    ENDX = 85
+    ENDY = 85
 
-    angles = [
-        (
-            STARTX - deltaX + i * 2 * deltaX / NUM_ITERX,
-            STARTY - deltaY + j * 2 * deltaY / NUM_ITERY,
-        )
-        for i, j in itertools.product(range(NUM_ITERX + 1), range(NUM_ITERY + 1))
-    ]
-    angles = iter(angles)
+    rangeX = range(STARTX, ENDX + 1, deltaX)
+    rangeY = range(STARTY, ENDY + 1, deltaY)
+
+    angles = iter(itertools.product(rangeX, rangeY))
     nextAngleFlag = True
 
     try:
@@ -153,8 +135,9 @@ def measure():
                 cv2.circle(frame, (laserX, laserY), 7, (0, 0, 255), -1)
             # add text at the top left corner
             text = "Enter chooses RED\nSpace chooses MOUSE\nBackspace skips angle"
+            textcolor = (255, 255, 255)
             for i, line in enumerate(text.split("\n")):
-                cv2.putText(frame, line, (10, 20 + 20 * i), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
+                cv2.putText(frame, line, (10, 20 + 20 * i), cv2.FONT_HERSHEY_SIMPLEX, 0.5, textcolor, 1)
             cv2.imshow(title, frame)
 
             # if user presses Enter then add the red point to the measurements
@@ -169,7 +152,7 @@ def measure():
                 nextAngleFlag = True
                 print(f"Added measurement: ({mouseX}, {mouseY}, {angleX}, {angleY})")
             # If the user presses backspace, skip the current angle
-            if key == 8:
+            if key == BACKSPACE:
                 nextAngleFlag = True
                 print("Skipped angle")
             # Esc key to exit

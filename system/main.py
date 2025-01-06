@@ -63,8 +63,6 @@ def laser_thread():
     plt.show()
 
 
-
-
 def hit_cursor_main():
     global CAMERA_INDEX, timestep, centers
     detectCameras()
