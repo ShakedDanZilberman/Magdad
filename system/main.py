@@ -73,10 +73,8 @@ def hit_cursor_main():
     laser = threading.Thread(target=laser_thread)
     laser.start()
 
-    title = handler.TITLE
-
-    cv2.namedWindow(title)
-    cv2.setMouseCallback(title, handler.mouse_callback)
+    cv2.namedWindow(handler.TITLE)
+    cv2.setMouseCallback(handler.TITLE, handler.mouse_callback)
 
     while True:
         img = cam.read()

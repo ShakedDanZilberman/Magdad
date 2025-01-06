@@ -1,5 +1,5 @@
 import cv2
-from system.image_processing import Handler
+from image_processing import Handler
 
 
 class MouseCameraHandler(Handler):
