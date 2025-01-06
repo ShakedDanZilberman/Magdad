@@ -17,6 +17,9 @@ class LaserPointer:
     # Define pin A0 as an analog input
     sensor_pin = 0
 
+    MIN_THETA_X = MIN_THETA_Y = 0
+    MAX_THETA_X = MAX_THETA_Y = 180
+
 
     def __init__(self):
         """
@@ -84,8 +87,10 @@ class LaserPointer:
         print("Moving to angles:", angleX, angleY)
         if angleX is None or angleY is None:
             return
-        angleX = max(0, min(180, angleX))
-        angleY = max(0, min(180, angleY))
+        # bound the angle values
+        angleX = max(LaserPointer.MIN_THETA_X, min(LaserPointer.MAX_THETA_X, angleX))
+        angleY = max(LaserPointer.MIN_THETA_Y, min(LaserPointer.MAX_THETA_Y, angleY))
+        # move the servos
         self.servoH.write(angleX)
         self.servoV.write(angleY)
 
@@ -122,16 +127,20 @@ class LaserPointer:
         """
         Get the distance from the sensor.
         """
+        # magic numbers for the conversion, found empirically
+        A2D = (5.0 / 1023.0) * 1000
+        POWER = -1.17
+        COEFFICIENT = 0.6301
         # Read the analog value from sensor
         sensorValue = self.lidarPin.read()
         if sensorValue is None:
             return 0
         # Convert the analog value to voltage
-        voltage = sensorValue * (5.0 / 1023.0) * 1000
+        voltage = sensorValue * A2D
         print("analog read (voltage) value:", voltage)
         if voltage <= 0:
             return 0
         # Convert the voltage to distance (m)
-        distance = 0.6301 * pow(voltage, -1.17)
+        distance = COEFFICIENT * pow(voltage, POWER)
 
         return distance
