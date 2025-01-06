@@ -12,7 +12,7 @@ with ImportDefence():
 from contours import ContoursHandler
 from changes import ChangesHandler
 from cameraIO import detectCameras
-from image_processing import RawHandler, ImageParse
+from image_processing import Handler, RawHandler, ImageParse
 from object_finder import show_targets, get_targets
 from motion import DifferenceHandler
 from laser import LaserPointer
@@ -62,25 +62,75 @@ def laser_thread():
     plt.show()
 
 
+class MouseCameraHandler(Handler):
+    TITLE = "Camera Connection"
+
+    def __init__(self):
+        super().__init__()
+        self.mouseX = 0
+        self.mouseY = 0
+        self.img = None
+
+    def add(self, img):
+        self.img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+        self.addMouse()
+
+    def get(self):
+        return self.img
+
+    def display(self):
+        if self.img is None:
+            return
+        cv2.imshow(RawHandler.TITLE, self.img)
+
+    def mouse_callback(self, event, x, y, flags, param):
+        if event == cv2.EVENT_LBUTTONDOWN:
+            self.mouseX = x
+            self.mouseY = y
+
+    def clear(self):
+        self.img = None
+
+    def addMouse(self):
+        """Add a mouse pointer to the image.
+        The mouse pointer is a green circle with a radius of 3 pixels (hardcoded in this function).
+        """
+        r = 3
+        color = (0, 255, 0)
+
+        if self.img is None:
+            return
+        
+        cv2.circle(self.img, self.getMousePosition(), r, color, -1)
+
+    def getMousePosition(self) -> tuple:
+        return self.mouseX, self.mouseY
+
+
+
 def hit_cursor_main():
     global CAMERA_INDEX, timestep, centers
     detectCameras()
     cam = Camera(CAMERA_INDEX)
-    rawHandler = RawHandler()
+    handler = MouseCameraHandler()
     laser = threading.Thread(target=laser_thread)
     laser.start()
 
-    def 
+    title = handler.TITLE
+
+    cv2.namedWindow(title)
+    cv2.setMouseCallback(title, handler.mouse_callback)
 
     while True:
         img = cam.read()
 
-        rawHandler.add(img)
-        rawHandler.display()
-        centers = [(30, 60)]
+        handler.add(img)
+        handler.display()
+        mousePos = handler.getMousePosition()
+        centers = [mousePos]
         
         if cv2.waitKey(1) == 32:  # Whitespace
-            shoot(centers[0])
+            shoot(mousePos)
 
         # Press Escape to exit
         if cv2.waitKey(1) == 27:
