@@ -202,12 +202,19 @@ def bilerp(x0, y0, measurements):
 
     angleX0 = 0
     angleY0 = 0
+    assert len(closest_points) == 4
     for i in closest_points:
-        angleX0 += thetaX[i] / distances_squared[i]
-        angleY0 += thetaY[i] / distances_squared[i]
+        if distances_squared[i] == 0:
+            return thetaX[i], thetaY[i]
+        distance = np.sqrt(distances_squared[i])
+        weight = 1 / distance
+        angleX0 += weight * thetaX[i]
+        angleY0 += weight * thetaY[i]
 
-    angleX0 /= np.sum(1 / distances_squared[closest_points])
-    angleY0 /= np.sum(1 / distances_squared[closest_points])
+    normalizer = sum([1 / np.sqrt(distances_squared[i]) for i in closest_points])
+
+    angleX0 /= normalizer
+    angleY0 /= normalizer
 
     return angleX0, angleY0
 
