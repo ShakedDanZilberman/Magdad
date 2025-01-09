@@ -11,6 +11,8 @@ class LIDARDistancesGraph:
         self.previous_distance = 0
         self.before_previous_distance = 0
 
+        # set the plt size to 1/2 of the default
+        plt.rcParams['figure.figsize'] = [6.4, 4.8]
         plt.ion()
         self.fig, self.ax = plt.subplots()
         ax = self.ax
