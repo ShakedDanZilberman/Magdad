@@ -324,7 +324,7 @@ def evaluate(x, y, coeffsX, coeffsY):
         return angleX, angleY
 
 
-def main():
+def graphs():
 
     # only needed to display the polynom
     measurements = MEASUREMENTS
@@ -405,4 +405,4 @@ def main():
 
 if __name__ == "__main__":
     # measure()
-    main()
+    graphs()
