@@ -148,7 +148,15 @@ def measure():
             text = "Enter chooses RED\nSpace chooses MOUSE\nBackspace skips angle"
             textcolor = (255, 255, 255)
             for i, line in enumerate(text.split("\n")):
-                cv2.putText(frame, line, (10, 20 + 20 * i), cv2.FONT_HERSHEY_SIMPLEX, 0.5, textcolor, 1)
+                cv2.putText(
+                    frame,
+                    line,
+                    (10, 20 + 20 * i),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.5,
+                    textcolor,
+                    1,
+                )
             cv2.imshow(title, frame)
 
             # if user presses Enter then add the red point to the measurements
@@ -396,4 +404,5 @@ def main():
 
 
 if __name__ == "__main__":
-    measure()
+    # measure()
+    main()
