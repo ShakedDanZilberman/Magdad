@@ -327,8 +327,15 @@ def main():
     )
 
     # Evaluate the polynomial on the meshgrid
-    angleX_eval = evaluate_polynomial(x_eval, y_eval, coeffsX, degree=3)
-    angleY_eval = evaluate_polynomial(x_eval, y_eval, coeffsY, degree=3)
+    # evaluate knows to handle only numbers, not arrays, so we need to iterate over the meshgrid
+    # we want to store the results in 2 2D arrays, so we can plot them
+    angleX_eval = np.zeros((50, 50))
+    angleY_eval = np.zeros((50, 50))
+    for i in range(50):
+        for j in range(50):
+            angleX_eval[i, j], angleY_eval[i, j] = evaluate(
+                x_eval[i, j], y_eval[i, j], coeffsX, coeffsY
+            )
 
     # Visualization
     fig = plt.figure(figsize=(14, 10))
@@ -339,7 +346,7 @@ def main():
     ax1.plot_surface(
         x_eval, y_eval, angleX_eval, cmap="viridis", alpha=0.7, edgecolor="none"
     )
-    ax1.set_title("3rd-Degree Polynomial Fit for angleX")
+    ax1.set_title("3rd-Degree Hybrid Fit for angleX")
     ax1.set_xlabel("rx")
     ax1.set_ylabel("ry")
     ax1.set_zlabel("angleX")
@@ -351,7 +358,7 @@ def main():
     ax2.plot_surface(
         x_eval, y_eval, angleY_eval, cmap="viridis", alpha=0.7, edgecolor="none"
     )
-    ax2.set_title("3rd-Degree Polynomial Fit for angleY")
+    ax2.set_title("3rd-Degree Hybrid Fit for angleY")
     ax2.set_xlabel("rx")
     ax2.set_ylabel("ry")
     ax2.set_zlabel("angleY")
