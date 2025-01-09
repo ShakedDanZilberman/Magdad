@@ -182,19 +182,20 @@ def measure():
     laser_pointer.exit()
 
 
-def bilerp(x0, y0, measurements):
+def bilerp(x0, y0):
     # Extract the x, y, thetaX, and thetaY values from MEASUREMENTS
-    x = [item[0] for item in measurements]
-    y = [item[1] for item in measurements]
-    thetaX = [item[2] for item in measurements]
-    thetaY = [item[3] for item in measurements]
+    x = np.array([item[0] for item in MEASUREMENTS])
+    y = np.array([item[1] for item in MEASUREMENTS])
+    thetaX = np.array([item[2] for item in MEASUREMENTS])
+    thetaY = np.array([item[3] for item in MEASUREMENTS])
 
     # get the four closest points to the black point in x,y space
     distance_squared = lambda x1, y1, x2, y2: (x1 - x2) ** 2 + (y1 - y2) ** 2
     # use np because it's faster than list comprehension
-    distances_squared = np.array(
-        [distance_squared(x0, y0, x[i], y[i]) for i in range(len(x))]
-    )
+    distances_squared = [distance_squared(x0, y0, x[i], y[i]) for i in range(len(x))]
+    distance_squared = np.array(distances_squared)
+
+    # get the indices of the four closest points
     closest_points = np.argsort(distances_squared)[:4]
 
     # Linearly interpolate the four closest points to get the value at the black point
