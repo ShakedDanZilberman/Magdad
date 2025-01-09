@@ -39,7 +39,7 @@ def laser_thread():
     print("Laser thread started")
     global centers, laser_point
     laser_pointer = LaserPointer()
-    # graph = LIDARDistancesGraph()
+    graph = LIDARDistancesGraph()
     previous_distances = [0] * 3
     while True:
         my_centers = centers.copy()
@@ -53,8 +53,8 @@ def laser_thread():
             previous_distances.pop(0)
             measured_distance = sum(previous_distances) / 3
             print("Measured distance:", measured_distance)
-            # graph.add_distance(measured_distance)
-            # graph.plot()
+            graph.add_distance(measured_distance)
+            graph.plot()
 
             time.sleep(0.1)
         time.sleep(0.1)
@@ -118,8 +118,8 @@ def main():
             contoursHandler,
         ]:
             handler.add(img)
-            # handler.display()
-        rawHandler.display()
+            handler.display()
+        # rawHandler.display()
         # changesHandler.display()
         img_contours = contoursHandler.get()
         img_changes = changesHandler.get()
