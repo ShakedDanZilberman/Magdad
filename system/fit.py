@@ -292,6 +292,29 @@ def get_coeefs(measurements=MEASUREMENTS):
     return coeffsX, coeffsY
 
 
+def evaluate(x, y, coeffsX, coeffsY):
+    angleXbilerp, angleYbilerp = bilerp(x, y)
+    angleXpoly = evaluate_polynomial(x, y, coeffsX, degree=3)
+    angleYpoly = evaluate_polynomial(x, y, coeffsY, degree=3)
+    image_center = np.array([320, 240])
+    position = np.array([x, y])
+    distance_from_center = np.linalg.norm(position - image_center)
+
+    effective_radius = 300
+    interpolation_range = 50
+
+    if distance_from_center < effective_radius:
+        return angleXbilerp, angleYbilerp
+    elif distance_from_center > effective_radius + interpolation_range:
+        return angleXpoly, angleYpoly
+    else:
+        # interpolate between the two
+        weight = (distance_from_center - effective_radius) / interpolation_range
+        angleX = (1 - weight) * angleXbilerp + weight * angleXpoly
+        angleY = (1 - weight) * angleYbilerp + weight * angleYpoly
+        return angleX, angleY
+
+
 def main():
 
     # only needed to display the polynom
