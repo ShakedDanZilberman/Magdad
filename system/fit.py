@@ -364,6 +364,26 @@ def main():
     ax2.set_zlabel("angleY")
     ax2.legend()
 
+    # Plot the difference between the measurements and the polynomial fit
+    fig2 = plt.figure(figsize=(14, 10))
+    ax3 = fig2.add_subplot(121, projection="3d")
+    angleX_diff = evaluate_polynomial(x, y, coeffsX, degree=3) - thetaX
+    ax3.scatter(x, y, angleX_diff, color="red", label="angleX Difference", s=100)
+    ax3.set_title("Difference between angleX Data and Fit")
+    ax3.set_xlabel("rx")
+    ax3.set_ylabel("ry")
+    ax3.set_zlabel("angleX Difference")
+    ax3.legend()
+
+    ax4 = fig2.add_subplot(122, projection="3d")
+    angleY_diff = evaluate_polynomial(x, y, coeffsY, degree=3) - thetaY
+    ax4.scatter(x, y, angleY_diff, color="blue", label="angleY Difference", s=100)
+    ax4.set_title("Difference between angleY Data and Fit")
+    ax4.set_xlabel("rx")
+    ax4.set_ylabel("ry")
+    ax4.set_zlabel("angleY Difference")
+    ax4.legend()
+
     plt.show()
 
     print("Polynomial for angleX:")
