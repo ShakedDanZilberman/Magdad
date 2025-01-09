@@ -6,3 +6,8 @@
 4. File > Examples > Firmata > StandardFirmata.
 5. Tools > Processor: "..." > "..." (Old Bootloader) > Upload.
 6. Run `system/main.py`.
+
+errors:
+1. "pip is not recognized" 
+להריץ
+python -m pip install...
