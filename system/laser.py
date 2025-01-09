@@ -68,12 +68,16 @@ class LaserPointer:
             tuple: The angles for the servos: (angleX, angleY)
         """
         # Calculate angleX using the full polynomial expression
-        angleX = fit.evaluate_polynomial(coordinates[0], coordinates[1], self.coeffsX)
+        angleXpolynomial = fit.evaluate_polynomial(coordinates[0], coordinates[1], self.coeffsX)
 
         # Calculate angleY using the full polynomial expression
-        angleY = fit.evaluate_polynomial(coordinates[0], coordinates[1], self.coeffsY)
+        angleYpolynomial = fit.evaluate_polynomial(coordinates[0], coordinates[1], self.coeffsY)
 
-        return angleX, angleY
+        # Calculate angleX using the bilerp method
+        angleXbilerp, angleYbilerp = fit.bilerp(coordinates[0], coordinates[1])
+
+        # return 0.5 * (angleXbilerp + angleXpolynomial), 0.5 * (angleYbilerp + angleYpolynomial)
+        return angleXbilerp, angleYbilerp
 
     def move(self, point):
         """
