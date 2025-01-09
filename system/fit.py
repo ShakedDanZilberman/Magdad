@@ -9,6 +9,13 @@ ENTER = 13
 ESC = 27
 BACKSPACE = 8
 
+STARTX = 20
+STARTY = 10
+deltaX = 5
+deltaY = 5
+ENDX = 105
+ENDY = 85
+
 # Full MEASUREMENTS data (not truncated)
 MEASUREMENTS = [
     (624, 235, 20, 42),
@@ -101,13 +108,6 @@ def measure():
     cv2.setMouseCallback(title, on_mouse)
     measurements = []
     WAIT_FOR_KEY = 1  # milliseconds
-
-    STARTX = 20
-    STARTY = 10
-    deltaX = 15
-    deltaY = 8
-    ENDX = 85
-    ENDY = 85
 
     rangeX = range(STARTX, ENDX + 1, deltaX)
     rangeY = range(STARTY, ENDY + 1, deltaY)
