@@ -8,6 +8,7 @@ with ImportDefence():
     import numpy as np
     from pyfirmata import Arduino, util
     import matplotlib.pyplot as plt
+    from ultralytics import YOLO
 
 from contours import ContoursHandler
 from changes import ChangesHandler
@@ -16,6 +17,7 @@ from image_processing import RawHandler, ImageParse
 from mouseCamera import MouseCameraHandler
 from object_finder import show_targets, get_targets
 from motion import DifferenceHandler
+from yolo import YOLOHandler
 from laser import LaserPointer
 from cameraIO import Camera
 from object_finder import average_of_heatmaps
@@ -100,6 +102,7 @@ def main():
     changesHandler = ChangesHandler()
     differenceHandler = DifferenceHandler()
     contoursHandler = ContoursHandler()
+    yoloHandler = YOLOHandler()
     laser = threading.Thread(target=laser_thread)
     laser.start()
     target_queue = []
@@ -116,6 +119,7 @@ def main():
             changesHandler,
             differenceHandler,
             contoursHandler,
+            yoloHandler,
         ]:
             handler.add(img)
             handler.display()
@@ -123,6 +127,8 @@ def main():
         # changesHandler.display()
         img_contours = contoursHandler.get()
         img_changes = changesHandler.get()
+        img_objects = yoloHandler.get()  # TODO: Use the bounding boxes to get the targets
+        # TODO: make the decision algorithm more robust, clear, and DRY
         circles_high, circles_low, centers_contours = get_targets(img_contours)
         targets_contours = circles_high, circles_low, centers_contours
         circles_high, circles_low, centers_changes = show_targets("img_contours", img_contours, targets_contours)
@@ -162,4 +168,4 @@ def main():
 
 
 if __name__ == "__main__":
-    hit_cursor_main()
+    main()
