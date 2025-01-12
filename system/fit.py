@@ -57,8 +57,7 @@ MEASUREMENTS = [
     (146, 158, 95, 50),
     (152, 103, 95, 58),
     (161, 45, 95, 66),
-    (167, 0, 95, 74),
-    
+    (167, 0, 95, 74)
 ]
 
 
@@ -324,7 +323,7 @@ def evaluate(x, y, coeffsX, coeffsY):
         return angleX, angleY
 
 
-def graphs():
+def show_graphs():
 
     # only needed to display the polynom
     measurements = MEASUREMENTS
@@ -403,6 +402,64 @@ def graphs():
     print(coeffsY)
 
 
+def display_grid():
+    """
+    Display the grid of points on the screen.
+    Connects the points with lines.
+    This is basically a grid in angleX, angleY space,
+    cast onto the image (x, y) space.
+    """
+    # Create a blank image
+    img = np.zeros((480, 640, 3), dtype=np.uint8)
+    # color it white
+    img.fill(255)
+    # add points to the image from the measurements
+    black = (0, 0, 0)
+    radius = 4
+    for x, y, angleX, angleY in MEASUREMENTS:
+        cv2.circle(img, (x, y), radius, black, -1)
+    # connect the points with lines
+    # first, convert MEASUREMETS into a 2D array based on the angleX, angleY values
+    
+    # sort the measurements by angleX, angleY
+    MEASUREMENTS.sort(key=lambda x: (x[2], x[3]))
+
+    # We'd like to connect the points in a grid-like fashion
+
+    # First, we need to find the unique angleX and angleY values
+    angleX_values = set([item[2] for item in MEASUREMENTS])
+    angleY_values = set([item[3] for item in MEASUREMENTS])
+
+    # Now, we can iterate over the angleX and angleY values
+    # and connect the points in a grid-like fashion
+
+    # Connect the points in the x-direction
+    for angleX in angleX_values:
+        points = [item for item in MEASUREMENTS if item[2] == angleX]
+        points.sort(key=lambda x: x[3])
+        for i in range(len(points) - 1):
+            x1, y1, _, _ = points[i]
+            x2, y2, _, _ = points[i + 1]
+            cv2.line(img, (x1, y1), (x2, y2), black, 2)
+
+    # Connect the points in the y-direction
+    for angleY in angleY_values:
+        points = [item for item in MEASUREMENTS if item[3] == angleY]
+        points.sort(key=lambda x: x[2])
+        for i in range(len(points) - 1):
+            x1, y1, _, _ = points[i]
+            x2, y2, _, _ = points[i + 1]
+            cv2.line(img, (x1, y1), (x2, y2), black, 2)
+
+    # Display the image
+    cv2.imshow("Grid", img)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
+
+
+
 if __name__ == "__main__":
     # measure()
-    graphs()
+    # show_graphs()
+    display_grid()
