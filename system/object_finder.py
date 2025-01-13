@@ -7,7 +7,7 @@ INITIAL_BLURRING_KERNEL = (3, 3)
 HIGH_CEP_INDEX = 0.9
 LOW_CEP_INDEX = 0.5
 
-def average_of_heatmaps(ttchanges_map, contours_map):
+def average_of_heatmaps(changes_map, contours_map):
     """Intersect two heatmaps
 
     Args:

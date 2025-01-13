@@ -6,6 +6,7 @@ class DifferenceHandler(Handler):
     """
     DifferenceHandler class to calculate the difference between the current frame and the previous frame.
     This is useful for detecting movement.
+    IT IS NOT CURRENTLY USED IN THE SYSTEM FOR OBJECT DETECTION.
 
     add(img) - adds the image to the handler; if the previous image is None, it is skipped.
     clear() - clears the previous image and the difference

@@ -2,6 +2,9 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 
+# *** This module uses the planar homography method to calculate the depth of an object in an image ***
+# LIDAR is better. This is a backup method.
+
 def load_and_resize_image(image_path, max_width=1600, max_height=900):
     """
     Load an image and resize it if it's too large

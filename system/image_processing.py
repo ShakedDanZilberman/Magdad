@@ -5,6 +5,18 @@ import numpy as np
 from constants import IMG_WIDTH, IMG_HEIGHT
 
 class Handler(ABC):
+    """
+    Abstract class for image handling.
+
+    A handler is used to store an image and perform operations on it,
+    such as displaying it or getting it for the target detection.
+
+    Methods:
+        add: Add a frame to the handler. Call this every frame to update the handler.
+        get: Get the image from the handler. This returns a black-and-white image, where white pixels represent the suspected targets.
+        display: Display the image stored in the handler. This uses cv2.imshow() to display the image with a unique title.
+        clear: Clear the image and memory stored in the handler. This is useful for resetting the handler.
+    """
     @abstractmethod
     def add(self, img):
         """
@@ -80,7 +92,15 @@ class RawHandler(Handler):
 
 
 class ImageParse:
-    """Class containing utilities for image processing"""
+    """
+    Class containing utilities for image processing
+    
+    Methods:
+        toGrayscale: Convert an image to grayscale
+        differenceImage: Calculate the difference between two images
+        blurImage: Blur an image using a Gaussian filter
+        aboveThreshold: Apply a threshold to an image, converting it to a binary image
+    """
     @staticmethod
     def toGrayscale(img):
         """Convert an image to grayscale
@@ -141,16 +161,31 @@ class ImageParse:
             threshold (int): The threshold value
 
         Returns:
-            np.ndarray: The thresholded image
+            np.ndarray: The thresholded image as a binary image
         """
         return cv2.threshold(img, threshold, 255, cv2.THRESH_TOZERO)[1]
     
     @staticmethod
     def image_sum(img):
+        """Calculate the sum of the pixel values in an image
+
+        Args:
+            img (np.ndarray): The image to sum
+
+        Returns:
+            int: The sum of the pixel values
+        """
         return np.sum(img)  
     
     @staticmethod
     def increase_contrast(img, factor):
-        img = cv2.convertScaleAbs(img, factor, 0)
-        # print(img)
-        return img
+        """Increase the contrast of an image
+
+        Args:
+            img (np.ndarray): The image to increase the contrast of
+            factor (float): The factor to increase the contrast by
+
+        Returns:
+            np.ndarray: The image with increased contrast
+        """
+        return cv2.convertScaleAbs(img, factor, 0)

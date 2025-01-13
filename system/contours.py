@@ -2,6 +2,10 @@ from image_processing import ImageParse, Handler
 import numpy as np
 import cv2
 
+
+# These parameters are used to optimize the edges for contour extraction
+# Tune these parameters to get the best results
+
 DILATION_KERNEL = (5, 5)
 OPENING_KERNEL = (5, 5)
 CLOSING_KERNEL = (3, 3)

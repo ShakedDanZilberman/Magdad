@@ -23,8 +23,8 @@ from cameraIO import Camera
 from object_finder import average_of_heatmaps
 from gui import LIDARDistancesGraph
 
-timestep = 0
-centers = [(30, 60)]
+timestep = 0  # Global timestep, used to keep track of the number of frames processed
+laser_targets = [(30, 60)]  # List of targets for the laser pointer, used to share information between threads
 
 CAMERA_INDEX = 1
 
@@ -38,25 +38,28 @@ def shoot(target):
 
 
 def laser_thread():
-    print("Laser thread started")
-    global centers, laser_point
+    """
+    Thread that moves the laser pointer to the target.
+    The targets are aquired as an asynchronous input from the main thread.
+    Only this thread may access LaserPointer which controls the laser pointer and the LIDAR.
+    """
+    print("Laser thread started.")
+    global laser_targets, laser_point
     laser_pointer = LaserPointer()
-    graph = LIDARDistancesGraph()
-    previous_distances = [0] * 3
+    print("Laser pointer initialised and connected.")
+    distances_interative_graph = LIDARDistancesGraph()
     while True:
-        my_centers = centers.copy()
-        my_centers = sorted(my_centers, key=lambda x: x[0])
-        for center in my_centers:
+        my_targets = laser_targets.copy()
+        my_targets = sorted(my_targets, key=lambda x: x[0])  # sort by x coordinate to create a smooth left-to-right movement
+        for center in my_targets:
+            # Move the laser pointer to the target
             laser_pointer.move(center)
-            # laser_pointer.move((300, 190))
 
+            # Measure the distance to the target
             distance = laser_pointer.distance()
-            previous_distances.append(distance)
-            previous_distances.pop(0)
-            measured_distance = sum(previous_distances) / 3
-            print("Measured distance:", measured_distance)
-            graph.add_distance(measured_distance)
-            graph.plot()
+            distances_interative_graph.add_distance(distance)
+            # print("Measured distance:", distances_interative_graph.distance())
+            distances_interative_graph.plot()
 
             time.sleep(0.1)
         time.sleep(0.1)
@@ -66,7 +69,10 @@ def laser_thread():
 
 
 def hit_cursor_main():
-    global CAMERA_INDEX, timestep, centers
+    """
+    An alternative to the main function that uses the mouse cursor as the target for the laser pointer.
+    """
+    global CAMERA_INDEX, timestep, laser_targets
     detectCameras()
     cam = Camera(CAMERA_INDEX)
     handler = MouseCameraHandler()
@@ -81,8 +87,9 @@ def hit_cursor_main():
 
         handler.add(img)
         handler.display()
+
         mousePos = handler.getMousePosition()
-        centers = [mousePos]
+        laser_targets = [mousePos]
         
         if cv2.waitKey(1) == 32:  # Whitespace
             shoot(mousePos)
@@ -95,7 +102,7 @@ def hit_cursor_main():
 
 
 def main():
-    global CAMERA_INDEX, timestep, centers
+    global CAMERA_INDEX, timestep, laser_targets
     detectCameras()
     cam = Camera(CAMERA_INDEX)
     rawHandler = RawHandler()
@@ -104,14 +111,13 @@ def main():
     contoursHandler = ContoursHandler()
     yoloHandler = YOLOHandler()
     laser = threading.Thread(target=laser_thread)
-    laser.start()
+    # laser.start()
     target_queue = []
     target = None
 
     
-    number_of_frames = 0
     while True:
-        number_of_frames += 1
+        timestep += 1
         img = cam.read()
 
         for handler in [
@@ -140,22 +146,22 @@ def main():
         else:
             circles_high, circles_low, centers_changes = [], [], []
             targets_changes = circles_high, circles_low, centers_changes
-        if number_of_frames == INITIAL_CONTOUR_EXTRACT_FRAME_NUM:
+        if timestep == INITIAL_CONTOUR_EXTRACT_FRAME_NUM:
             for center in centers_contours:
                 target_queue.append(center)
-                centers.append(center)
-        elif number_of_frames%CHECK_FOR_NEW_OBJECTS == CHECK_FOR_NEW_OBJECTS-1 and ImageParse.image_sum(differenceHandler.get()) <= DIFF_THRESH:
+                laser_targets.append(center)
+        elif timestep%CHECK_FOR_NEW_OBJECTS == CHECK_FOR_NEW_OBJECTS-1 and ImageParse.image_sum(differenceHandler.get()) <= DIFF_THRESH:
                 for center in centers_changes:
-                    centers.append(center)
+                    laser_targets.append(center)
                     target_queue.append(center)
                 changesHandler.clear()
                 img_changes = changesHandler.get(img)
         # print("queue:", centers)
-        if number_of_frames % CHECK_FOR_NEW_OBJECTS == 0 and len(target_queue) > 0:
+        if timestep % CHECK_FOR_NEW_OBJECTS == 0 and len(target_queue) > 0:
             target = target_queue.pop(0)
             
             if not target == None:
-                centers.append(target)
+                laser_targets.append(target)
                 target = None
         
         if cv2.waitKey(1) == 32:  # Whitespace
@@ -168,4 +174,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    hit_cursor_main()

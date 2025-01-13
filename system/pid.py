@@ -3,6 +3,10 @@ import numpy as np
 
 
 class PID:
+    """
+    PID controller for general use.
+    Currently redundant, but can be used for future implementations.
+    """
     def __init__(self, Kp=0.1, Ki=0.1, Kd=0):
         """
         Initialize PID controller

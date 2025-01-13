@@ -21,7 +21,9 @@ class MouseCameraHandler(Handler):
     def display(self):
         if self.img is None:
             return
-        cv2.imshow(MouseCameraHandler.TITLE, self.img)
+        from fit import display_grid
+        img = display_grid(self.img, False)
+        cv2.imshow(MouseCameraHandler.TITLE, img)
 
     def mouse_callback(self, event, x, y, flags, param):
         if event == cv2.EVENT_LBUTTONDOWN:

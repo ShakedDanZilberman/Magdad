@@ -9,7 +9,7 @@ import os
 
 class LaserPointer:
     """
-    Class for controlling the laser pointer.
+    Class for controlling the laser pointer and LIDAR mounted on 2 servos.
     """
     servoV_pin = 5
     servoH_pin = 3
@@ -51,8 +51,6 @@ class LaserPointer:
         it = util.Iterator(self.board)
         it.start()
 
-        # get polyonm
-        # measure?
         self.coeffsX, self.coeffsY = fit.get_coeefs()
 
 
@@ -88,7 +86,7 @@ class LaserPointer:
         """
         self.point = point
         angleX, angleY = self.angle_from_coordinates(point)
-        print("Moving to angles:", angleX, angleY)
+        # print("Moving to angles:", angleX, angleY)
         if angleX is None or angleY is None:
             return
         # bound the angle values
@@ -129,7 +127,10 @@ class LaserPointer:
 
     def distance(self):
         """
-        Get the distance from the sensor.
+        Get the distance from the sensor (LIDAR).
+
+        Uses the formula: $$distance = COEFFICIENT \\cdot voltage^{POWER}$$
+        The coefficients are determined experimentally.
         """
         # magic numbers for the conversion, found empirically
         A2D = (5.0 / 1023.0) * 1000

@@ -100,6 +100,19 @@ def find_red_point(frame):
 
 
 def measure():
+    """
+    Measure the angles for the laser pointer at each point in the grid.
+
+    The user can click on the red point or the mouse cursor to add a measurement.
+    Press Enter to add the red point to the measurements.
+    Press Space to add the mouse cursor to the measurements.
+    Press Backspace to skip the current angle.
+
+    Press Esc to exit the program.
+
+    After all measurements are taken, the program will print the measurements and exit.
+    *TAKE THE PRINTED MEASUREMENTS AND COPY THEM INTO THE MEASUREMENTS LIST ABOVE*
+    """
     mouseX, mouseY = 0, 0
     from laser import LaserPointer
     from cameraIO import Camera
@@ -110,6 +123,9 @@ def measure():
     title = "Camera Feed"
 
     def on_mouse(event, x, y, flags, param):
+        """
+        Mouse callback function. Updates the global mouseX, mouseY variables to the position of the click.
+        """
         nonlocal mouseX, mouseY
         if event == cv2.EVENT_LBUTTONDOWN:
             mouseX, mouseY = x, y
@@ -119,10 +135,11 @@ def measure():
     measurements = []
     WAIT_FOR_KEY = 1  # milliseconds
 
-    rangeX = range(STARTX, ENDX + 1, deltaX)
-    rangeY = range(STARTY, ENDY + 1, deltaY)
+    # The ranges of angles to measure
+    rangeAngleX = range(STARTX, ENDX + 1, deltaX)
+    rangeAngleY = range(STARTY, ENDY + 1, deltaY)
 
-    angles = iter(itertools.product(rangeX, rangeY))
+    angles = iter(itertools.product(rangeAngleX, rangeAngleY))
     nextAngleFlag = True
 
     try:
@@ -190,6 +207,23 @@ def measure():
 
 
 def bilerp(x0, y0):
+    """
+    Perform bilinear interpolation to estimate the angleX and angleY values at the given point (x0, y0).
+    Calculates the weighted average of the four closest points to the given point.
+    Method:
+        - Find the four closest points to the given point (x0, y0) in the x, y space.
+        - Calculate the distance between the given point and each of the four closest points.
+        - Calculate the weight for each of the four points based on the inverse of the distance.
+        - Calculate the weighted average of the angleX and angleY values of the four points.
+        - Normalize the weighted average by dividing by the sum of the weights.
+
+    Args:
+        x0 (float): The x-coordinate of the point.
+        y0 (float): The y-coordinate of the point.
+
+    Returns:
+        tuple: The estimated angleX and angleY values at the point (x0, y0).
+    """
     # Extract the x, y, thetaX, and thetaY values from MEASUREMENTS
     x = np.array([item[0] for item in MEASUREMENTS])
     y = np.array([item[1] for item in MEASUREMENTS])
@@ -230,6 +264,7 @@ def bilerp(x0, y0):
 def fit_3d_polynomial(x, y, z, degree=3):
     """
     Fits a 3rd-degree 2D polynomial f(x, y) = z using least squares regression.
+    Returns the coefficients of the polynomial.
     """
 
     x = np.array(x)
@@ -271,6 +306,7 @@ def print_polynomial(coeffs, degree=3, var1="x", var2="y"):
 def evaluate_polynomial(x, y, coeffs, degree=3):
     """
     Evaluates the fitted 2D polynomial at points (x, y).
+
     """
     x = np.array(x)
     y = np.array(y)
@@ -285,6 +321,10 @@ def evaluate_polynomial(x, y, coeffs, degree=3):
 
 
 def get_data_from_measurements(measurements):
+    """
+    Extracts the x, y, thetaX, and thetaY values from the measurements
+    and returns them as separate lists.
+    """
     x = [item[0] for item in measurements]
     y = [item[1] for item in measurements]
     thetaX = [item[2] for item in measurements]
@@ -293,6 +333,9 @@ def get_data_from_measurements(measurements):
 
 
 def get_coeefs(measurements=MEASUREMENTS):
+    """
+    Fits a 3rd-degree 2D polynomial to the measurements and returns the coefficients.
+    """
     x, y, thetaX, thetaY = get_data_from_measurements(measurements)
     # Fit the 3D polynomial to the data
     coeffsX = fit_3d_polynomial(x, y, thetaX, degree=3)
@@ -301,6 +344,23 @@ def get_coeefs(measurements=MEASUREMENTS):
 
 
 def evaluate(x, y, coeffsX, coeffsY):
+    """
+    Evaluates the 3rd-degree 2D polynomial at the given point (x, y).
+    Returns the estimated angleX and angleY values.
+
+    This is the most important function in this script,
+    because it is used to estimate the angleX and angleY values
+    at any point in the image space (x, y).
+
+    Args:
+        x (float): The x-coordinate of the point.
+        y (float): The y-coordinate of the point.
+        coeffsX (np.ndarray): The coefficients of the 3rd-degree polynomial for angleX.
+        coeffsY (np.ndarray): The coefficients of the 3rd-degree polynomial for angleY.
+
+    Returns:
+        tuple: The estimated angleX and angleY values at the point (x, y).
+    """
     angleXbilerp, angleYbilerp = bilerp(x, y)
     angleXpoly = evaluate_polynomial(x, y, coeffsX, degree=3)
     angleYpoly = evaluate_polynomial(x, y, coeffsY, degree=3)
@@ -324,7 +384,15 @@ def evaluate(x, y, coeffsX, coeffsY):
 
 
 def show_graphs():
+    """
+    Show the 3D polynomial fit for angleX and angleY.
 
+    This function is used to visualize the 3D polynomial fit for angleX and angleY.
+    It displays two 3D plots: one for angleX and one for angleY.
+
+    It also displays the difference between the measurements and the polynomial fit,
+    showing how well the polynomial fits the data.
+    """
     # only needed to display the polynom
     measurements = MEASUREMENTS
     coeffsX, coeffsY = get_coeefs(measurements)
@@ -402,17 +470,25 @@ def show_graphs():
     print(coeffsY)
 
 
-def display_grid():
+def display_grid(img=None, display=True):
     """
     Display the grid of points on the screen.
     Connects the points with lines.
     This is basically a grid in angleX, angleY space,
     cast onto the image (x, y) space.
+
+    Args:
+        img (np.ndarray, optional): The image to display the grid on. Defaults to None.
+        display (bool, optional): Whether to display the image. Defaults to True.
+
+    Returns:
+        np.ndarray: The image with the grid drawn on it.
     """
-    # Create a blank image
-    img = np.zeros((480, 640, 3), dtype=np.uint8)
-    # color it white
-    img.fill(255)
+    if img is None:
+        # Create a blank image
+        img = np.zeros((480, 640, 3), dtype=np.uint8)
+        # color it white
+        img.fill(255)
     # add points to the image from the measurements
     black = (0, 0, 0)
     radius = 4
@@ -451,15 +527,18 @@ def display_grid():
             x2, y2, _, _ = points[i + 1]
             cv2.line(img, (x1, y1), (x2, y2), black, 2)
 
-    # Display the image
-    cv2.imshow("Grid", img)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    if display:
+        # Display the image
+        cv2.imshow("Grid", img)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+    else:
+        return img
 
 
 
 
 if __name__ == "__main__":
-    # measure()
-    # show_graphs()
+    # measure()  # Uncomment this line to measure the angles.
+    show_graphs()
     display_grid()
