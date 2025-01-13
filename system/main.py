@@ -111,7 +111,7 @@ def main():
     contoursHandler = ContoursHandler()
     yoloHandler = YOLOHandler()
     laser = threading.Thread(target=laser_thread)
-    # laser.start()
+    laser.start()
     target_queue = []
     target = None
 
@@ -155,7 +155,7 @@ def main():
                     laser_targets.append(center)
                     target_queue.append(center)
                 changesHandler.clear()
-                img_changes = changesHandler.get(img)
+                img_changes = changesHandler.get()
         # print("queue:", centers)
         if timestep % CHECK_FOR_NEW_OBJECTS == 0 and len(target_queue) > 0:
             target = target_queue.pop(0)
@@ -174,4 +174,4 @@ def main():
 
 
 if __name__ == "__main__":
-    hit_cursor_main()
+    main()
