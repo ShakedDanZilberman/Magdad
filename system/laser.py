@@ -41,7 +41,7 @@ class LaserPointer:
             os.system("mode")
             sys.exit()
 
-        self.board.digital[LaserPointer.laser_pin].write(1)
+        self.turn_on()
         # Attach the servo to the board
         self.servoV = self.board.get_pin(f"d:{LaserPointer.servoV_pin}:s")  # 's' means it's a servo
         self.servoH = self.board.get_pin(f"d:{LaserPointer.servoH_pin}:s")

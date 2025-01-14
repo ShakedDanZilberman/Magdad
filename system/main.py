@@ -47,7 +47,7 @@ def laser_thread():
     global laser_targets, laser_point
     laser_pointer = LaserPointer()
     print("Laser pointer initialised and connected.")
-    distances_interative_graph = LIDARDistancesGraph()
+    distances_interative_graph = LIDARDistancesGraph(show=False)
     while True:
         my_targets = laser_targets.copy()
         my_targets = sorted(my_targets, key=lambda x: x[0])  # sort by x coordinate to create a smooth left-to-right movement
@@ -58,7 +58,7 @@ def laser_thread():
             # Measure the distance to the target
             distance = laser_pointer.distance()
             distances_interative_graph.add_distance(distance)
-            # print("Measured distance:", distances_interative_graph.distance())
+            print("Measured distance:", distances_interative_graph.distance())
             distances_interative_graph.plot()
 
             time.sleep(0.1)

@@ -30,7 +30,7 @@ class LIDARDistancesGraph:
         - The class uses a moving average to smooth out the distances.
         - The class filters out incorrect readings by comparing the current distance to the previous two distances.
     """
-    def __init__(self):
+    def __init__(self, show=True):
         self.distances = [0]
         self.real_distances = [0]
         self.moving_average = [0]
@@ -41,19 +41,21 @@ class LIDARDistancesGraph:
         self.before_previous_distance = 0
         self.MOVING_AVERAGE_FRAMESIZE = 5
 
-        # set the plt size to 1/2 of the default
-        plt.rcParams['figure.figsize'] = [6.4, 4.8]
-        plt.ion()
-        self.fig, self.ax = plt.subplots()
-        ax = self.ax
-        self.line, = ax.plot([], [], 'b-')
-        self.realline, = ax.plot([], [], 'r--')
-        self.moving_average_line, = ax.plot([], [], 'g-')
-        ax.set_xlabel("Time")
-        ax.set_ylabel("LIDAR Distance")
-        ax.set_title("LIDAR Distance vs Time")
-        plt.legend(["Filtered", "Raw", "Moving Average"])
-        plt.show()
+        self.show = show
+        if show:
+            # set the plt size to 1/2 of the default
+            plt.rcParams['figure.figsize'] = [6.4, 4.8]
+            plt.ion()
+            self.fig, self.ax = plt.subplots()
+            ax = self.ax
+            self.line, = ax.plot([], [], 'b-')
+            self.realline, = ax.plot([], [], 'r--')
+            self.moving_average_line, = ax.plot([], [], 'g-')
+            ax.set_xlabel("Time")
+            ax.set_ylabel("LIDAR Distance")
+            ax.set_title("LIDAR Distance vs Time")
+            plt.legend(["Filtered", "Raw", "Moving Average"])
+            plt.show()
 
     def add_distance(self, distance):
         self.real_distances.append(distance)
@@ -84,6 +86,8 @@ class LIDARDistancesGraph:
         return self.moving_average[-1]
     
     def plot(self):
+        if not self.show:
+            return
         self.line.set_xdata(self.times)
         self.line.set_ydata(self.distances)
         self.realline.set_xdata(self.times)
