@@ -20,7 +20,8 @@ def gun_shot():
     sleep(0.2)
     board.digital[gun_pin].write(0)
 def gun_move(deg):
-    gun_servo.write(deg*180/240)
+    deg *= 240 / 180  # The servo thinks in terms of 0-180 degrees, but the servo can move 240 degrees
+    gun_servo.write(deg)
 def main():
     while True:
         gun_shot()

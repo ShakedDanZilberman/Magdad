@@ -99,7 +99,7 @@ def find_red_point(frame):
     return cX, cY
 
 
-def measure():
+def measure_for_lidar():
     """
     Measure the angles for the laser pointer at each point in the grid.
 
@@ -537,8 +537,114 @@ def display_grid(img=None, display=True):
 
 
 
+def measure_for_gun():
+    """
+    Measure the angles for the gel blaster at each point in the grid.
+
+    The user can click on the red point or the mouse cursor to add a measurement.
+    Press Enter to add the red point to the measurements.
+    Press Space to add the mouse cursor to the measurements.
+    Press Backspace to skip the current angle.
+
+    Press Esc to exit the program.
+
+    After all measurements are taken, the program will print the measurements and exit.
+    *TAKE THE PRINTED MEASUREMENTS AND COPY THEM INTO THE MEASUREMENTS LIST ABOVE*
+    """
+    mouseX, mouseY = 0, 0
+    from gun import Gun
+    from cameraIO import Camera
+    from main import CAMERA_INDEX
+
+    gun = Gun()
+    camera = Camera(CAMERA_INDEX)
+    title = "Camera Feed"
+
+    def on_mouse(event, x, y, flags, param):
+        """
+        Mouse callback function. Updates the global mouseX, mouseY variables to the position of the click.
+        """
+        nonlocal mouseX, mouseY
+        if event == cv2.EVENT_LBUTTONDOWN:
+            mouseX, mouseY = x, y
+
+    cv2.namedWindow(title)
+    cv2.setMouseCallback(title, on_mouse)
+    measurements = []
+    WAIT_FOR_KEY = 1  # milliseconds
+
+    # The ranges of angles to measure
+    rangeAngleX = range(STARTX, ENDX + 1, deltaX)
+
+    angles = iter(rangeAngleX)
+    nextAngleFlag = True
+
+    try:
+        while True:
+            # Get the feed from the camera
+            if nextAngleFlag:
+                angleX = next(angles)
+                print("Next angle: ", angleX)
+                gun.rotate(angleX)
+                time.sleep(0.3)
+                nextAngleFlag = False
+
+            frame = camera.read()
+            laserX, laserY = find_red_point(frame)
+            # convert the frame to BGR for display
+            frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+            cv2.circle(frame, (mouseX, mouseY), 7, (255, 0, 0), -1)
+            if laserX is not None and laserY is not None:
+                cv2.circle(frame, (laserX, laserY), 7, (0, 0, 255), -1)
+            # add text at the top left corner
+            text = "Enter chooses RED\nSpace chooses MOUSE\nBackspace skips angle"
+            textcolor = (255, 255, 255)
+            for i, line in enumerate(text.split("\n")):
+                cv2.putText(
+                    frame,
+                    line,
+                    (10, 20 + 20 * i),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.5,
+                    textcolor,
+                    1,
+                )
+            cv2.imshow(title, frame)
+
+            # if user presses Enter then add the red point to the measurements
+            key = cv2.waitKey(WAIT_FOR_KEY) & 0xFF
+            if key == ENTER:
+                measurements.append((laserX, laserY, angleX))
+                nextAngleFlag = True
+                print(f"Added measurement: ({laserX}, {laserY}, {angleX})")
+            # If the user presses the spacebar, add the mouse point to the measurements
+            if key == ord(" "):
+                measurements.append((mouseX, mouseY, angleX))
+                nextAngleFlag = True
+                print(f"Added measurement: ({mouseX}, {mouseY}, {angleX})")
+            # If the user presses backspace, skip the current angle
+            if key == BACKSPACE:
+                nextAngleFlag = True
+                print("Skipped angle")
+            # Esc key to exit
+            if key == ESC:
+                break
+    except KeyboardInterrupt:
+        print(measurements)
+        gun.exit()
+        raise
+    except StopIteration:
+        gun.exit()
+        print("All angles measured for gun:")
+
+    print(measurements)
+    cv2.destroyAllWindows()
+    gun.exit()
+
+
 
 if __name__ == "__main__":
-    # measure()  # Uncomment this line to measure the angles.
+    measure_for_lidar()  # Uncomment this line to measure the angles.
+    measure_for_gun()
     show_graphs()
     display_grid()
