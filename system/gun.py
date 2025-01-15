@@ -56,3 +56,6 @@ class Gun:
             print(f"WARNING: The angle {angle} must be in the range [0, 240].")
         angle *= 180 / 240  # The servo thinks in terms of 0-180 degrees, but the servo can move 240 degrees
         self.servo.write(angle)
+
+    def exit(self):
+        pass
