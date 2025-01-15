@@ -5,6 +5,8 @@ import sys
 import serial
 from time import sleep
 
+from constants import COM
+
 
 class Gun:
     def __init__(self):
@@ -20,7 +22,7 @@ class Gun:
         self.gun_pin = 10
         self.servo_pin = 4
         try:
-            self.board = Arduino("COM8")
+            self.board = Arduino(COM)
         except serial.serialutil.SerialException as e:
             print("Arduino not connected or COM port is wrong")
             # print the output of "mode" command in the CMD
