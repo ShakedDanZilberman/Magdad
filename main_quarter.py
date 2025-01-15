@@ -624,28 +624,28 @@ class LaserPointer:
         it = util.Iterator(self.board)
         it.start()
         # Coefficients for angleX polynomial
-        self.AX = 70
-        self.BX = -0.05
-        self.CX = 0.0001
-        self.DX = 0
-        self.EX = -0.1736
-        self.FX = 0.0001
-        self.GX = 0.0000
-        self.HX = 0.0001
-        self.IX = -0.0000
-        self.JX = 0
+        self.AX = 9.45632e+01
+        self.BX = 2.69643e-05
+        self.CX = -1.65539e-04
+        self.DX = -4.72132e-08
+        self.EX = -1.84593e-02
+        self.FX = -1.46460e-01
+        self.GX = -3.35683e-07
+        self.HX = -4.76762e-07
+        self.IX = 1.29607e-04
+        self.JX = 1.02539e-06
 
         # Coefficients for angleY polynomial
-        self.AY = 55.3912
-        self.BY = -0.1502
-        self.CY = 0.0001
-        self.DY = 0
-        self.EY = 0.0144
-        self.FY = 0.0
-        self.GY = 0.0000
-        self.HY = 0.0000
-        self.IY = 0.0000
-        self.JY = 0
+        self.AY = 1.23685e+02
+        self.BY = 7.69434e-03
+        self.CY = -2.19113e-03
+        self.DY = 1.39886e-07
+        self.EY = -1.28191e+00
+        self.FY = 1.74828e-01
+        self.GY = -1.62040e-06
+        self.HY = -1.66488e-05
+        self.IY = 1.91474e-04
+        self.JY = 7.83625e-06
 
         self.STARTX = 60
         self.STARTY = 40
@@ -732,6 +732,14 @@ class LaserPointer:
             + self.IY * X**2 * Y
             + self.JY * X**3
         )
+        if angleX > 180:
+            angleX = 180
+        if angleY > 180:
+            angleY = 180
+        if angleX < 0:
+            angleX = 0
+        if angleY < 0:
+            angleY = 0
         return angleX, angleY
 
     def move(self, point):
