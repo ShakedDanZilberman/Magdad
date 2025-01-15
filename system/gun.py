@@ -28,8 +28,8 @@ class Gun:
             sys.exit()
         it = util.Iterator(self.board)
         it.start()
-        self.servo = self.board.get_pin(f'd:{self.servo_pin}:s')
-        
+        self.servo = self.board.get_pin(f"d:{self.servo_pin}:s")
+
     def shoot(self):
         """
         Shoots the gun, assuming there is a gel-blaster ball in the chamber.
