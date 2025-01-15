@@ -1,0 +1,15 @@
+3rd-Degree 2D Polynomial Fit Coefficients:
+
+angleY = c0 + c1*x + c2*y + c3*x^2 + c4*x*y + c5*y^2 + c6*x^3 + c7*x^2*y + c8*x*y^2 + c9*y^3
+Coefficients for angleY vs rx, ry:
+c0: 7.23975e-06
+c1: -6.92635e-03
+c2: 2.56448e+00
+c3: -3.48961e+01
+
+angleX = c0 + c1*x + c2*y + c3*x^2 + c4*x*y + c5*y^2 + c6*x^3 + c7*x^2*y + c8*x*y^2 + c9*y^3
+Coefficients for angleX vs rx, ry:
+c0: 7.23975e-06
+c1: -6.92635e-03
+c2: 2.56448e+00
+c3: -3.48961e+01
