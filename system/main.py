@@ -93,10 +93,10 @@ def hit_cursor_main():
 
         mousePos = handler.getMousePosition()
         laser_targets = [mousePos]
+        thetaX, thetaY = fit.bilerp(*mousePos)
+        gun.rotate(thetaX)
         
         if cv2.waitKey(1) == 32:  # Whitespace
-            thetaX, thetaY = fit.bilerp(*mousePos)
-            gun.rotate(thetaX)
             gun.shoot()
 
         # Press Escape to exit
