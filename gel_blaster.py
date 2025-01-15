@@ -20,11 +20,15 @@ def gun_shot():
     sleep(0.2)
     board.digital[gun_pin].write(0)
 def gun_move(deg):
-    gun_servo.write(deg)
+    gun_servo.write(deg*180/240)
 def main():
     while True:
         gun_shot()
         sleep(5)
+        gun_move(10)
+        gun_shot()
+        sleep(5)
+        gun_move(180)
 
 if __name__ == '__main__':
     main()
