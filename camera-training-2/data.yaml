@@ -1,0 +1,12 @@
+names:
+- targets
+nc: 1
+roboflow:
+  license: CC BY 4.0
+  project: camera-training-ltw8l
+  url: https://universe.roboflow.com/ayalulu/camera-training-ltw8l/dataset/2
+  version: 2
+  workspace: ayalulu
+test: ../test/images
+train: ../train/images
+val: ../valid/images
