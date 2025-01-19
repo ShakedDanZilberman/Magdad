@@ -5,6 +5,8 @@ import sys
 import serial
 from time import sleep
 
+from constants import COM
+
 
 class Gun:
     def __init__(self):
@@ -19,8 +21,9 @@ class Gun:
 
         self.gun_pin = 10
         self.servo_pin = 4
+        self.sleep_duration = 0.2
         try:
-            self.board = Arduino("COM7")
+            self.board = Arduino(COM)
         except serial.serialutil.SerialException as e:
             print("Arduino not connected or COM port is wrong")
             # print the output of "mode" command in the CMD
@@ -28,8 +31,8 @@ class Gun:
             sys.exit()
         it = util.Iterator(self.board)
         it.start()
-        self.servo = self.board.get_pin(f'd:{self.servo_pin}:s')
-        
+        self.servo = self.board.get_pin(f"d:{self.servo_pin}:s")
+
     def shoot(self):
         """
         Shoots the gun, assuming there is a gel-blaster ball in the chamber.
@@ -39,7 +42,7 @@ class Gun:
             None
         """
         self.board.digital[self.gun_pin].write(1)
-        sleep(0.2)
+        sleep(self.sleep_duration)
         self.board.digital[self.gun_pin].write(0)
 
     def rotate(self, angle):

@@ -642,7 +642,6 @@ def measure_for_gun():
     gun.exit()
 
 
-
 if __name__ == "__main__":
     measure_for_lidar()  # Uncomment this line to measure the angles.
     measure_for_gun()

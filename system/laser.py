@@ -5,6 +5,7 @@ import serial
 import fit
 import sys
 import os
+from constants import COM
 # TODO - change import to class? maybe not? maybe it's okay
 
 class LaserPointer:
@@ -34,7 +35,7 @@ class LaserPointer:
         self.point = (60, 30)
         # you can check the correct port in the CMD with the command: mode
         try:
-            self.board = Arduino("COM5")
+            self.board = Arduino(COM)
         except serial.serialutil.SerialException as e:
             print("Arduino not connected or COM port is wrong")
             # print the output of "mode" command in the CMD
