@@ -2,10 +2,45 @@ import numpy as np
 from constants import IMG_HEIGHT, IMG_WIDTH
 import cv2
 
+
 INITIAL_BLURRING_KERNEL = (3, 3)
 
 HIGH_CEP_INDEX = 0.9
 LOW_CEP_INDEX = 0.5
+# sample rate - in frames, not in seconds
+SAMPLE_RATE = 24
+FRAMES_FOR_INITIALISATION = 30
+BRIGHTNESS_THRESHOLD = 240
+
+class Targets:
+    """
+    abstraction of the decision algorithm. todo: add a logic for extracting a coordinate and for resetting the image after a shot.
+    """
+
+    first_images = []
+
+    def __init__(self):
+        self.frame_number = 0
+        self.contours_heatmap = None
+        self.changes_heatmap = None
+        self.yolo_centers = None
+        self.contours_centers = None
+        self.changes_centers = None
+        self.target_queue = []
+
+    def add(self, frame_number, contours_heatmap, changes_heatmap, yolo_centers):
+        self.frame_number = frame_number
+        self.contours_heatmap = contours_heatmap
+        self.changes_heatmap = changes_heatmap
+        # at the "initial frame", add all current objects to the queue
+        if self.frame_number == SAMPLE_RATE//2:
+            _, _, self.contours_centers = get_targets(contours_heatmap)
+        if self.frame_number%SAMPLE_RATE == SAMPLE_RATE-1:
+            self.yolo_centers = yolo_centers
+            _, _, self.changes_centers = get_targets(changes_heatmap)
+        for centers in [self.changes_centers, self.contours_centers]:
+
+    def pop
 
 def average_of_heatmaps(changes_map, contours_map):
     """Intersect two heatmaps
