@@ -21,6 +21,7 @@ class Gun:
 
         self.gun_pin = 10
         self.servo_pin = 4
+        self.sleep_duration = 0.2
         try:
             self.board = Arduino(COM)
         except serial.serialutil.SerialException as e:
@@ -41,7 +42,7 @@ class Gun:
             None
         """
         self.board.digital[self.gun_pin].write(1)
-        sleep(0.2)
+        sleep(self.sleep_duration)
         self.board.digital[self.gun_pin].write(0)
 
     def rotate(self, angle):
