@@ -1,6 +1,7 @@
 from image_processing import ImageParse, Handler
 import numpy as np
 import cv2
+from constants import IMG_WIDTH, IMG_HEIGHT
 
 
 # These parameters are used to optimize the edges for contour extraction
@@ -63,6 +64,8 @@ class ContoursHandler(Handler):
         return erode
 
     def add(self, img):
+        if img is None:
+            img = np.zeros((IMG_HEIGHT, IMG_WIDTH), np.uint8)
         gray = ImageParse.toGrayscale(img)
         height, width = img.shape
         black_canvas = np.zeros((height, width, 3), dtype=np.uint8)

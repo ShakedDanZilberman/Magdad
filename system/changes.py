@@ -1,6 +1,7 @@
 import cv2
 from image_processing import Handler, ImageParse
 import numpy as np
+from constants import IMG_HEIGHT, IMG_WIDTH
 
 FRAMES_FOR_INITIALISATION = 30
 BRIGHTNESS_THRESHOLD = 240
@@ -33,6 +34,8 @@ class ChangesHandler(Handler):
         # Skip if index is -1
         if self.index != -1:
             # Skip images that are too bright
+            if img is None:
+                return
             if np.mean(img) > BRIGHTNESS_THRESHOLD:
                 return
 
@@ -79,7 +82,7 @@ class ChangesHandler(Handler):
         """Displays the difference between the current frame and the average of the first N frames"""
         TITLE = "Changes from Original"
         if not self.isReady():
-            LOADING_IMAGE = np.ones(self.img.shape, np.uint8) * 128
+            LOADING_IMAGE = np.ones((IMG_HEIGHT, IMG_WIDTH), np.uint8) * 128
             cv2.imshow(TITLE, LOADING_IMAGE)
         else:
             cv2.imshow(TITLE, self.diff)

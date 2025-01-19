@@ -23,6 +23,8 @@ class YOLOHandler(Handler):
         """
         self.img = img
         # convert the image to RGB from grayscale
+        if img is None:
+            return
         img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
         # remove printing
         results = self.model.predict(img, imgsz=640, stream=True, verbose=False)
@@ -72,6 +74,8 @@ class YOLOHandler(Handler):
         Returns:
             None
         """
+        if self.img is None:
+            return
         image = self.img.copy()
         image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
         black = (0, 0, 0)
