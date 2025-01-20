@@ -62,3 +62,18 @@ class Gun:
 
     def exit(self):
         pass
+
+
+class DummyGun:
+    # This class has exactly the same interface as Gun, but does nothing.
+    def __init__(self):
+        pass
+
+    def shoot(self):
+        print("DummyGun: Shooting")
+
+    def rotate(self, angle):
+        pass
+
+    def exit(self):
+        pass

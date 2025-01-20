@@ -116,7 +116,7 @@ def measure_for_lidar():
     mouseX, mouseY = 0, 0
     from laser import LaserPointer
     from cameraIO import Camera
-    from main import CAMERA_INDEX
+    from constants import CAMERA_INDEX
 
     laser_pointer = LaserPointer()
     camera = Camera(CAMERA_INDEX)

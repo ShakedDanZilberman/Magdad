@@ -22,12 +22,11 @@ from laser import LaserPointer
 from cameraIO import Camera
 from object_finder import average_of_heatmaps
 from gui import LIDARDistancesGraph
-from gun import Gun
+from gun import Gun, DummyGun
+from constants import CAMERA_INDEX
 
 timestep = 0  # Global timestep, used to keep track of the number of frames processed
 laser_targets = [(30, 60)]  # List of targets for the laser pointer, used to share information between threads
-
-CAMERA_INDEX = 1
 
 DIFF_THRESH = 0
 INITIAL_CONTOUR_EXTRACT_FRAME_NUM = 30
@@ -80,7 +79,7 @@ def hit_cursor_main():
     handler = MouseCameraHandler()
     # laser = threading.Thread(target=laser_thread)
     # laser.start()  # comment this line to disable the laser pointer
-    gun = Gun()
+    gun = DummyGun()  # DummyGun() or Gun()
 
     cv2.namedWindow(handler.TITLE)
     cv2.setMouseCallback(handler.TITLE, handler.mouse_callback)
@@ -105,7 +104,6 @@ def hit_cursor_main():
     cv2.destroyAllWindows()
 
 
-
 def main():
     global CAMERA_INDEX, timestep, laser_targets
     detectCameras()
@@ -119,7 +117,6 @@ def main():
     laser.start()
     target_queue = []
     target = None
-
     
     while True:
         timestep += 1

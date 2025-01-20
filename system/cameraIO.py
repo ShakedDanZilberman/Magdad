@@ -10,7 +10,7 @@ def detectCameras():
 
     If the camera at CAMERA_INDEX is connected, the function will print a message and return.
     """
-    from main import CAMERA_INDEX
+    from constants import CAMERA_INDEX
     # first try to connect to CAMERA_INDEX
     cam = cv2.VideoCapture(CAMERA_INDEX)
     if cam.isOpened():
