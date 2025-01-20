@@ -140,26 +140,36 @@ def main():
         img_changes = changesHandler.get()
         img_objects = yoloHandler.get()  # TODO: Use the bounding boxes to get the targets
         # TODO: make the decision algorithm more robust, clear, and DRY
+        # get the targets using the contour detection method
         circles_high, circles_low, centers_contours = get_targets(img_contours)
         targets_contours = circles_high, circles_low, centers_contours
+        # show them on screen
         circles_high, circles_low, centers_changes = show_targets("img_contours", img_contours, targets_contours)
 
         if isinstance(img_changes, np.ndarray) and img_changes.size > 1:
+            # get the targets using the image diffrecnce method
             circles_high, circles_low, centers_changes = get_targets(img_changes)
             targets_changes = circles_high, circles_low, centers_changes
+            # show them on screen
             circles_high, circles_low, centers_changes = show_targets("img_changes", img_changes, targets_changes)
         else:
             circles_high, circles_low, centers_changes = [], [], []
             targets_changes = circles_high, circles_low, centers_changes
+        # extract the objects using contour detection
         if timestep == INITIAL_CONTOUR_EXTRACT_FRAME_NUM:
             for center in centers_contours:
                 target_queue.append(center)
                 laser_targets.append(center)
-        elif timestep%CHECK_FOR_NEW_OBJECTS == CHECK_FOR_NEW_OBJECTS-1 and ImageParse.image_sum(differenceHandler.get()) <= DIFF_THRESH:
+        # at a constant rate, check for changes between the current image and and the original image
+        elif timestep%CHECK_FOR_NEW_OBJECTS == CHECK_FOR_NEW_OBJECTS-1 and ImageParse.image_sum(differenceHandler.get()) is not None and ImageParse.image_sum(differenceHandler.get()) <= DIFF_THRESH:
+                # add all new objects in the image 
                 for center in centers_changes:
                     laser_targets.append(center)
                     target_queue.append(center)
+                # immediately after adding targets to the target queue, reset the image changes heatmap, 
+                # so that the movements of objects caused by shooting do not count as new targets
                 changesHandler.clear()
+                # get the changes image again
                 img_changes = changesHandler.get()
         # print("queue:", centers)
         if timestep % CHECK_FOR_NEW_OBJECTS == 0 and len(target_queue) > 0:
@@ -179,4 +189,4 @@ def main():
 
 
 if __name__ == "__main__":
-    hit_cursor_main()
+    main()
