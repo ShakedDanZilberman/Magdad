@@ -38,9 +38,9 @@ class Targets:
         if self.frame_number%SAMPLE_RATE == SAMPLE_RATE-1:
             self.yolo_centers = yolo_centers
             _, _, self.changes_centers = get_targets(changes_heatmap)
-        for centers in [self.changes_centers, self.contours_centers]:
+        # for centers in [self.changes_centers, self.contours_centers]:
 
-    def pop
+    # def pop
 
 def average_of_heatmaps(changes_map, contours_map):
     """Intersect two heatmaps

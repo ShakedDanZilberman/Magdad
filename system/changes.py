@@ -56,7 +56,7 @@ class ChangesHandler(Handler):
         self.diff = ImageParse.differenceImage(img, self.avg)
         self.diff = ImageParse.blurImage(self.diff, 20)
         self.diff = ImageParse.aboveThreshold(self.diff, 10)
-        # self.diff = ImageParse.increase_contrast(self.diff, 1.5)
+        # self.diff = ImageParse.increase_contrast(self.diff, 1.5)  # leave this commented out for now, until it's fixed
 
 
     def get(self):
