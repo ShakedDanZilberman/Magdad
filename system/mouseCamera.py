@@ -23,6 +23,8 @@ class MouseCameraHandler(Handler):
             return
         from fit import display_grid
         img = display_grid(self.img, False)
+        text = "Press Space to shoot"
+        cv2.putText(img, text, (5, 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
         cv2.imshow(MouseCameraHandler.TITLE, img)
 
     def mouse_callback(self, event, x, y, flags, param):
