@@ -106,7 +106,7 @@ def hit_cursor_main():
 
 
 def just_changes_main():
-    global CAMERA_INDEX, timestep, laser_targets
+    global CAMERA_INDEX, timestep, gun_targets
     detectCameras()
     cam = Camera(CAMERA_INDEX)
     rawHandler = RawHandler("Whitespace to clear")
@@ -122,10 +122,6 @@ def just_changes_main():
         global gun_targets
         gun = Gun()
         print("Gun initialised and connected.")
-        # Wait for the first targets to flow in
-        while len(gun_targets) == 0:
-            time.sleep(0.2)
-        
         while True:
             my_targets = gun_targets.copy()
             # Sort by x coordinate to create a smooth right-to-left movement
@@ -136,7 +132,9 @@ def just_changes_main():
                 gun.rotate(thetaX)
                 time.sleep(0.1)
                 gun.shoot()
+                print("Shooting", center)
             time.sleep(1)
+        # TODO: It seems gun_thread is not moving, even though the targets are being updated. FIX
 
     
     gun = threading.Thread(target=gun_thread)
@@ -165,7 +163,14 @@ def just_changes_main():
 
         # add the targets from the changes to the queue
         if len(centers_changes) > 0:
-            laser_targets = centers_changes.copy()
+            # Remove from centers_changes any targets that are less than 20 pixels apart (unique targets)
+            targets = []
+            pixel_distance = 30
+            for center in centers_changes:
+                if all(np.linalg.norm(np.array(center) - np.array(target)) > pixel_distance for target in targets):
+                    targets.append(center)
+            gun_targets = targets.copy()
+            print("Targets:", gun_targets)
         
         if cv2.waitKey(1) == 32:  # Whitespace
             changesHandler.clear()
