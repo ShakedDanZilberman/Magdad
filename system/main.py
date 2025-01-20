@@ -104,7 +104,6 @@ def hit_cursor_main():
     cv2.destroyAllWindows()
 
 
-
 def main():
     global CAMERA_INDEX, timestep, laser_targets
     detectCameras()
@@ -118,7 +117,6 @@ def main():
     laser.start()
     target_queue = []
     target = None
-
     
     while True:
         timestep += 1
