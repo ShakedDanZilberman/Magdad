@@ -73,8 +73,9 @@ class RawHandler(Handler):
 
     TITLE = "Camera Connection"
 
-    def __init__(self):
+    def __init__(self, text=None):
         self.img = None
+        self.text = text
 
     def add(self, img):
         self.img = img
@@ -85,6 +86,9 @@ class RawHandler(Handler):
     def display(self):
         if self.img is None:
             return
+        if self.text is not None:
+            textcolor = (130, 255, 0)
+            cv2.putText(self.img, self.text, (7, 17), cv2.FONT_HERSHEY_SIMPLEX, 0.5, textcolor, 1)
         cv2.imshow(RawHandler.TITLE, self.img)
 
     def clear(self):
