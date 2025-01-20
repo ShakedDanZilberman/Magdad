@@ -27,6 +27,7 @@ from constants import CAMERA_INDEX
 
 timestep = 0  # Global timestep, used to keep track of the number of frames processed
 laser_targets = [(30, 60)]  # List of targets for the laser pointer, used to share information between threads
+gun_targets = []  # List of targets for the gun, used to share information between threads
 
 DIFF_THRESH = 0
 INITIAL_CONTOUR_EXTRACT_FRAME_NUM = 30
@@ -97,6 +98,77 @@ def hit_cursor_main():
         
         if cv2.waitKey(1) == 32:  # Whitespace
             gun.shoot()
+
+        # Press Escape to exit
+        if cv2.waitKey(1) == 27:
+            break
+    cv2.destroyAllWindows()
+
+
+def just_changes_main():
+    global CAMERA_INDEX, timestep, laser_targets
+    detectCameras()
+    cam = Camera(CAMERA_INDEX)
+    rawHandler = RawHandler("Whitespace to clear")
+    changesHandler = ChangesHandler()
+
+    def gun_thread():
+        """
+        Thread that moves the gun to the target and shoots.
+        The targets are aquired as an asynchronous input from the main thread.
+        """
+        import fit
+        print("Gun thread started.")
+        global gun_targets
+        gun = Gun()
+        print("Gun initialised and connected.")
+        # Wait for the first targets to flow in
+        while len(gun_targets) == 0:
+            time.sleep(0.2)
+        
+        while True:
+            my_targets = gun_targets.copy()
+            # Sort by x coordinate to create a smooth right-to-left movement
+            my_targets = sorted(my_targets, key=lambda x: x[0], reverse=True)
+            for center in my_targets:
+                # Move the laser pointer to the target
+                thetaX, thetaY = fit.bilerp(*center)
+                gun.rotate(thetaX)
+                time.sleep(0.1)
+                gun.shoot()
+            time.sleep(1)
+
+    
+    gun = threading.Thread(target=gun_thread)
+    gun.start()
+    
+    while True:
+        timestep += 1
+        img = cam.read()
+
+        rawHandler.add(img)
+        rawHandler.display()
+        
+        changesHandler.add(img)
+        changesHandler.display()
+
+        img_changes = changesHandler.get()
+
+        FRAME_TITLE = "Targets from Changes"
+
+        if isinstance(img_changes, np.ndarray) and img_changes.size > 1:
+            targets_changes = circles_high, circles_low, centers_changes = get_targets(img_changes)
+            show_targets(FRAME_TITLE, img_changes, targets_changes)
+        else:
+            targets_changes = circles_high, circles_low, centers_changes = [], [], []
+            show_targets(FRAME_TITLE, img_changes, targets_changes)
+
+        # add the targets from the changes to the queue
+        if len(centers_changes) > 0:
+            laser_targets = centers_changes.copy()
+        
+        if cv2.waitKey(1) == 32:  # Whitespace
+            changesHandler.clear()
 
         # Press Escape to exit
         if cv2.waitKey(1) == 27:
@@ -186,4 +258,5 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # hit_cursor_main()
+    just_changes_main()
