@@ -55,8 +55,8 @@ class ChangesHandler(Handler):
         
         self.diff = ImageParse.differenceImage(img, self.avg)
         self.diff = ImageParse.blurImage(self.diff, 20)
-        self.diff = ImageParse.aboveThreshold(self.diff, 40)
-        self.diff = ImageParse.increase_contrast(self.diff, 1.5)
+        self.diff = ImageParse.aboveThreshold(self.diff, 10)
+        # self.diff = ImageParse.increase_contrast(self.diff, 1.5)
 
 
     def get(self):
@@ -85,4 +85,4 @@ class ChangesHandler(Handler):
             LOADING_IMAGE = np.ones((IMG_HEIGHT, IMG_WIDTH), np.uint8) * 128
             cv2.imshow(TITLE, LOADING_IMAGE)
         else:
-            cv2.imshow(TITLE, self.diff)
+            cv2.imshow(TITLE, self.avg)
