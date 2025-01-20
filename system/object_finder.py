@@ -72,6 +72,9 @@ def average_of_heatmaps(changes_map, contours_map):
 
 
 def show_targets(title, image, targets):
+    # If the image is empty, return [], [] and []
+    if image is None:
+        return [], [], []
     image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
     circles_high, circles_low, centers = targets
     img = image.copy()
