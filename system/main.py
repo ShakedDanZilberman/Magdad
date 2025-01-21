@@ -8,7 +8,7 @@ with ImportDefence():
     import numpy as np
     from pyfirmata import Arduino, util
     import matplotlib.pyplot as plt
-    # from ultralytics import YOLO
+    from ultralytics import YOLO
 
 from contours import ContoursHandler
 from changes import ChangesHandler
@@ -17,7 +17,7 @@ from image_processing import RawHandler, ImageParse
 from mouseCamera import MouseCameraHandler
 from object_finder import show_targets, get_targets
 from motion import DifferenceHandler
-# from yolo import YOLOHandler
+from yolo import YOLOHandler
 from laser import LaserPointer
 from cameraIO import Camera
 from object_finder import average_of_heatmaps
@@ -170,7 +170,7 @@ def just_changes_main():
 
         # add the targets from the changes to the queue
         if len(centers_changes) > 0:
-            # Remove from centers_changes any targets that are less than 20 pixels apart (unique targets)
+            # Remove from centers_changes any targets that are less than 30 pixels apart (unique targets)
             targets = []
             pixel_distance = 30
             for center in centers_changes:
