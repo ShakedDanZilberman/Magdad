@@ -17,14 +17,14 @@ ENDX = 105
 ENDY = 85
 
 # Full MEASUREMENTS data (not truncated)
-MEASUREMENTS = [
-    (418, 275, 20,0), 
-    (351, 276, 25,0), 
-    (266, 277, 30,0), 
-    (181, 278, 35,0), 
-    (104, 279, 40,0), 
-    (58,  279, 45,0)]
-
+MEASUREMENTS = [(594, 273, 30, 0.1056), 
+                (513, 271, 35, 0.1222), 
+                (416, 275, 40, 0.1339), 
+                (348, 275, 45, 0.1447), 
+                (258, 276, 50, 0.1593), 
+                (182, 275, 55, 0.1701), 
+                (102, 274, 60, 0.1857), 
+                (55, 274, 65, 0.1945)]
 def find_red_point(frame):
     """
     Finds the (x, y) coordinates of the single red point in the image.
@@ -192,7 +192,7 @@ def bilerp(x0, y0):
     x = np.array([item[0] for item in MEASUREMENTS])
     y = np.array([item[1] for item in MEASUREMENTS])
     thetaX = np.array([item[2] for item in MEASUREMENTS])
-    thetaY = np.array([item[3] for item in MEASUREMENTS])
+    motor_voltage = np.array([item[3] for item in MEASUREMENTS])
 
     # get the four closest points to the black point in x,y space
     distance_squared = lambda x1, y1, x2, y2: (x1 - x2) ** 2 + (y1 - y2) ** 2
@@ -207,22 +207,22 @@ def bilerp(x0, y0):
     # Make sure to normalise it correctly
 
     angleX0 = 0
-    angleY0 = 0
+    motor_voltage0 = 0
     assert len(closest_points) == 4
     for i in closest_points:
         if distances_squared[i] == 0:
-            return thetaX[i], thetaY[i]
+            return thetaX[i], motor_voltage[i]
         distance = np.sqrt(distances_squared[i])
         weight = 1 / distance
         angleX0 += weight * thetaX[i]
-        angleY0 += weight * thetaY[i]
+        motor_voltage0 += weight * motor_voltage[i]
 
     normalizer = sum([1 / np.sqrt(distances_squared[i]) for i in closest_points])
 
     angleX0 /= normalizer
-    angleY0 /= normalizer
+    motor_voltage0 /= normalizer
 
-    return angleX0, angleY0
+    return angleX0, motor_voltage0
 
 
 def fit_3d_polynomial(x, y, z, degree=3):
@@ -580,17 +580,19 @@ def measure_for_gun():
                 )
             cv2.imshow(title, frame)
 
+            Voltage = gun.get_voltage()
+
             # if user presses Enter then add the red point to the measurements
             key = cv2.waitKey(WAIT_FOR_KEY) & 0xFF
             if key == ENTER:
-                measurements.append((laserX, laserY, angleX))
+                measurements.append((laserX, laserY, angleX, Voltage))
                 nextAngleFlag = True
-                print(f"Added measurement: ({laserX}, {laserY}, {angleX})")
+                print(f"Added measurement: ({laserX}, {laserY}, {angleX},{Voltage})")
             # If the user presses the spacebar, add the mouse point to the measurements
             if key == ord(" "):
-                measurements.append((mouseX, mouseY, angleX))
+                measurements.append((mouseX, mouseY, angleX, Voltage))
                 nextAngleFlag = True
-                print(f"Added measurement: ({mouseX}, {mouseY}, {angleX})")
+                print(f"Added measurement: ({mouseX}, {mouseY}, {angleX},{Voltage})")
             # If the user presses backspace, skip the current angle
             if key == BACKSPACE:
                 nextAngleFlag = True
@@ -614,5 +616,5 @@ def measure_for_gun():
 if __name__ == "__main__":
     # measure_for_lidar()  # Uncomment this line to measure the angles.
     measure_for_gun()
-    show_graphs()
-    display_grid()
+    # show_graphs()
+    # display_grid()

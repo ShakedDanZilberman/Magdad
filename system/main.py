@@ -29,7 +29,7 @@ from object_finder import Targets
 timestep = 0  # Global timestep, used to keep track of the number of frames processed
 laser_targets = [(30, 60)]  # List of targets for the laser pointer, used to share information between threads
 gun_targets = []  # List of targets for the gun, used to share information between threads
-
+P_ERROR = 200
 DIFF_THRESH = 0
 INITIAL_CONTOUR_EXTRACT_FRAME_NUM = 30
 CHECK_FOR_NEW_OBJECTS = 48
@@ -94,12 +94,15 @@ def hit_cursor_main():
 
         mousePos = handler.getMousePosition()
         laser_targets = [mousePos]
-        thetaX, thetaY = fit.bilerp(*mousePos)
-        gun.rotate(thetaX)
+        thetaX, expected_volt = fit.bilerp(*mousePos)
+        # use PID
+        motor_volt = gun.get_voltage()
+        volt_error = motor_volt - expected_volt
+        print("Motor voltage:", motor_volt, "Expected voltage:", expected_volt, "Error:", volt_error)
+        gun.rotate(thetaX + volt_error*P_ERROR)
         
         if cv2.waitKey(1) == 32:  # Whitespace
             gun.shoot()
-
         # Press Escape to exit
         if cv2.waitKey(1) == 27:
             break
