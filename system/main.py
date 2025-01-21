@@ -8,7 +8,7 @@ with ImportDefence():
     import numpy as np
     from pyfirmata import Arduino, util
     import matplotlib.pyplot as plt
-    from ultralytics import YOLO
+    # from ultralytics import YOLO
 
 from contours import ContoursHandler
 from changes import ChangesHandler
@@ -17,7 +17,7 @@ from image_processing import RawHandler, ImageParse
 from mouseCamera import MouseCameraHandler
 from object_finder import show_targets, get_targets
 from motion import DifferenceHandler
-from yolo import YOLOHandler
+# from yolo import YOLOHandler
 from laser import LaserPointer
 from cameraIO import Camera
 from object_finder import average_of_heatmaps
@@ -81,7 +81,7 @@ def hit_cursor_main():
     handler = MouseCameraHandler()
     # laser = threading.Thread(target=laser_thread)
     # laser.start()  # comment this line to disable the laser pointer
-    gun = DummyGun()  # DummyGun() or Gun()
+    gun = Gun()  # DummyGun() or Gun()
 
     cv2.namedWindow(handler.TITLE)
     cv2.setMouseCallback(handler.TITLE, handler.mouse_callback)
@@ -308,6 +308,6 @@ def main_using_targets():
 
 
 if __name__ == "__main__":
-    # hit_cursor_main()
+    hit_cursor_main()
     # just_changes_main()
-    main_using_targets()
+    # main_using_targets()

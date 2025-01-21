@@ -18,48 +18,12 @@ ENDY = 85
 
 # Full MEASUREMENTS data (not truncated)
 MEASUREMENTS = [
-    (611, 234, 35, 42),
-    (611, 173, 35, 50),
-    (609, 116, 35, 58),
-    (602, 59, 35, 66),
-    (591, 2, 35, 74),
-    (602, 332, 50, 18),
-    (553, 281, 50, 26),
-    (524, 251, 50, 34),
-    (500, 228, 50, 42),
-    (504, 164, 50, 50),
-    (501, 106, 50, 58),
-    (498, 50, 50, 66),
-    (493, 1, 50, 74),
-    (431, 368, 65, 10),
-    (413, 329, 65, 18),
-    (393, 276, 65, 26),
-    (381, 243, 65, 34),
-    (371, 224, 65, 42),
-    (374, 161, 65, 50),
-    (375, 103, 65, 58),
-    (377, 48, 65, 66),
-    (375, 1, 65, 74),
-    (200, 407, 80, 10),
-    (220, 325, 80, 18),
-    (236, 270, 80, 26),
-    (245, 239, 80, 34),
-    (253, 214, 80, 42),
-    (258, 159, 80, 50),
-    (260, 101, 80, 58),
-    (267, 46, 80, 66),
-    (267, 0, 80, 74),
-    (13, 383, 95, 10),
-    (56, 306, 95, 18),
-    (89, 265, 95, 26),
-    (117, 236, 95, 34),
-    (140, 213, 95, 42),
-    (146, 158, 95, 50),
-    (152, 103, 95, 58),
-    (161, 45, 95, 66),
-    (167, 0, 95, 74)
-]
-
+    (418, 275, 20,0), 
+    (351, 276, 25,0), 
+    (266, 277, 30,0), 
+    (181, 278, 35,0), 
+    (104, 279, 40,0), 
+    (58,  279, 45,0)]
 
 def find_red_point(frame):
     """
@@ -490,10 +454,11 @@ def display_grid(img=None, display=True):
         # color it white
         img.fill(255)
     # add points to the image from the measurements
+    overlay = img.copy()
     black = (0, 0, 0)
     radius = 4
     for x, y, angleX, angleY in MEASUREMENTS:
-        cv2.circle(img, (x, y), radius, black, -1)
+        cv2.circle(overlay, (x, y), radius, black, -1)
     # connect the points with lines
     # first, convert MEASUREMETS into a 2D array based on the angleX, angleY values
     
@@ -516,7 +481,7 @@ def display_grid(img=None, display=True):
         for i in range(len(points) - 1):
             x1, y1, _, _ = points[i]
             x2, y2, _, _ = points[i + 1]
-            cv2.line(img, (x1, y1), (x2, y2), black, 2)
+            cv2.line(overlay, (x1, y1), (x2, y2), black, 2)
 
     # Connect the points in the y-direction
     for angleY in angleY_values:
@@ -525,7 +490,11 @@ def display_grid(img=None, display=True):
         for i in range(len(points) - 1):
             x1, y1, _, _ = points[i]
             x2, y2, _, _ = points[i + 1]
-            cv2.line(img, (x1, y1), (x2, y2), black, 2)
+            cv2.line(overlay, (x1, y1), (x2, y2), black, 2)
+
+    # Apply the overlay with 50% opacity
+    alpha = 0.5
+    cv2.addWeighted(overlay, alpha, img, 1 - alpha, 0, img)
 
     if display:
         # Display the image
@@ -643,7 +612,7 @@ def measure_for_gun():
 
 
 if __name__ == "__main__":
-    measure_for_lidar()  # Uncomment this line to measure the angles.
+    # measure_for_lidar()  # Uncomment this line to measure the angles.
     measure_for_gun()
     show_graphs()
     display_grid()
