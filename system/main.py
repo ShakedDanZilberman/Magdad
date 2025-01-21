@@ -287,7 +287,7 @@ def main_using_targets():
                 gun.rotate(thetaX)
                 time.sleep(0.1)
                 gun.shoot()
-                print("Shooting", center)
+                # print("Shooting", center)
                 time.sleep(1)
         # TODO: 1. gun is not moving. 2. contour parameters need adjustment. 3. changes is not working correctly
     
