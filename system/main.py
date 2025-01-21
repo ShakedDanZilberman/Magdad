@@ -73,6 +73,7 @@ def laser_thread():
 def hit_cursor_main():
     """
     An alternative to the main function that uses the mouse cursor as the target for the laser pointer.
+    It does not use any image processing to detect targets.
     """
     global CAMERA_INDEX, timestep, laser_targets
     import fit
@@ -107,6 +108,11 @@ def hit_cursor_main():
 
 
 def just_changes_main():
+    """
+    This function uses the changes in the image to detect targets.
+    It does not use contours or YOLO.
+    It is a simplified version of the main function.
+    """
     global CAMERA_INDEX, timestep, gun_targets
     detectCameras()
     cam = Camera(CAMERA_INDEX)
@@ -308,6 +314,6 @@ def main_using_targets():
 
 
 if __name__ == "__main__":
-    hit_cursor_main()
-    # just_changes_main()
+    # hit_cursor_main()
+    just_changes_main()
     # main_using_targets()
