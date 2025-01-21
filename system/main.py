@@ -24,6 +24,7 @@ from object_finder import average_of_heatmaps
 from gui import LIDARDistancesGraph
 from gun import Gun, DummyGun
 from constants import CAMERA_INDEX
+from object_finder import Targets
 
 timestep = 0  # Global timestep, used to keep track of the number of frames processed
 laser_targets = [(30, 60)]  # List of targets for the laser pointer, used to share information between threads
@@ -262,6 +263,51 @@ def main():
     cv2.destroyAllWindows()
 
 
+def main_using_targets():
+    global CAMERA_INDEX, timestep, gun_targets
+    detectCameras()
+    cam = Camera(CAMERA_INDEX)
+    rawHandler = RawHandler("Whitespace to clear")
+    target_manager = Targets()
+    def gun_thread():
+        """
+        Thread that moves the gun to the target and shoots.
+        The targets are aquired as an asynchronous input from the main thread.
+        """
+        import fit
+        print("Gun thread started.")
+        global gun_targets
+        gun = Gun()
+        print("Gun initialised and connected.")
+        while True:
+            center = target_manager.pop()
+            # Move the laser pointer to the target
+            if center is not None:
+                thetaX, thetaY = fit.bilerp(*center)
+                gun.rotate(thetaX)
+                time.sleep(0.1)
+                gun.shoot()
+                print("Shooting", center)
+                time.sleep(1)
+        # TODO: 1. gun is not moving. 2. contour parameters need adjustment. 3. changes is not working correctly
+    
+    gun = threading.Thread(target=gun_thread)
+    gun.start()
+    
+    while True:
+        timestep += 1
+        img = cam.read()
+        rawHandler.add(img)
+        rawHandler.display()
+        target_manager.add(timestep, img)
+
+        # Press Escape to exit
+        if cv2.waitKey(1) == 27:
+            break
+    cv2.destroyAllWindows()
+
+
 if __name__ == "__main__":
     # hit_cursor_main()
-    just_changes_main()
+    # just_changes_main()
+    main_using_targets()

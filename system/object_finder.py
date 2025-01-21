@@ -1,6 +1,10 @@
 import numpy as np
 from constants import IMG_HEIGHT, IMG_WIDTH
 import cv2
+from contours import ContoursHandler
+from changes import ChangesHandler
+from bisect import bisect
+from heapq import merge
 
 
 INITIAL_BLURRING_KERNEL = (3, 3)
@@ -8,9 +12,22 @@ INITIAL_BLURRING_KERNEL = (3, 3)
 HIGH_CEP_INDEX = 0.9
 LOW_CEP_INDEX = 0.5
 # sample rate - in frames, not in seconds
-SAMPLE_RATE = 24
-FRAMES_FOR_INITIALISATION = 30
+SAMPLE_RATE = 48
+FRAMES_FOR_INITIALISATION = 15
 BRIGHTNESS_THRESHOLD = 240
+
+
+def insert_sorted(sorted_list, new_tuple):
+    pos = bisect(sorted_list, new_tuple)
+    sorted_list.insert(pos, new_tuple)
+    return sorted_list
+
+
+def insert_many_sorted_fast(sorted_list, new_tuples):
+    sorted_list.extend(new_tuples)
+    sorted_list.sort()
+    return sorted_list
+
 
 class Targets:
     """
@@ -21,26 +38,58 @@ class Targets:
 
     def __init__(self):
         self.frame_number = 0
-        self.contours_heatmap = None
-        self.changes_heatmap = None
+        self.contours_handler = ContoursHandler()
+        self.changes_handler = ChangesHandler()
+        self.img_changes = None
         self.yolo_centers = None
         self.contours_centers = None
         self.changes_centers = None
         self.target_queue = []
 
-    def add(self, frame_number, contours_heatmap, changes_heatmap, yolo_centers):
+    def add(self, frame_number, img):
         self.frame_number = frame_number
-        self.contours_heatmap = contours_heatmap
-        self.changes_heatmap = changes_heatmap
-        # at the "initial frame", add all current objects to the queue
-        if self.frame_number == SAMPLE_RATE//2:
-            _, _, self.contours_centers = get_targets(contours_heatmap)
-        if self.frame_number%SAMPLE_RATE == SAMPLE_RATE-1:
-            self.yolo_centers = yolo_centers
-            _, _, self.changes_centers = get_targets(changes_heatmap)
-        # for centers in [self.changes_centers, self.contours_centers]:
+        self.changes_handler.add(img)
+        # self.changes_handler.display()
+        self.img_changes = self.changes_handler.get()
+        self.contours_handler.add(img)
+        self.contours_handler.display()
+        self.img_contours = self.contours_handler.get()
+        # at the "initial frame", add all current objects to the queue using contour identification
+        if self.frame_number == SAMPLE_RATE//4:
+            print("pulling targets from contours")
+            targets_contours = _, _, self.contours_centers = get_targets(self.img_contours)
+            # show_targets("targets from changes", self.img_changes, targets_contours)
+            self.contours_centers = sorted(self.contours_centers, key=lambda x: x[0], reverse=True)
+            self.target_queue.extend(self.contours_centers)
+        # at a constant rate SAMPLE_RATE, get all new objects in the image
+        if self.frame_number%SAMPLE_RATE == SAMPLE_RATE-1 and isinstance(self.img_changes, np.ndarray) and self.img_changes.size > 1:
+            print("pulling targets from changes")
+            targets_changes = _, _, self.changes_centers = get_targets(self.img_changes)
+            # show_targets("targets from changes", self.img_changes, targets_changes)
+        # add the targets from the changes to the queue
+            if len(self.changes_centers) > 0:
+                # Remove from centers_changes any targets that are less than 20 pixels apart (unique targets)
+                targets = []
+                pixel_distance = 30
+                for center in self.centers_changes:
+                    if all(np.linalg.norm(np.array(center) - np.array(target)) > pixel_distance for target in targets):
+                        insert_sorted(targets, center)
+                self.target_queue = list(merge(self.target_queue, targets.copy()))
+            # reset the changes heatmap, so we get no duplicates
+            
+            self.changes_handler.clear() 
+            
+    def pop(self):
+        if self.target_queue:
+            target = self.target_queue.pop(0)
+            return target
+        return
+    
+    def clear(self):
+        self.changes_handler.clear() 
 
-    # def pop
+    
+        
 
 def average_of_heatmaps(changes_map, contours_map):
     """Intersect two heatmaps

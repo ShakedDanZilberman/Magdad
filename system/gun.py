@@ -19,8 +19,8 @@ class Gun:
         4. Start an iterator thread.
         """
 
-        self.gun_pin = 10
-        self.servo_pin = 4
+        self.gun_pin = 4
+        self.servo_pin = 9
         self.sleep_duration = 0.2
         try:
             self.board = Arduino(COM)

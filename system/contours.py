@@ -72,7 +72,7 @@ class ContoursHandler(Handler):
         # manipluate the image to get the contours
         blurred = cv2.GaussianBlur(gray, INITIAL_BLURRING_KERNEL, 0)
         edges = cv2.Canny(blurred, EDGE_DETECTION_MINTHRESH, EDGE_DETECTION_MAXTHRESH)
-        optimized = self.optimize_edges(edges)
+        optimized = self.optimize_edges(edges, True)
         contours, hierarchy = cv2.findContours(
             optimized, CONTOUR_EXTRACTION_M0DE, CONTOUR_EXTRACTION_METHOD
         )

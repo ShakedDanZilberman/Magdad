@@ -3,7 +3,7 @@ from image_processing import Handler, ImageParse
 import numpy as np
 from constants import IMG_HEIGHT, IMG_WIDTH
 
-FRAMES_FOR_INITIALISATION = 30
+FRAMES_FOR_INITIALISATION = 15
 BRIGHTNESS_THRESHOLD = 240
 
 class ChangesHandler(Handler):
