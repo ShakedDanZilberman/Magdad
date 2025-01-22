@@ -5,6 +5,7 @@ import serial
 import fit
 import sys
 import os
+import time
 # TODO - change import to class? maybe not? maybe it's okay
 
 class LaserPointer:
@@ -14,8 +15,8 @@ class LaserPointer:
     servoV_pin = 5
     servoH_pin = 3
     laser_pin = 8
-    # Define pin A0 as an analog input
-    sensor_pin = 0
+    # Define pin 5 as an analog input
+    sensor_pin = 5
 
     MIN_THETA_X = MIN_THETA_Y = 0
     MAX_THETA_X = MAX_THETA_Y = 180
@@ -45,7 +46,16 @@ class LaserPointer:
         # Attach the servo to the board
         self.servoV = self.board.get_pin(f"d:{LaserPointer.servoV_pin}:s")  # 's' means it's a servo
         self.servoH = self.board.get_pin(f"d:{LaserPointer.servoH_pin}:s")
+
+
         self.lidarPin = self.board.get_pin(f"a:{LaserPointer.sensor_pin}:i")  # 'i' means it's an input, 'a' means it's analog
+        self.lidarPin.enable_reporting()
+
+
+        # self.board.digital[LaserPointer.sensor_pin].write(1)
+        # time.sleep(0.01)  # Short pulse to trigger the sensor
+        # self.board.digital[LaserPointer.sensor_pin].write(0)
+
 
         # Start an iterator thread to read analog inputs
         it = util.Iterator(self.board)
@@ -127,23 +137,26 @@ class LaserPointer:
         """
         Get the distance from the sensor.
         """
-        # magic numbers for the conversion, found empirically
-        A2D = (5.0 / 1023.0) * 1000
-        POWER = -1.17
-        COEFFICIENT = 0.6301
         # Read the analog value from sensor
         sensorValue = self.lidarPin.read()
-        if sensorValue is None:
+
+        if sensorValue is None or sensorValue==0 or sensorValue*1000>1850:
             return 0
-        # Convert the analog value to voltage
-        voltage = sensorValue * A2D
-        print("analog read (voltage) value:", voltage)
-        if voltage <= 0:
+        # Convert the analog value to distance
+        distance = (sensorValue*1000 - 1000)*0.4
+        #print("sensorValue:", sensorValue)
+        #limit the distance to positive values
+        if distance < 0:
             return 0
-        # Convert the voltage to distance (m)
-        distance = COEFFICIENT * pow(voltage, POWER)
 
         return distance
     
 
+
+
     
+
+if __name__ == "__main__":
+    laser_pointer = LaserPointer()
+    while True:
+        laser_pointer.distance()
