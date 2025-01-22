@@ -97,7 +97,8 @@ class Gun:
         while time.time() - start_time < 1:
             self.rotate(thetaX + fix)
             motor_volt = self.get_voltage()
-            fix = fixer.PID(expected_volt,motor_volt) 
+            if motor_volt is not None:
+                fix = fixer.PID(expected_volt,motor_volt) 
             
         self.shoot()
         return

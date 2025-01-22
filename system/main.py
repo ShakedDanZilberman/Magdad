@@ -8,7 +8,7 @@ with ImportDefence():
     import numpy as np
     from pyfirmata import Arduino, util
     import matplotlib.pyplot as plt
-    from ultralytics import YOLO
+    # from ultralytics import YOLO
 
 from contours import ContoursHandler
 from changes import ChangesHandler
@@ -17,7 +17,7 @@ from image_processing import RawHandler, ImageParse
 from mouseCamera import MouseCameraHandler
 from object_finder import show_targets, get_targets
 from motion import DifferenceHandler
-from yolo import YOLOHandler
+# from yolo import YOLOHandler
 from laser import LaserPointer
 from cameraIO import Camera
 from object_finder import average_of_heatmaps
@@ -318,13 +318,7 @@ def main_using_targets():
             center = target_manager.pop()
             # Move the laser pointer to the target
             if center is not None:
-                thetaX, expected_volt = fit.bilerp(*center)
-                # use PID
-                motor_volt = gun.get_voltage()
-                error = PID(expected_volt,motor_volt)  
-                gun.rotate(thetaX + error)
-                time.sleep(0.1)
-                gun.shoot()
+                gun.aim_and_fire_target(center)
                 print("Shooting", center)
                 time.sleep(1)
                 target_manager.clear()
@@ -398,7 +392,16 @@ def test_main():
     cv2.destroyAllWindows()
 
 
+def test():
+    gun = Gun(print_flag=True)
+    while True:
+        gun.rotate(60)
+        print(gun.get_voltage()) 
+    print("done")
+
+
 if __name__ == "__main__":
+    # test()
     # hit_cursor_main()
     #just_changes_main()
     main_using_targets()

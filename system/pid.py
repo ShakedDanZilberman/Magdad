@@ -20,8 +20,8 @@ class PID:
 
         # Initialize previous values for PID
         self.time_prev = time.time() / 100
-        self.integral = np.array([0, 0])
-        self.error_prev = np.array([0, 0])
+        self.integral = 0
+        self.error_prev = 0
 
     def set_constants(self, new_Kp, new_Ki, new_Kd):
         """
@@ -50,7 +50,7 @@ class PID:
         """
         # target and curr are (x, y)
         now = time.time() / 100
-        error = np.array([target - curr])
+        error = target - curr
 
         P = self.Kp * error
         I = self.integral + self.Ki * error * (now - self.time_prev)
@@ -58,4 +58,5 @@ class PID:
 
         self.error_prev = error
         self.time_prev = now
-        return P + I + D
+        
+        return np.sum(np.nan_to_num([P, I, D]))
