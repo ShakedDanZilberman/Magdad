@@ -300,6 +300,7 @@ def main_using_targets():
                 gun.shoot()
                 print("Shooting", center)
                 time.sleep(1)
+                target_manager.clear()
         # TODO: 1. gun is not moving. 2. contour parameters need adjustment. 3. changes is not working correctly
     
     gun = threading.Thread(target=gun_thread)
