@@ -4,7 +4,7 @@ import numpy as np
 from image_processing import Handler, ImageParse
 
 class YOLOHandler(Handler):
-    def __init__(self, model_path: str = 'C:/Users/TLP-001/runs/detect/train26/weights/last.pt'):
+    def __init__(self, model_path: str = 'C:/Users/TLP-001/runs/detect/train8/weights/last.pt'):
         self.model = YOLO(model_path)
         self.img = None
         self.bounding_boxes = []
@@ -114,7 +114,7 @@ if __name__ == "__main__":
     from main import CAMERA_INDEX
 
     detectCameras()
-    cam = Camera(0)
+    cam = Camera(CAMERA_INDEX)
     handler = MouseCameraHandler()
     yoloHandler = YOLOHandler()
     # laser = threading.Thread(target=laser_thread)

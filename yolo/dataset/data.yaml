@@ -1,13 +1,13 @@
-train: C:\Users\TLP-001\Documents\magdad_project\Magdad\yolo\dataset\train\images
-val: C:\Users\TLP-001\Documents\magdad_project\Magdad\yolo\dataset\valid\images
-test: C:\Users\TLP-001\Documents\magdad_project\Magdad\yolo\dataset\test\images
+train: ../train/images
+val: ../valid/images
+test: ../test/images
 
 nc: 1
 names: ['targets']
 
 roboflow:
   workspace: ayalulu
-  project: camera-training-ltw8l
-  version: 4
+  project: ir-camera-training
+  version: 3
   license: CC BY 4.0
-  url: https://universe.roboflow.com/ayalulu/camera-training-ltw8l/dataset/4
+  url: https://universe.roboflow.com/ayalulu/ir-camera-training/dataset/3

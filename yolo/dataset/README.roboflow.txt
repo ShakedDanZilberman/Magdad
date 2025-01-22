@@ -1,8 +1,8 @@
 
-camera training - v4 2025-01-15 10:06pm
+IR camera training - v3 2025-01-22 5:53pm
 ==============================
 
-This dataset was exported via roboflow.com on January 15, 2025 at 8:07 PM GMT
+This dataset was exported via roboflow.com on January 22, 2025 at 3:53 PM GMT
 
 Roboflow is an end-to-end computer vision platform that helps you
 * collaborate with your team on computer vision projects
@@ -17,12 +17,12 @@ visit https://github.com/roboflow/notebooks
 
 To find over 100k other datasets and pre-trained models, visit https://universe.roboflow.com
 
-The dataset includes 90 images.
-Targets are annotated in YOLO v5 PyTorch format.
+The dataset includes 126 images.
+Targets-3893 are annotated in YOLO v5 PyTorch format.
 
 The following pre-processing was applied to each image:
 * Auto-orientation of pixel data (with EXIF-orientation stripping)
-* Resize to 640x640 (Fit (white edges))
+* Resize to 640x640 (Stretch)
 
 No image augmentation techniques were applied.
 
