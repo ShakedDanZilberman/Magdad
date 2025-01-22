@@ -114,29 +114,68 @@ class GUI:
         self.changes = np.zeros((IMG_HEIGHT, IMG_WIDTH), np.uint8)
         self.contours = np.zeros((IMG_HEIGHT, IMG_WIDTH), np.uint8)
 
-    def add(self, img, targets, changes, contours):
+    def add(self, img, targets, changes, contours, circles_low, circles_high):
         self.img = img
         self.targets = targets
         self.changes = changes
         self.contours = contours
+        self.circles_low = circles_low
+        self.circles_high = circles_high
 
     def display(self):
-        merged_image = self.img.copy()
+        # merge_image should have four quadrents, each one the size of self.img
+        merged_image = np.zeros((2*IMG_HEIGHT, 2*IMG_WIDTH), np.uint8)
+        zeros_frame = np.zeros((IMG_HEIGHT, IMG_WIDTH), np.uint8)
         # convert to color image
         merged_image = cv2.cvtColor(merged_image, cv2.COLOR_GRAY2BGR)
+        # top left
+        frame = self.img.copy()
+        if self.img is not None:
+            # (as grayscale)
+            merged_image[:IMG_HEIGHT, :IMG_WIDTH, 0] = frame
+            merged_image[:IMG_HEIGHT, :IMG_WIDTH, 1] = frame
+            merged_image[:IMG_HEIGHT, :IMG_WIDTH, 2] = frame
         # add the targets as red circles
         for target in self.targets:
             red = (0, 0, 255)
             target_size = 2
             cv2.circle(merged_image, (int(target[0]), int(target[1])), target_size, red, -1)
-        
-        # Add the changes heatmap to the photo. It has the same size, add in in the green channel with opacity 0.3
-        heatmaps_opacity = 0.3
+            LOW_COLOR = (0, 255, 0)
+            HIGH_COLOR = (0, 0, 255)
+            for circle in self.circles_low:
+                cv2.circle( 
+                    merged_image,
+                    (int(circle[0][0]), int(circle[0][1])),
+                    int(circle[1]),
+                    LOW_COLOR,
+                    1,
+                )
+            for circle in self.circles_high:
+                cv2.circle(
+                    merged_image,
+                    (int(circle[0][0]), int(circle[0][1])),
+                    int(circle[1]),
+                    HIGH_COLOR,
+                    1,
+                )
+        print(len(self.targets))
+        # top right
         if self.changes is not None:
-            merged_image[:, :, 1] = cv2.addWeighted(merged_image[:, :, 1], 1, self.changes, heatmaps_opacity, 0)
-        # Add the contours heatmap to the photo. It has the same size, add in in the blue channel with opacity 0.3
+            # (in green)
+            merged_image[:IMG_HEIGHT, IMG_WIDTH:2*IMG_WIDTH, 1] = self.changes
+            merged_image[:IMG_HEIGHT, IMG_WIDTH:2*IMG_WIDTH, 0] = zeros_frame
+            merged_image[:IMG_HEIGHT, IMG_WIDTH:2*IMG_WIDTH, 2] = zeros_frame
+            cv2.putText(merged_image, " Changes", (IMG_WIDTH, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
+        # bottom left
         if self.contours is not None:
-            merged_image[:, :, 0] = cv2.addWeighted(merged_image[:, :, 0], 1, self.contours, heatmaps_opacity, 0)
+            # (in blue)
+            merged_image[IMG_HEIGHT:2*IMG_HEIGHT, :IMG_WIDTH, 0] = self.contours
+            merged_image[IMG_HEIGHT:2*IMG_HEIGHT, :IMG_WIDTH, 1] = zeros_frame
+            merged_image[IMG_HEIGHT:2*IMG_HEIGHT, :IMG_WIDTH, 2] = zeros_frame
+            cv2.putText(merged_image, " Contours", (0, IMG_HEIGHT + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
+        # bottom right
+        # [add YOLO here]
+
 
         cv2.imshow("CounterStrike Magdad", merged_image)
         time.sleep(0.1)
