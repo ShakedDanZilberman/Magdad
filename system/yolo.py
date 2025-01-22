@@ -2,9 +2,14 @@ from ultralytics import YOLO
 import cv2
 import numpy as np
 from image_processing import Handler, ImageParse
+import os
 
 class YOLOHandler(Handler):
-    def __init__(self, model_path: str = 'yolov8n.pt'):
+    def __init__(self, model_path: str = 'last.pt'):
+        # get absolute path to current folder
+        current_folder = os.path.dirname(os.path.abspath(__file__))
+        model_path = os.path.join(current_folder, model_path)
+
         self.model = YOLO(model_path)
         self.img = None
         self.bounding_boxes = []
@@ -102,3 +107,38 @@ class YOLOHandler(Handler):
         """
         self.img = None
         self.bounding_boxes = []
+
+
+if __name__ == "__main__":
+    # read the images from camera of the computer and display the bounding boxes using the YOLOHandler class inside some loop
+    global CAMERA_INDEX, timestep, laser_targets
+    import fit
+    from cameraIO import detectCameras
+    from cameraIO import Camera
+    from mouseCamera import MouseCameraHandler
+    from main import CAMERA_INDEX
+
+    detectCameras()
+    cam = Camera(CAMERA_INDEX)
+    handler = MouseCameraHandler()
+    yoloHandler = YOLOHandler()
+    # laser = threading.Thread(target=laser_thread)
+    # laser.start()  # comment this line to disable the laser pointer
+
+    cv2.namedWindow(handler.TITLE)
+    cv2.setMouseCallback(handler.TITLE, handler.mouse_callback)
+
+    while True:
+        img = cam.read()
+
+        handler.add(img)
+        handler.display()
+
+        yoloHandler.add(img)
+        yoloHandler.display()
+
+
+        # Press Escape to exit
+        if cv2.waitKey(1) == 27:
+            break
+    cv2.destroyAllWindows()

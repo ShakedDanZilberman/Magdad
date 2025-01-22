@@ -150,3 +150,6 @@ class LaserPointer:
         distance = COEFFICIENT * pow(voltage, POWER)
 
         return distance
+    
+
+    
