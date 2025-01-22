@@ -321,7 +321,7 @@ def test_main():
     detectCameras()
     cam = Camera(CAMERA_INDEX)
     rawHandler = RawHandler()
-    contours_handler = ContoursHandler()
+    contours_handler = ChangesHandler()
     # target_manager = Targets()
     # def gun_thread():
     #     """
