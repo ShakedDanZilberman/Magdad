@@ -274,10 +274,12 @@ def main():
 
 def main_using_targets():
     global CAMERA_INDEX, timestep, gun_targets
+    from gui import GUI
     detectCameras()
     cam = Camera(CAMERA_INDEX)
-    rawHandler = RawHandler("Whitespace to clear")
+    rawHandler = RawHandler()
     target_manager = Targets()
+    gui = GUI()
     def gun_thread():
         """
         Thread that moves the gun to the target and shoots.
@@ -309,6 +311,9 @@ def main_using_targets():
         rawHandler.add(img)
         rawHandler.display()
         target_manager.add(timestep, img)
+
+        gui.add(img, target_manager.target_queue, target_manager.changes_handler.get(), target_manager.contours_handler.get())
+        gui.display()
 
         # Press Escape to exit
         if cv2.waitKey(1) == 27:
