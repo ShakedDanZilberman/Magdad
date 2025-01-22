@@ -29,7 +29,7 @@ from object_finder import Targets
 timestep = 0  # Global timestep, used to keep track of the number of frames processed
 laser_targets = [(30, 60)]  # List of targets for the laser pointer, used to share information between threads
 gun_targets = []  # List of targets for the gun, used to share information between threads
-P_ERROR = 0
+P_ERROR = 100
 I_ERROR = 0
 D_ERROR = 0
 total_error = 0
@@ -103,9 +103,6 @@ def hit_cursor_main():
         thetaX, expected_volt = fit.bilerp(*mousePos)
         # use PID
         motor_volt = gun.get_voltage()
-        volt_error = motor_volt - expected_volt
-        print("Motor voltage:", motor_volt, "Expected voltage:", expected_volt, "Error:", volt_error)
-        gun.rotate(thetaX + volt_error*P_ERROR)
         error = PID(expected_volt,motor_volt)  
         gun.rotate(thetaX + error)
         
@@ -154,10 +151,6 @@ def just_changes_main():
             my_targets = sorted(my_targets, key=lambda x: x[0], reverse=True)
             for center in my_targets:
                 # Move the laser pointer to the target
-                thetaX, thetaY = fit.bilerp(*center)
-                gun.rotate(thetaX)
-                time.sleep(0.1)
-                gun.shoot()
                 thetaX, expected_volt = fit.bilerp(*center)
                 # use PID
                 motor_volt = gun.get_voltage()
@@ -315,8 +308,6 @@ def main_using_targets():
             center = target_manager.pop()
             # Move the laser pointer to the target
             if center is not None:
-                thetaX, thetaY = fit.bilerp(*center)
-                gun.rotate(thetaX)
                 thetaX, expected_volt = fit.bilerp(*center)
                 # use PID
                 motor_volt = gun.get_voltage()
@@ -397,8 +388,6 @@ def test_main():
 
 
 if __name__ == "__main__":
-    # hit_cursor_main()
-    just_changes_main()
     hit_cursor_main()
     #just_changes_main()
     # main_using_targets()
