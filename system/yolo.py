@@ -2,9 +2,14 @@ from ultralytics import YOLO
 import cv2
 import numpy as np
 from image_processing import Handler, ImageParse
+import os
 
 class YOLOHandler(Handler):
-    def __init__(self, model_path: str = 'C:/Users/TLP-001/runs/detect/train8/weights/last.pt'):
+    def __init__(self, model_path: str = 'last.pt'):
+        # get absolute path to current folder
+        current_folder = os.path.dirname(os.path.abspath(__file__))
+        model_path = os.path.join(current_folder, model_path)
+
         self.model = YOLO(model_path)
         self.img = None
         self.bounding_boxes = []
