@@ -29,7 +29,12 @@ from object_finder import Targets
 timestep = 0  # Global timestep, used to keep track of the number of frames processed
 laser_targets = [(30, 60)]  # List of targets for the laser pointer, used to share information between threads
 gun_targets = []  # List of targets for the gun, used to share information between threads
-P_ERROR = 200
+P_ERROR = 0
+I_ERROR = 0
+D_ERROR = 0
+total_error = 0
+last_error = 0
+error = 0
 DIFF_THRESH = 0
 INITIAL_CONTOUR_EXTRACT_FRAME_NUM = 30
 CHECK_FOR_NEW_OBJECTS = 48
@@ -101,6 +106,8 @@ def hit_cursor_main():
         volt_error = motor_volt - expected_volt
         print("Motor voltage:", motor_volt, "Expected voltage:", expected_volt, "Error:", volt_error)
         gun.rotate(thetaX + volt_error*P_ERROR)
+        error = PID(expected_volt,motor_volt)  
+        gun.rotate(thetaX + error)
         
         if cv2.waitKey(1) == 32:  # Whitespace
             gun.shoot()
@@ -109,6 +116,15 @@ def hit_cursor_main():
             break
     cv2.destroyAllWindows()
 
+def PID (expected_volt, motor_volt):
+    # use PID      
+        global total_error, last_error, error
+        last_error = error
+        error = motor_volt - expected_volt
+        dif_error = error - last_error
+        total_error += error
+        print("Motor voltage:", motor_volt, "Expected voltage:", expected_volt, "Error:", error)
+        return error*P_ERROR + total_error*I_ERROR + dif_error*D_ERROR
 
 def just_changes_main():
     """
@@ -142,6 +158,11 @@ def just_changes_main():
                 gun.rotate(thetaX)
                 time.sleep(0.1)
                 gun.shoot()
+                thetaX, expected_volt = fit.bilerp(*center)
+                # use PID
+                motor_volt = gun.get_voltage()
+                error = PID(expected_volt,motor_volt)  
+                gun.rotate(thetaX + error)
                 print("Shooting", center)
             time.sleep(1)
         # TODO: It seems gun_thread is not moving, even though the targets are being updated. FIX
@@ -294,6 +315,11 @@ def main_using_targets():
             if center is not None:
                 thetaX, thetaY = fit.bilerp(*center)
                 gun.rotate(thetaX)
+                thetaX, expected_volt = fit.bilerp(*center)
+                # use PID
+                motor_volt = gun.get_voltage()
+                error = PID(expected_volt,motor_volt)  
+                gun.rotate(thetaX + error)
                 time.sleep(0.1)
                 gun.shoot()
                 # print("Shooting", center)
@@ -319,4 +345,6 @@ def main_using_targets():
 if __name__ == "__main__":
     # hit_cursor_main()
     just_changes_main()
+    hit_cursor_main()
+    #just_changes_main()
     # main_using_targets()

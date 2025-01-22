@@ -17,16 +17,8 @@ ENDX = 105
 ENDY = 85
 
 # Full MEASUREMENTS data (not truncated)
-MEASUREMENTS = [(435, 229, 20, 0), (427, 225, 22, 0),  (397, 221, 26, 0), (355, 219, 28, 0), (345, 218, 30, 0), (330, 220, 32, 0), (320, 217, 34, 0), (283, 216, 38, 0), (255, 214, 40, 0), (245, 218, 42, 0), (222, 215, 44, 0), (207, 215, 46, 0), (190, 215, 48, 0), (177, 216, 50, 0), (148, 216, 52, 0), (136, 219, 54, 0), (118, 216, 56, 0), (103, 215, 58, 0)]
 
-MEASUREMENTS = [(594, 273, 30, 0.1056), 
-                (513, 271, 35, 0.1222), 
-                (416, 275, 40, 0.1339), 
-                (348, 275, 45, 0.1447), 
-                (258, 276, 50, 0.1593), 
-                (182, 275, 55, 0.1701), 
-                (102, 274, 60, 0.1857), 
-                (55, 274, 65, 0.1945)]
+MEASUREMENTS = [(622, 269, 48, 0.1525), (599, 270, 50, 0.1564), (566, 267, 52, 0.1672), (539, 268, 54, 0.1701), (506, 270, 56, 0.176), (486, 269, 58, 0.1808), (442, 270, 60, 0.1867), (427, 273, 62, 0.1906), (382, 270, 64, 0.1955), (358, 269, 66, 0.1994), (322, 271, 68, 0.2063), (295, 271, 70, 0.2111), (263, 272, 72, 0.217), (243, 271, 74, 0.2199), (197, 271, 76, 0.2268), (177, 270, 78, 0.2307), (141, 272, 80, 0.2375), (126, 273, 82, 0.2434), (86, 271, 84, 0.2493), (73, 271, 86, 0.2502), (46, 274, 88, 0.2581), (30, 272, 90, 0.263), (3, 269, 92, 0.2688)]
 def find_red_point(frame):
     """
     Finds the (x, y) coordinates of the single red point in the image.
@@ -172,59 +164,64 @@ def measure_for_lidar():
     cv2.destroyAllWindows()
     laser_pointer.exit()
 
-
 def bilerp(x0, y0):
     """
-    Perform bilinear interpolation to estimate the angleX and angleY values at the given point (x0, y0).
-    Calculates the weighted average of the four closest points to the given point.
-    Method:
-        - Find the four closest points to the given point (x0, y0) in the x, y space.
-        - Calculate the distance between the given point and each of the four closest points.
-        - Calculate the weight for each of the four points based on the inverse of the distance.
-        - Calculate the weighted average of the angleX and angleY values of the four points.
-        - Normalize the weighted average by dividing by the sum of the weights.
+    Perform bilinear interpolation to estimate the angleX and V_motor values at the given point (x0, y0).
+    Calculates the weighted average of the two closest points to the given point.
 
     Args:
         x0 (float): The x-coordinate of the point.
-        y0 (float): The y-coordinate of the point.
+        y0 (float): The y-coordinate of the point. Ignored; kept for backwards compatibility.
 
     Returns:
-        tuple: The estimated angleX and angleY values at the point (x0, y0).
+        tuple: The estimated angleX and V_motor values at the point (x0, y0).
     """
     # Extract the x, y, thetaX, and thetaY values from MEASUREMENTS
     x = np.array([item[0] for item in MEASUREMENTS])
-    y = np.array([item[1] for item in MEASUREMENTS])
+    # y = np.array([item[1] for item in MEASUREMENTS])
     thetaX = np.array([item[2] for item in MEASUREMENTS])
-    thetaY = np.array([item[3] for item in MEASUREMENTS])
-    V_motor = np.array([item[4] for item in MEASUREMENTS])
+    # thetaY = np.array([item[3] for item in MEASUREMENTS])
+    V_motor = np.array([item[3] for item in MEASUREMENTS])
 
-    # get the four closest points to the black point in x,y space
-    distance_squared = lambda x1, y1, x2, y2: (x1 - x2) ** 2 + (y1 - y2) ** 2
-    # use np because it's faster than list comprehension
-    distances_squared = [distance_squared(x0, y0, x[i], y[i]) for i in range(len(x))]
-    distance_squared = np.array(distances_squared)
+    if len(x) == 0:
+        return 0, 0
+    if len(x[x < x0]) == 0:
+        left_pointX = x[0]
+    else:
+        left_pointX = np.max(x[x < x0])
+    if len(x[x >= x0]) == 0:
+        right_pointX = x[-1]
+    else: 
+        right_pointX = np.min(x[x >= x0])
+    
+    print("Left:", left_pointX)
+    print("Right:", right_pointX)
+    print("x0:", x0)
+    
+    left_point = np.where(x == left_pointX)[0]
+    right_point = np.where(x == right_pointX)[0]
 
-    # get the indices of the four closest points
-    closest_points = np.argsort(distances_squared)[:4]
+    thetaX_left = thetaX[left_point]
+    thetaX_right = thetaX[right_point]
+    V_motor_left = V_motor[left_point]
+    V_motor_right = V_motor[right_point]
 
-    # Linearly interpolate the four closest points to get the value at the black point
-    # Make sure to normalise it correctly
+    distance_to_left = np.abs(x0 - x[left_point])
+    distance_to_right = np.abs(x[right_point] - x0)
 
-    angleX0 = 0
-    motor_voltage0 = 0
-    assert len(closest_points) == 4
-    for i in closest_points:
-        if distances_squared[i] == 0:
-            return thetaX[i], motor_voltage[i]
-        distance = np.sqrt(distances_squared[i])
-        weight = 1 / distance
-        angleX0 += weight * thetaX[i]
-        motor_voltage0 += weight * motor_voltage[i]
+    # bilerp according to the distances
+    angleX0 = (thetaX_left * distance_to_right + thetaX_right * distance_to_left) / (
+        distance_to_left + distance_to_right
+    )
 
-    normalizer = sum([1 / np.sqrt(distances_squared[i]) for i in closest_points])
-
-    angleX0 /= normalizer
-    motor_voltage0 /= normalizer
+    motor_voltage0 = (V_motor_left * distance_to_right + V_motor_right * distance_to_left) / (
+        distance_to_left + distance_to_right
+    )
+    
+    if angleX0 < thetaX_left:
+        angleX0 = thetaX_left
+    if angleX0 > thetaX_right:
+        angleX0 = thetaX_right
 
     return angleX0, motor_voltage0
 
@@ -589,12 +586,12 @@ def measure_for_gun():
             # if user presses Enter then add the red point to the measurements
             key = cv2.waitKey(WAIT_FOR_KEY) & 0xFF
             if key == ENTER:
-                measurements.append((laserX, laserY, angleX,0))
+                measurements.append((laserX, laserY, angleX,Voltage))
                 nextAngleFlag = True
                 print(f"Added measurement: ({laserX}, {laserY}, {angleX},{Voltage})")
             # If the user presses the spacebar, add the mouse point to the measurements
             if key == ord(" "):
-                measurements.append((mouseX, mouseY, angleX,0))
+                measurements.append((mouseX, mouseY, angleX,Voltage))
                 nextAngleFlag = True
                 print(f"Added measurement: ({mouseX}, {mouseY}, {angleX},{Voltage})")
             # If the user presses backspace, skip the current angle
