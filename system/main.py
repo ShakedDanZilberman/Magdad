@@ -340,7 +340,8 @@ def main_using_targets():
         rawHandler.display()
         target_manager.add(timestep, img)
 
-        gui.add(img, target_manager.target_queue, target_manager.changes_handler.get(), target_manager.contours_handler.get())
+        gui.add(img, target_manager.target_queue, target_manager.changes_handler.get(), target_manager.contours_handler.get(),
+                target_manager.low_targets, target_manager.high_targets)
         gui.display()
 
         # Press Escape to exit
@@ -397,8 +398,7 @@ def test_main():
     cv2.destroyAllWindows()
 
 
-
 if __name__ == "__main__":
-    hit_cursor_main()
+    # hit_cursor_main()
     #just_changes_main()
-    # main_using_targets()
+    main_using_targets()
