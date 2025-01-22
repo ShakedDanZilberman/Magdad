@@ -435,6 +435,26 @@ def show_graphs():
     print(print_polynomial(coeffsY, degree=3, var1="rx", var2="ry"))
     print(coeffsY)
 
+    # show a graph of x vs thetaX and x vs thetaY
+    plt.figure(figsize=(14, 10))
+    plt.subplot(121)
+    plt.scatter(x, thetaX, color="red", label="Angle Data")
+    plt.plot(x, evaluate_polynomial(x, y, coeffsX, degree=3), color="blue", label="Angle Fit")
+    plt.xlabel("x")
+    plt.ylabel("Angle")
+    plt.title("Angle vs x")
+    plt.legend()
+
+    plt.subplot(122)
+    plt.scatter(x, thetaY, color="red", label="Voltage Data")
+    plt.plot(x, evaluate_polynomial(x, y, coeffsY, degree=3), color="blue", label="Voltage Fit")
+    plt.xlabel("x")
+    plt.ylabel("Voltage")
+    plt.title("Voltage vs X")
+    plt.legend()
+
+    plt.show()
+
 
 def display_grid(img=None, display=True):
     """
@@ -617,6 +637,6 @@ def measure_for_gun():
 
 if __name__ == "__main__":
     #measure_for_lidar()  # Uncomment this line to measure the angles.
-    measure_for_gun()
-    # show_graphs()
+    # measure_for_gun()
+    show_graphs()
     # display_grid()
