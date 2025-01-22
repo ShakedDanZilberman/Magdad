@@ -313,8 +313,7 @@ def main_using_targets():
         import fit
         print("Gun thread started.")
         global gun_targets
-        gun = Gun()
-        print("Gun initialised and connected.")
+        gun = Gun(print_flag=True)
         while True:
             center = target_manager.pop()
             # Move the laser pointer to the target

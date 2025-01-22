@@ -67,6 +67,7 @@ class ContoursHandler(Handler):
         if img is None:
             img = np.zeros((IMG_HEIGHT, IMG_WIDTH), np.uint8)
         gray = ImageParse.toGrayscale(img)
+        # gray = cv2.threshold(gray, 40, 80, cv2.THRESH_BINARY)
         height, width = img.shape
         black_canvas = np.zeros((height, width, 3), dtype=np.uint8)
         # manipluate the image to get the contours

@@ -9,7 +9,7 @@ from constants import COM
 
 
 class Gun:
-    def __init__(self):
+    def __init__(self, print_flag=False):
         """
         Initializes the Gun.
         Steps of initialization:
@@ -35,6 +35,9 @@ class Gun:
         self.servo = self.board.get_pin(f"d:{self.servo_pin}:s")
         self.voltage_sensor = self.board.analog[self.voltage_motor_pin]
         self.voltage_sensor.enable_reporting()
+        if print_flag:
+            print("Gun initialised and connected.")
+
 
     def shoot(self):
         """
@@ -73,6 +76,22 @@ class Gun:
         """
         return self.voltage_sensor.read()
     
+    def shoot_target(self, target):
+        # while True:
+        #     # Move the laser pointer to the target
+        #     if target is not None:
+        #         thetaX, expected_volt = fit.bilerp(*center)
+        #         # use PID
+        #         motor_volt = gun.get_voltage()
+        #         error = PID(expected_volt,motor_volt)  
+        #         self.rotate(thetaX + error)
+        #         time.sleep(0.1)
+        #         self.shoot()
+        #         print("Shooting", center)
+        #         time.sleep(1)
+        #         target_manager.clear()
+        pass
+
     def exit(self):
         pass
 
