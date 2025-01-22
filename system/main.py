@@ -298,7 +298,7 @@ def main_using_targets():
                 gun.rotate(thetaX)
                 time.sleep(0.1)
                 gun.shoot()
-                # print("Shooting", center)
+                print("Shooting", center)
                 time.sleep(1)
         # TODO: 1. gun is not moving. 2. contour parameters need adjustment. 3. changes is not working correctly
     
@@ -321,7 +321,57 @@ def main_using_targets():
     cv2.destroyAllWindows()
 
 
+def test_main():
+    global CAMERA_INDEX, timestep, gun_targets
+    detectCameras()
+    cam = Camera(CAMERA_INDEX)
+    rawHandler = RawHandler()
+    contours_handler = ContoursHandler()
+    # target_manager = Targets()
+    # def gun_thread():
+    #     """
+    #     Thread that moves the gun to the target and shoots.
+    #     The targets are aquired as an asynchronous input from the main thread.
+    #     """
+    #     import fit
+    #     print("Gun thread started.")
+    #     global gun_targets
+    #     gun = Gun()
+    #     print("Gun initialised and connected.")
+    #     while True:
+    #         center = target_manager.pop()
+    #         # Move the laser pointer to the target
+    #         if center is not None:
+    #             thetaX, thetaY = fit.bilerp(*center)
+    #             gun.rotate(thetaX)
+    #             time.sleep(0.1)
+    #             gun.shoot()
+    #             # print("Shooting", center)
+    #             time.sleep(1)
+        # TODO: 1. gun is not moving. 2. contour parameters need adjustment. 3. changes is not working correctly
+    
+    # gun = threading.Thread(target=gun_thread)
+    # gun.start()
+    
+    while True:
+        timestep += 1
+        img = cam.read()
+        rawHandler.add(img)
+        rawHandler.display()
+        contours_handler.add(img)
+        contours_handler.display()
+        img_contours = contours_handler.get()
+        targets_contours = _, _, contours_centers = get_targets(img_contours)
+        show_targets("targets from contours", img_contours, targets_contours)
+        
+        if cv2.waitKey(1) == 27:
+            break
+    cv2.destroyAllWindows()
+
+
+
 if __name__ == "__main__":
     # hit_cursor_main()
-    just_changes_main()
-    # main_using_targets()
+    # just_changes_main()
+    main_using_targets()
+    # test_main()
