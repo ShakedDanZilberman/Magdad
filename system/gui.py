@@ -1,4 +1,9 @@
 from matplotlib import pyplot as plt
+from constants import IMG_WIDTH, IMG_HEIGHT
+import numpy as np
+import threading
+import cv2
+import time
 
 class LIDARDistancesGraph:
     """
@@ -102,3 +107,36 @@ class LIDARDistancesGraph:
         plt.draw()
         plt.pause(0.1)
 
+class GUI:
+    def __init__(self):
+        self.img = np.zeros((IMG_HEIGHT, IMG_WIDTH), np.uint8)
+        self.targets = []
+        self.changes = np.zeros((IMG_HEIGHT, IMG_WIDTH), np.uint8)
+        self.contours = np.zeros((IMG_HEIGHT, IMG_WIDTH), np.uint8)
+
+    def add(self, img, targets, changes, contours):
+        self.img = img
+        self.targets = targets
+        self.changes = changes
+        self.contours = contours
+
+    def display(self):
+        merged_image = self.img.copy()
+        # convert to color image
+        merged_image = cv2.cvtColor(merged_image, cv2.COLOR_GRAY2BGR)
+        # add the targets as red circles
+        for target in self.targets:
+            red = (0, 0, 255)
+            target_size = 2
+            cv2.circle(merged_image, (int(target[0]), int(target[1])), target_size, red, -1)
+        
+        # Add the changes heatmap to the photo. It has the same size, add in in the green channel with opacity 0.3
+        heatmaps_opacity = 0.3
+        if self.changes is not None:
+            merged_image[:, :, 1] = cv2.addWeighted(merged_image[:, :, 1], 1, self.changes, heatmaps_opacity, 0)
+        # Add the contours heatmap to the photo. It has the same size, add in in the blue channel with opacity 0.3
+        if self.contours is not None:
+            merged_image[:, :, 0] = cv2.addWeighted(merged_image[:, :, 0], 1, self.contours, heatmaps_opacity, 0)
+
+        cv2.imshow("CounterStrike Magdad", merged_image)
+        time.sleep(0.1)

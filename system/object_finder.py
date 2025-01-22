@@ -50,28 +50,37 @@ class Targets:
         self.frame_number = frame_number
         self.changes_handler.add(img)
         self.img_changes = self.changes_handler.get()
-        if isinstance(self.img_changes, np.ndarray) and self.img_changes.size > 1:
-            cv2.imshow("changes from original", self.img_changes)
+        # if isinstance(self.img_changes, np.ndarray) and self.img_changes.size > 1:
+        #     cv2.imshow("changes from original", self.img_changes)
         self.contours_handler.add(img)
         self.contours_handler.display()
         self.img_contours = self.contours_handler.get()
         # at the "initial frame", add all current objects to the queue using contour identification
         # TODO: figure out how to use the contours properly
-        # if self.frame_number == SAMPLE_RATE//4:
-        #     # print("pulling targets from contours")
-        #     targets_contours = _, _, self.contours_centers = get_targets(self.img_contours)
-        #     show_targets("targets from changes", self.img_changes, targets_contours)
-        #     self.contours_centers = sorted(self.contours_centers, key=lambda x: x[0], reverse=True)
-        #     self.target_queue.extend(self.contours_centers)
+        if self.frame_number == SAMPLE_RATE//4:
+            print("pulling targets from contours")
+            targets_contours = _, _, self.contours_centers = get_targets(self.img_contours)
+            print("targets contours", self.contours_centers)
+            show_targets("targets from contours", self.img_contours, targets_contours)
+            # self.contours_centers = sorted(self.contours_centers, key=lambda x: x[0], reverse=True)
+            # self.target_queue.extend(self.contours_centers)
+            if len(self.contours_centers) > 0:
+                # Remove from centers_contours any targets that are less than 20 pixels apart (unique targets)
+                targets = []
+                pixel_distance = 30
+                for center in self.contours_centers:
+                    if all(np.linalg.norm(np.array(center) - np.array(target)) > pixel_distance for target in targets):
+                        insert_sorted(targets, center)
+                self.target_queue = list(merge(self.target_queue, targets.copy()))
 
         # at a constant rate SAMPLE_RATE, get all new objects in the image
         if self.frame_number%SAMPLE_RATE == SAMPLE_RATE-1 and isinstance(self.img_changes, np.ndarray) and self.img_changes.size > 1:
-            # print("pulling targets from changes")
+            print("pulling targets from changes")
             targets_changes = _, _, self.changes_centers = get_targets(self.img_changes)
-            show_targets("targets from changes", self.img_changes, targets_changes)
+            # show_targets("targets from changes", self.img_changes, targets_changes)
         # add the targets from the changes to the queue
             if len(self.changes_centers) > 0:
-                # Remove from centers_changes any targets that are less than 20 pixels apart (unique targets)
+                # Remove from centers_changes any targets that are less than 30 pixels apart (unique targets)
                 targets = []
                 pixel_distance = 30
                 for center in self.changes_centers:
@@ -79,7 +88,7 @@ class Targets:
                         insert_sorted(targets, center)
                 self.target_queue = list(merge(self.target_queue, targets.copy()))
             # reset the changes heatmap, so we get no duplicates
-            print("Queue:", self.target_queue)
+            # print("Queue:", self.target_queue)
             self.changes_handler.clear() 
             
     def pop(self):
@@ -91,8 +100,6 @@ class Targets:
     def clear(self):
         self.changes_handler.clear() 
 
-    
-        
 
 def average_of_heatmaps(changes_map, contours_map):
     """Intersect two heatmaps

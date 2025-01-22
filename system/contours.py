@@ -7,17 +7,17 @@ from constants import IMG_WIDTH, IMG_HEIGHT
 # These parameters are used to optimize the edges for contour extraction
 # Tune these parameters to get the best results
 
-DILATION_KERNEL = (5, 5)
+DILATION_KERNEL = (7, 7)
 OPENING_KERNEL = (5, 5)
-CLOSING_KERNEL = (3, 3)
+CLOSING_KERNEL = (7, 7)
 EROSION_KERNEL = (3, 3)
 
-DILATION_ITERATIONS = 2
+DILATION_ITERATIONS = 1
 EROSION_ITERATIONS = 2
 
-INITIAL_BLURRING_KERNEL = (3, 3)
-EDGE_DETECTION_MINTHRESH = 150
-EDGE_DETECTION_MAXTHRESH = 180
+INITIAL_BLURRING_KERNEL = (5, 5)
+EDGE_DETECTION_MINTHRESH = 40
+EDGE_DETECTION_MAXTHRESH = 60
 
 
 CONTOUR_EXTRACTION_M0DE = cv2.RETR_EXTERNAL
@@ -49,7 +49,7 @@ class ContoursHandler(Handler):
             np.ndarray: The optimized edges.
         """
         dilated_edges = cv2.dilate(
-            edges, Kernels.dilation_kernel, iterations=1
+            edges, Kernels.dilation_kernel, iterations=DILATION_ITERATIONS
         )
         opening = cv2.morphologyEx(dilated_edges, cv2.MORPH_OPEN, Kernels.opening_kernel)
         closing = cv2.morphologyEx(opening, cv2.MORPH_CLOSE, Kernels.closing_kernel)
