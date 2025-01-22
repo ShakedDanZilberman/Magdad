@@ -11,12 +11,14 @@ BACKSPACE = 8
 
 STARTX = 20
 STARTY = 10
-deltaX = 5
+deltaX = 2
 deltaY = 5
 ENDX = 105
 ENDY = 85
 
 # Full MEASUREMENTS data (not truncated)
+MEASUREMENTS = [(435, 229, 20, 0), (427, 225, 22, 0),  (397, 221, 26, 0), (355, 219, 28, 0), (345, 218, 30, 0), (330, 220, 32, 0), (320, 217, 34, 0), (283, 216, 38, 0), (255, 214, 40, 0), (245, 218, 42, 0), (222, 215, 44, 0), (207, 215, 46, 0), (190, 215, 48, 0), (177, 216, 50, 0), (148, 216, 52, 0), (136, 219, 54, 0), (118, 216, 56, 0), (103, 215, 58, 0)]
+
 MEASUREMENTS = [(594, 273, 30, 0.1056), 
                 (513, 271, 35, 0.1222), 
                 (416, 275, 40, 0.1339), 
@@ -119,6 +121,7 @@ def measure_for_lidar():
 
             frame = camera.read()
             laserX, laserY = find_red_point(frame)
+            # insert motor pin
             # convert the frame to BGR for display
             frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
             cv2.circle(frame, (mouseX, mouseY), 7, (255, 0, 0), -1)
@@ -192,7 +195,8 @@ def bilerp(x0, y0):
     x = np.array([item[0] for item in MEASUREMENTS])
     y = np.array([item[1] for item in MEASUREMENTS])
     thetaX = np.array([item[2] for item in MEASUREMENTS])
-    motor_voltage = np.array([item[3] for item in MEASUREMENTS])
+    thetaY = np.array([item[3] for item in MEASUREMENTS])
+    V_motor = np.array([item[4] for item in MEASUREMENTS])
 
     # get the four closest points to the black point in x,y space
     distance_squared = lambda x1, y1, x2, y2: (x1 - x2) ** 2 + (y1 - y2) ** 2
@@ -554,7 +558,7 @@ def measure_for_gun():
             if nextAngleFlag:
                 angleX = next(angles)
                 print("Next angle: ", angleX)
-                gun.rotate(angleX)
+                motor_value = gun.rotate(angleX)
                 time.sleep(0.3)
                 nextAngleFlag = False
 
@@ -585,12 +589,12 @@ def measure_for_gun():
             # if user presses Enter then add the red point to the measurements
             key = cv2.waitKey(WAIT_FOR_KEY) & 0xFF
             if key == ENTER:
-                measurements.append((laserX, laserY, angleX, Voltage))
+                measurements.append((laserX, laserY, angleX,0))
                 nextAngleFlag = True
                 print(f"Added measurement: ({laserX}, {laserY}, {angleX},{Voltage})")
             # If the user presses the spacebar, add the mouse point to the measurements
             if key == ord(" "):
-                measurements.append((mouseX, mouseY, angleX, Voltage))
+                measurements.append((mouseX, mouseY, angleX,0))
                 nextAngleFlag = True
                 print(f"Added measurement: ({mouseX}, {mouseY}, {angleX},{Voltage})")
             # If the user presses backspace, skip the current angle
@@ -614,7 +618,7 @@ def measure_for_gun():
 
 
 if __name__ == "__main__":
-    # measure_for_lidar()  # Uncomment this line to measure the angles.
+    #measure_for_lidar()  # Uncomment this line to measure the angles.
     measure_for_gun()
     # show_graphs()
     # display_grid()

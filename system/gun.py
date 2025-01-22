@@ -24,6 +24,7 @@ class Gun:
         self.sleep_duration = 0.2
         try:
             self.board = Arduino(COM)
+
         except serial.serialutil.SerialException as e:
             print("Arduino not connected or COM port is wrong")
             # print the output of "mode" command in the CMD
