@@ -4,9 +4,12 @@ import sys
 
 import serial
 from time import sleep
+import time
 
 from constants import COM
 
+import fit
+import pid
 
 class Gun:
     def __init__(self, print_flag=False):
@@ -76,21 +79,28 @@ class Gun:
         """
         return self.voltage_sensor.read()
     
-    def shoot_target(self, target):
-        # while True:
-        #     # Move the laser pointer to the target
-        #     if target is not None:
-        #         thetaX, expected_volt = fit.bilerp(*center)
-        #         # use PID
-        #         motor_volt = gun.get_voltage()
-        #         error = PID(expected_volt,motor_volt)  
-        #         self.rotate(thetaX + error)
-        #         time.sleep(0.1)
-        #         self.shoot()
-        #         print("Shooting", center)
-        #         time.sleep(1)
-        #         target_manager.clear()
-        pass
+    def aim_and_fire_target(self, target):
+
+        P_ERROR = -75
+        I_ERROR = -25
+        D_ERROR = 0
+        fix = 0
+        
+        fixer = pid.PID(P_ERROR, I_ERROR, D_ERROR)
+
+        thetaX, expected_volt = fit.bilerp(*target)
+        self.rotate(thetaX)
+
+        start_time = time.time()
+        # Run the loop for 1 second
+        # TODO - change time to global var
+        while time.time() - start_time < 1:
+            self.rotate(thetaX + fix)
+            motor_volt = self.get_voltage()
+            fix = fixer.PID(expected_volt,motor_volt) 
+            
+        self.shoot()
+        return
 
     def exit(self):
         pass
