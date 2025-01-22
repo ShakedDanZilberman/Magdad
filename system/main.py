@@ -322,7 +322,6 @@ def main_using_targets():
                 print("Shooting", center)
                 time.sleep(1)
                 target_manager.clear()
-        # TODO: 1. gun is not moving. 2. contour parameters need adjustment. 3. changes is not working correctly
     
     gun = threading.Thread(target=gun_thread)
     gun.start()
@@ -333,10 +332,11 @@ def main_using_targets():
         rawHandler.add(img)
         rawHandler.display()
         target_manager.add(timestep, img)
-
-        gui.add(img, target_manager.target_queue, target_manager.changes_handler.get(), target_manager.contours_handler.get(),
-                target_manager.low_targets, target_manager.high_targets)
-        gui.display()
+        # targets = get_targets(target_manager.contours_handler.get())
+        # show_targets("targets from contours", target_manager.contours_handler.get(), targets)
+        # gui.add(img, target_manager.target_queue, target_manager.changes_handler.get(), target_manager.contours_handler.get(),
+        #         target_manager.low_targets, target_manager.high_targets)
+        # gui.display()
 
         # Press Escape to exit
         if cv2.waitKey(1) == 27:

@@ -5,6 +5,7 @@ from contours import ContoursHandler
 from changes import ChangesHandler
 from bisect import bisect
 from heapq import merge
+from yolo import YOLOHandler
 
 
 INITIAL_BLURRING_KERNEL = (3, 3)
@@ -40,6 +41,7 @@ class Targets:
         self.frame_number = 0
         self.contours_handler = ContoursHandler()
         self.changes_handler = ChangesHandler()
+        self.yolo_handler = YOLOHandler() 
         self.img_changes = None
         self.yolo_centers = None
         self.contours_centers = None
@@ -51,29 +53,42 @@ class Targets:
     def add(self, frame_number, img):
         self.frame_number = frame_number
         self.changes_handler.add(img)
-        self.img_changes = self.changes_handler.get()
-        # if isinstance(self.img_changes, np.ndarray) and self.img_changes.size > 1:
-        #     cv2.imshow("changes from original", self.img_changes)
+        self.yolo_handler.add(img)
+        self.yolo_centers = self.yolo_handler.get_centers()
+        detected = self.yolo_handler.get()
+        if isinstance(detected, np.ndarray) and detected.size > 1:
+            cv2.imshow("yolo image", detected)
         self.contours_handler.add(img)
         self.contours_handler.display()
         self.img_contours = self.contours_handler.get()
         # at the "initial frame", add all current objects to the queue using contour identification
         # TODO: figure out how to use the contours properly
+        # if self.frame_number == SAMPLE_RATE//4:
+        #     print("pulling targets from contours")
+        #     targets_contours = self.high_targets, self.low_targets, self.contours_centers = get_targets(self.img_contours)
+        #     print("targets contours", self.contours_centers)
+        #     show_targets("targets from contours", self.img_contours, targets_contours)
+        #     # self.contours_centers = sorted(self.contours_centers, key=lambda x: x[0], reverse=True)
+        #     # self.target_queue.extend(self.contours_centers)
+        #     if len(self.contours_centers) > 0:
+        #         # Remove from centers_contours any targets that are less than 20 pixels apart (unique targets)
+        #         targets = []
+        #         pixel_distance = 30
+        #         for center in self.contours_centers:
+        #             if all(np.linalg.norm(np.array(center) - np.array(target)) > pixel_distance for target in targets):
+        #                 insert_sorted(targets, center)
+        #         self.target_queue = list(merge(self.target_queue, targets.copy()))
+
         if self.frame_number == SAMPLE_RATE//4:
-            print("pulling targets from contours")
-            targets_contours = self.high_targets, self.low_targets, self.contours_centers = get_targets(self.img_contours)
-            print("targets contours", self.contours_centers)
-            # show_targets("targets from contours", self.img_contours, targets_contours)
-            # self.contours_centers = sorted(self.contours_centers, key=lambda x: x[0], reverse=True)
-            # self.target_queue.extend(self.contours_centers)
-            if len(self.contours_centers) > 0:
+            if len(self.yolo_centers) > 0:
                 # Remove from centers_contours any targets that are less than 20 pixels apart (unique targets)
                 targets = []
                 pixel_distance = 30
-                for center in self.contours_centers:
+                for center in self.yolo_centers:
                     if all(np.linalg.norm(np.array(center) - np.array(target)) > pixel_distance for target in targets):
                         insert_sorted(targets, center)
                 self.target_queue = list(merge(self.target_queue, targets.copy()))
+
 
         # at a constant rate SAMPLE_RATE, get all new objects in the image
         if self.frame_number%SAMPLE_RATE == SAMPLE_RATE-1 and isinstance(self.img_changes, np.ndarray) and self.img_changes.size > 1:

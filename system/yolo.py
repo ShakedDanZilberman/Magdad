@@ -69,6 +69,23 @@ class YOLOHandler(Handler):
             cv2.rectangle(black_image, topleft, bottomright, white, -1)
 
         return black_image
+    
+
+    def get_centers(self):
+        """
+        Get the centers of the bounding boxes.
+
+        Returns:
+            list[tuple]: The centers of the bounding boxes.
+        """
+
+        centers = []
+        for box in self.bounding_boxes:
+            x1, y1, x2, y2 = box['x1'], box['y1'], box['x2'], box['y2']
+            center = ((x1 + x2) // 2, (y1 + y2) // 2)
+            centers.append(center)
+        return centers
+
 
 
     def display(self):
