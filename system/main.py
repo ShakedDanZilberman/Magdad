@@ -29,12 +29,13 @@ from object_finder import Targets
 timestep = 0  # Global timestep, used to keep track of the number of frames processed
 laser_targets = [(30, 60)]  # List of targets for the laser pointer, used to share information between threads
 gun_targets = []  # List of targets for the gun, used to share information between threads
-P_ERROR = 100
-I_ERROR = 0
+P_ERROR = -75
+I_ERROR = -25
 D_ERROR = 0
 total_error = 0
 last_error = 0
 error = 0
+fix = 0
 DIFF_THRESH = 0
 INITIAL_CONTOUR_EXTRACT_FRAME_NUM = 30
 CHECK_FOR_NEW_OBJECTS = 48
@@ -91,7 +92,7 @@ def hit_cursor_main():
 
     cv2.namedWindow(handler.TITLE)
     cv2.setMouseCallback(handler.TITLE, handler.mouse_callback)
-
+    thetaX = 90.00
     while True:
         img = cam.read()
 
@@ -100,11 +101,21 @@ def hit_cursor_main():
 
         mousePos = handler.getMousePosition()
         laser_targets = [mousePos]
+        last_thetaX = thetaX
         thetaX, expected_volt = fit.bilerp(*mousePos)
         # use PID
+        global fix
+        if thetaX != last_thetaX:
+            gun.rotate(thetaX)
+            global last_error, total_error
+            last_error = 0 
+            total_error = 0
+            time.sleep(0.5)
+        else:
+            gun.rotate(thetaX + fix)
         motor_volt = gun.get_voltage()
-        error = PID(expected_volt,motor_volt)  
-        gun.rotate(thetaX + error)
+        fix = PID(expected_volt,motor_volt) 
+        
         
         if cv2.waitKey(1) == 32:  # Whitespace
             gun.shoot()
