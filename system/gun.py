@@ -18,7 +18,7 @@ class Gun:
         3. Attach the servo to the board.
         4. Start an iterator thread.
         """
-
+        self.voltage_motor_pin = 4
         self.gun_pin = 4
         self.servo_pin = 9
         self.sleep_duration = 0.2
@@ -32,6 +32,8 @@ class Gun:
         it = util.Iterator(self.board)
         it.start()
         self.servo = self.board.get_pin(f"d:{self.servo_pin}:s")
+        self.voltage_sensor = self.board.analog[self.voltage_motor_pin]
+        self.voltage_sensor.enable_reporting()
 
     def shoot(self):
         """
@@ -60,6 +62,15 @@ class Gun:
         angle *= 180 / 240  # The servo thinks in terms of 0-180 degrees, but the servo can move 240 degrees
         self.servo.write(angle)
 
+    def get_voltage(self):
+        """
+        Returns the voltage of the battery.
+
+        Returns:
+            float: The voltage of the battery.
+        """
+        return self.voltage_sensor.read()
+    
     def exit(self):
         pass
 

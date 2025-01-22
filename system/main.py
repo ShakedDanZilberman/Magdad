@@ -29,7 +29,7 @@ from object_finder import Targets
 timestep = 0  # Global timestep, used to keep track of the number of frames processed
 laser_targets = [(30, 60)]  # List of targets for the laser pointer, used to share information between threads
 gun_targets = []  # List of targets for the gun, used to share information between threads
-
+P_ERROR = 200
 DIFF_THRESH = 0
 INITIAL_CONTOUR_EXTRACT_FRAME_NUM = 30
 CHECK_FOR_NEW_OBJECTS = 48
@@ -73,6 +73,7 @@ def laser_thread():
 def hit_cursor_main():
     """
     An alternative to the main function that uses the mouse cursor as the target for the laser pointer.
+    It does not use any image processing to detect targets.
     """
     global CAMERA_INDEX, timestep, laser_targets
     import fit
@@ -81,7 +82,7 @@ def hit_cursor_main():
     handler = MouseCameraHandler()
     # laser = threading.Thread(target=laser_thread)
     # laser.start()  # comment this line to disable the laser pointer
-    gun = DummyGun()  # DummyGun() or Gun()
+    gun = Gun()  # DummyGun() or Gun()
 
     cv2.namedWindow(handler.TITLE)
     cv2.setMouseCallback(handler.TITLE, handler.mouse_callback)
@@ -94,12 +95,15 @@ def hit_cursor_main():
 
         mousePos = handler.getMousePosition()
         laser_targets = [mousePos]
-        thetaX, thetaY = fit.bilerp(*mousePos)
-        gun.rotate(thetaX)
+        thetaX, expected_volt = fit.bilerp(*mousePos)
+        # use PID
+        motor_volt = gun.get_voltage()
+        volt_error = motor_volt - expected_volt
+        print("Motor voltage:", motor_volt, "Expected voltage:", expected_volt, "Error:", volt_error)
+        gun.rotate(thetaX + volt_error*P_ERROR)
         
         if cv2.waitKey(1) == 32:  # Whitespace
             gun.shoot()
-
         # Press Escape to exit
         if cv2.waitKey(1) == 27:
             break
@@ -107,6 +111,11 @@ def hit_cursor_main():
 
 
 def just_changes_main():
+    """
+    This function uses the changes in the image to detect targets.
+    It does not use contours or YOLO.
+    It is a simplified version of the main function.
+    """
     global CAMERA_INDEX, timestep, gun_targets
     detectCameras()
     cam = Camera(CAMERA_INDEX)
@@ -164,7 +173,7 @@ def just_changes_main():
 
         # add the targets from the changes to the queue
         if len(centers_changes) > 0:
-            # Remove from centers_changes any targets that are less than 20 pixels apart (unique targets)
+            # Remove from centers_changes any targets that are less than 30 pixels apart (unique targets)
             targets = []
             pixel_distance = 30
             for center in centers_changes:
@@ -309,5 +318,5 @@ def main_using_targets():
 
 if __name__ == "__main__":
     # hit_cursor_main()
-    # just_changes_main()
-    main_using_targets()
+    just_changes_main()
+    # main_using_targets()
