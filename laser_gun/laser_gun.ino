@@ -10,26 +10,18 @@ int joyVal; // create variable for joystick value
  
 void setup()
 {
-  servo1.attach(4); // start servos
+  servo1.attach(9); // start servos
   servo2.attach(3);
   pinMode(8,OUTPUT);
-  digitalWrite(8,HIGH);
-  delay(1000);
-  digitalWrite(8,LOW);
+
 }
  
  
 void loop()
 {
 
-  joyVal = analogRead(joyX); // read value from joystick
-  joyVal = map(joyVal, 0, 1023, 180, 0); // change value range to 0-180
-  servo1.write(joyVal); // write value to servo
-
- 
-  joyVal = analogRead(joyY); // repeat same for y axis
-  joyVal = map(joyVal, 0, 1023, 0, 180);
-  servo2.write(joyVal);
-  delay(20); // add small delay to reduce noise
- 
+  servo1.write(0); // write value to servo
+  delay(2000); // add small delay to reduce noise
+  servo1.write(180); // write value to servo
+  delay(2000);
 }
