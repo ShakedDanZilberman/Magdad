@@ -1,0 +1,10 @@
+command line yolo syntax:
+
+for train:
+yolo detect train model=yolov5mu.pt data='C:\Users\TLP-001\Documents\magdad_project\Magdad\yolo\dataset\data.yaml' epochs=25 imgsz=640 device='cpu'
+
+for validate:
+yolo detect val model=C:\Users\TLP-001\runs\detect\train8\weights\best.pt data=C:\Users\TLP-001\Documents\magdad_project\Magdad\yolo\dataset\data.yaml
+
+for predict:
+yolo detect predict model=C:\Users\TLP-001\runs\detect\train8\weights\last.pt source=C:\Users\TLP-001\Documents\magdad_project\Magdad\yolo\images\img6.jpg save=True imgsz=640 conf=0.25

@@ -1,0 +1,12 @@
+Fit Parameters for angleX vs rx (3rd-degree polynomial):
+y = 1.45905e-05x³ + -1.39060e-02x² + 4.13163e+00x + -6.98276e+01
+
+Fit Parameters for angleY vs ry (3rd-degree polynomial):
+y = 7.16066e-06x³ + -6.80441e-03x² + 2.48578e+00x + -3.30036e+01
+
+Fit Parameters for angleX vs ry (3rd-degree polynomial):
+y = 3.53030e-06x³ + -3.36469e-03x² + 1.74074e+00x + -1.64708e+01
+
+Fit Parameters for angleY vs rx (3rd-degree polynomial):
+y = 2.20277e-05x³ + -2.09533e-02x² + 5.70232e+00x + -1.04806e+02
+
