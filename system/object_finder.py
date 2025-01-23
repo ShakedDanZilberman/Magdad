@@ -13,7 +13,7 @@ INITIAL_BLURRING_KERNEL = (3, 3)
 HIGH_CEP_INDEX = 0.9
 LOW_CEP_INDEX = 0.5
 # sample rate - in frames, not in seconds
-SAMPLE_RATE = 12
+SAMPLE_RATE = 26
 FRAMES_FOR_INITIALISATION = 15
 BRIGHTNESS_THRESHOLD = 240
 
@@ -106,6 +106,10 @@ class Targets:
         ):
             print("pulling targets from changes")
 
+            if len(self.target_queue) > 0:
+                print("Not pulling from changes, because shooting isn't done")
+                self.changes_handler.clear()  # reset the changes heatmap, so we get no duplicates from targets that moved
+
             targets_changes = (
                 self.high_targets,
                 self.low_targets,
@@ -133,6 +137,10 @@ class Targets:
         self.frame_number = frame_number
         self.changes_handler.add(img)
         self.contours_handler.add(img)
+
+        if len(self.target_queue) > 0:
+            print("Not pulling from YOLO, because shooting isn't done")
+            return
         self.yolo_handler.add(img)
 
         # at a constant rate SAMPLE_RATE, get all objects in the image

@@ -33,6 +33,7 @@ class Gun:
             # print the output of "mode" command in the CMD
             os.system("mode")
             sys.exit()
+            raise
         it = util.Iterator(self.board)
         it.start()
         self.servo = self.board.get_pin(f"d:{self.servo_pin}:s")

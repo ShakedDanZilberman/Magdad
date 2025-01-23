@@ -41,6 +41,7 @@ class LaserPointer:
             # print the output of "mode" command in the CMD
             os.system("mode")
             sys.exit()
+            raise
 
         self.turn_on()
         # Attach the servo to the board

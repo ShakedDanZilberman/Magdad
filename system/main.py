@@ -124,7 +124,7 @@ def hit_cursor_main():
             break
     cv2.destroyAllWindows()
 
-def PID (expected_volt, motor_volt):
+def PID(expected_volt, motor_volt):
     # use PID      
         global total_error, last_error, error
         last_error = error
@@ -381,5 +381,5 @@ def test():
 if __name__ == "__main__":
     #test()
     #hit_cursor_main()
-    #just_changes_main()
+    # just_changes_main()
     main_using_targets()
