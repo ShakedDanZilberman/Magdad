@@ -46,6 +46,7 @@ class Targets:
         self.yolo_centers = None
         self.contours_centers = None
         self.changes_centers = None
+        self.yolo_centers = []
         self.low_targets = []
         self.high_targets = []
         self.target_queue = []

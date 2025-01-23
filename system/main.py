@@ -8,7 +8,7 @@ with ImportDefence():
     import numpy as np
     from pyfirmata import Arduino, util
     import matplotlib.pyplot as plt
-    # from ultralytics import YOLO
+    from ultralytics import YOLO
 
 from contours import ContoursHandler
 from changes import ChangesHandler
@@ -310,13 +310,11 @@ def main_using_targets():
         Thread that moves the gun to the target and shoots.
         The targets are aquired as an asynchronous input from the main thread.
         """
-        import fit
         print("Gun thread started.")
         global gun_targets
         gun = Gun(print_flag=True)
         while True:
             center = target_manager.pop()
-            # Move the laser pointer to the target
             if center is not None:
                 gun.aim_and_fire_target(center)
                 print("Shooting", center)
