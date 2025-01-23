@@ -17,7 +17,7 @@ from image_processing import RawHandler, ImageParse
 from mouseCamera import MouseCameraHandler
 from object_finder import show_targets, get_targets
 from motion import DifferenceHandler
-# from yolo import YOLOHandler
+from yolo import YOLOHandler
 from laser import LaserPointer
 from cameraIO import Camera
 from object_finder import average_of_heatmaps
@@ -297,15 +297,7 @@ def main():
     cv2.destroyAllWindows()
 
 
-def main_using_targets():
-    global CAMERA_INDEX, timestep, gun_targets
-    from gui import GUI
-    detectCameras()
-    cam = Camera(CAMERA_INDEX)
-    rawHandler = RawHandler()
-    target_manager = Targets()
-    gui = GUI()
-    def gun_thread():
+def gun_thread(target_manager):
         """
         Thread that moves the gun to the target and shoots.
         The targets are aquired as an asynchronous input from the main thread.
@@ -321,17 +313,28 @@ def main_using_targets():
                 time.sleep(1)
                 target_manager.clear()
     
-    gun = threading.Thread(target=gun_thread)
+
+def main_using_targets():
+    global CAMERA_INDEX, timestep, gun_targets
+    from gui import GUI
+    from constants import useJustYOLO
+    detectCameras()
+    cam = Camera(CAMERA_INDEX)
+    rawHandler = RawHandler()
+    target_manager = Targets()
+    gui = GUI()
+    
+    gun = threading.Thread(target=gun_thread, args=(target_manager,))
     gun.start()
     
     while True:
         timestep += 1
         img = cam.read()
         rawHandler.add(img)
-        # rawHandler.display()
-        target_manager.add(timestep, img)
-        targets = get_targets(target_manager.contours_handler.get())
-        show_targets("targets from contours", target_manager.contours_handler.get(), targets)
+        if useJustYOLO:
+            target_manager.addJustYOLO(timestep, img)
+        else:
+            target_manager.add(timestep, img)
         gui.add(img, target_manager.target_queue, target_manager.changes_handler.get(), target_manager.contours_handler.get(),
                 target_manager.low_targets, target_manager.high_targets, target_manager.yolo_handler.get(), target_manager.yolo_centers)
         gui.display()
@@ -348,32 +351,7 @@ def test_main():
     cam = Camera(CAMERA_INDEX)
     rawHandler = RawHandler()
     contours_handler = ChangesHandler()
-    # target_manager = Targets()
-    # def gun_thread():
-    #     """
-    #     Thread that moves the gun to the target and shoots.
-    #     The targets are aquired as an asynchronous input from the main thread.
-    #     """
-    #     import fit
-    #     print("Gun thread started.")
-    #     global gun_targets
-    #     gun = Gun()
-    #     print("Gun initialised and connected.")
-    #     while True:
-    #         center = target_manager.pop()
-    #         # Move the laser pointer to the target
-    #         if center is not None:
-    #             thetaX, thetaY = fit.bilerp(*center)
-    #             gun.rotate(thetaX)
-    #             time.sleep(0.1)
-    #             gun.shoot()
-    #             # print("Shooting", center)
-    #             time.sleep(1)
-        # TODO: 1. gun is not moving. 2. contour parameters need adjustment. 3. changes is not working correctly
-    
-    # gun = threading.Thread(target=gun_thread)
-    # gun.start()
-    
+
     while True:
         timestep += 1
         img = cam.read()

@@ -3,7 +3,7 @@ from image_processing import Handler, ImageParse
 import numpy as np
 from constants import IMG_HEIGHT, IMG_WIDTH
 
-FRAMES_FOR_INITIALISATION = 15
+FRAMES_FOR_INITIALISATION = 6
 BRIGHTNESS_THRESHOLD = 240
 
 class ChangesHandler(Handler):
@@ -54,7 +54,9 @@ class ChangesHandler(Handler):
                 self.avg = cv2.addWeighted(self.avg, 1, self.images[i], 1 / FRAMES_FOR_INITIALISATION, 0)
         
         self.diff = ImageParse.differenceImage(img, self.avg)
-        self.diff = ImageParse.blurImage(self.diff, 20)
+        # cv2.imshow("Difference", self.diff)
+        self.diff = ImageParse.blurImage(self.diff, 5)
+        # cv2.imshow("Blurred Difference", self.diff)
         self.diff = ImageParse.aboveThreshold(self.diff, 10)
         # self.diff = ImageParse.increase_contrast(self.diff, 1.5)  # leave this commented out for now, until it's fixed
 

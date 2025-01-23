@@ -15,6 +15,8 @@ class YOLOHandler(Handler):
         self.bounding_boxes = []
         self.conf_threshold = 0.5
 
+        print("YOLO model loaded successfully.")
+    
     
     def add(self, img):
         """

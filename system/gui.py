@@ -5,6 +5,8 @@ import threading
 import cv2
 import time
 
+from object_finder import get_targets
+
 class LIDARDistancesGraph:
     """
     Class to plot the LIDAR distances in real-time.
@@ -164,32 +166,39 @@ class GUI:
                     1,
                 )
         print("Number of targets:", len(self.targets))
+        font_scale = 1
         # top right
         if self.changes is not None:
             # (in green)
             merged_image[:IMG_HEIGHT, IMG_WIDTH:2*IMG_WIDTH, 1] = self.changes
             merged_image[:IMG_HEIGHT, IMG_WIDTH:2*IMG_WIDTH, 0] = zeros_frame
             merged_image[:IMG_HEIGHT, IMG_WIDTH:2*IMG_WIDTH, 2] = zeros_frame
-            cv2.putText(merged_image, " Changes", (IMG_WIDTH, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
+            cv2.putText(merged_image, " Changes", (IMG_WIDTH, 30), cv2.FONT_HERSHEY_SIMPLEX, font_scale, (255, 255, 255), 1, cv2.LINE_AA)
         # bottom left
         if self.contours is not None:
             # (in blue)
             merged_image[IMG_HEIGHT:2*IMG_HEIGHT, :IMG_WIDTH, 0] = self.contours
             merged_image[IMG_HEIGHT:2*IMG_HEIGHT, :IMG_WIDTH, 1] = zeros_frame
             merged_image[IMG_HEIGHT:2*IMG_HEIGHT, :IMG_WIDTH, 2] = zeros_frame
-            cv2.putText(merged_image, " Contours", (0, IMG_HEIGHT + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
+            cv2.putText(merged_image, " Contours", (0, IMG_HEIGHT + 30), cv2.FONT_HERSHEY_SIMPLEX, font_scale, (255, 255, 255), 1, cv2.LINE_AA)
+            
+            _, _, contour_targets = get_targets(self.contours)
+            for target in contour_targets:
+                purple = (255, 0, 100)
+                target_size = 2
+                cv2.circle(merged_image, (int(target[0]), IMG_HEIGHT + int(target[1])), target_size, purple, -1)
         # bottom right
         if self.yolo is not None:
             # (in red)
             merged_image[IMG_HEIGHT:2*IMG_HEIGHT, IMG_WIDTH:2*IMG_WIDTH, 2] = self.yolo
             merged_image[IMG_HEIGHT:2*IMG_HEIGHT, IMG_WIDTH:2*IMG_WIDTH, 0] = zeros_frame
             merged_image[IMG_HEIGHT:2*IMG_HEIGHT, IMG_WIDTH:2*IMG_WIDTH, 1] = zeros_frame
-            cv2.putText(merged_image, " YOLO", (IMG_WIDTH, IMG_HEIGHT + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
+            cv2.putText(merged_image, " YOLO", (IMG_WIDTH, IMG_HEIGHT + 30), cv2.FONT_HERSHEY_SIMPLEX, font_scale, (255, 255, 255), 1, cv2.LINE_AA)
             for center in self.yolo_centers:
                 red = (100, 0, 255)
                 target_size = 2
-                cv2.circle(merged_image, (int(center[0]), int(center[1])), target_size, red, -1)
+                cv2.circle(merged_image, (IMG_WIDTH + int(center[0]), IMG_HEIGHT + int(center[1])), target_size, red, -1)
 
-
-        cv2.imshow("CounterStrike Magdad", merged_image)
+        downscaled_merged_image = cv2.resize(merged_image, (IMG_WIDTH, IMG_HEIGHT))
+        cv2.imshow("CounterStrike Magdad", downscaled_merged_image)
         time.sleep(0.1)
