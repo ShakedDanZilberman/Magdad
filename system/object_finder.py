@@ -53,11 +53,6 @@ class Targets:
     def add(self, frame_number, img):
         self.frame_number = frame_number
         self.changes_handler.add(img)
-        self.yolo_handler.add(img)
-        self.yolo_centers = self.yolo_handler.get_centers()
-        detected = self.yolo_handler.get()
-        if isinstance(detected, np.ndarray) and detected.size > 1:
-            cv2.imshow("yolo image", detected)
         self.contours_handler.add(img)
         self.contours_handler.display()
         self.img_contours = self.contours_handler.get()
@@ -93,6 +88,15 @@ class Targets:
         # at a constant rate SAMPLE_RATE, get all new objects in the image
         if self.frame_number%SAMPLE_RATE == SAMPLE_RATE-1 and isinstance(self.img_changes, np.ndarray) and self.img_changes.size > 1:
             print("pulling targets from changes")
+            
+            self.yolo_handler.add(img)
+            self.yolo_centers = self.yolo_handler.get_centers()
+            detected = self.yolo_handler.get()
+            if isinstance(detected, np.ndarray) and detected.size > 1:
+                cv2.imshow("yolo image", detected)
+        
+            
+            
             targets_changes = self.high_targets, self.low_targets, self.changes_centers = get_targets(self.img_changes)
             # show_targets("targets from changes", self.img_changes, targets_changes)
             # add the targets from the changes to the queue
