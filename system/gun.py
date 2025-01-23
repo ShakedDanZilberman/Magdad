@@ -29,10 +29,18 @@ class Gun:
             self.board = Arduino(COM)
 
         except serial.serialutil.SerialException as e:
-            print("Arduino not connected or COM port is wrong")
-            # print the output of "mode" command in the CMD
-            os.system("mode")
-            sys.exit()
+            import subprocess
+            import re
+            result = subprocess.run(["mode"], capture_output=True, text=True, shell=True).stdout
+            device_pattern = r"Status for device (\w+):"
+            devices = re.findall(device_pattern, result)
+            if devices is not []:
+                self.board = Arduino(devices[0])
+            else:
+                print("Arduino not connected or COM port is wrong")
+                # print the output of "mode" command in the CMD
+                os.system("mode")
+                sys.exit()
         it = util.Iterator(self.board)
         it.start()
         self.servo = self.board.get_pin(f"d:{self.servo_pin}:s")
