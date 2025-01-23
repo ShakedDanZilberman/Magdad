@@ -382,6 +382,6 @@ def test():
 
 if __name__ == "__main__":
     #test()
-    # hit_cursor_main()
+    hit_cursor_main()
     #just_changes_main()
-    main_using_targets()
+    # main_using_targets()
