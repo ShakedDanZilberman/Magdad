@@ -397,11 +397,13 @@ def test():
     while True:
         gun.rotate(60)
         print(gun.get_voltage()) 
+        gun.shoot()
+        time.sleep(1)
     print("done")
 
 
 if __name__ == "__main__":
-    # test()
-    # hit_cursor_main()
+    #test()
+    #hit_cursor_main()
     #just_changes_main()
     main_using_targets()
