@@ -55,7 +55,7 @@ class Targets:
         self.frame_number = frame_number
         self.changes_handler.add(img)
         self.contours_handler.add(img)
-        self.contours_handler.display()
+        # self.contours_handler.display()
         self.img_contours = self.contours_handler.get()
         # at the "initial frame", add all current objects to the queue using contour identification
         # TODO: figure out how to use the contours properly

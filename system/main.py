@@ -328,12 +328,12 @@ def main_using_targets():
         timestep += 1
         img = cam.read()
         rawHandler.add(img)
-        rawHandler.display()
+        # rawHandler.display()
         target_manager.add(timestep, img)
         targets = get_targets(target_manager.contours_handler.get())
         show_targets("targets from contours", target_manager.contours_handler.get(), targets)
         gui.add(img, target_manager.target_queue, target_manager.changes_handler.get(), target_manager.contours_handler.get(),
-                target_manager.low_targets, target_manager.high_targets)
+                target_manager.low_targets, target_manager.high_targets, target_manager.yolo_handler.get(), target_manager.yolo_centers)
         gui.display()
 
         # Press Escape to exit

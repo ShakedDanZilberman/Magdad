@@ -114,13 +114,15 @@ class GUI:
         self.changes = np.zeros((IMG_HEIGHT, IMG_WIDTH), np.uint8)
         self.contours = np.zeros((IMG_HEIGHT, IMG_WIDTH), np.uint8)
 
-    def add(self, img, targets, changes, contours, circles_low, circles_high):
+    def add(self, img, targets, changes, contours, circles_low, circles_high, yolo, yolo_centers):
         self.img = img
         self.targets = targets
         self.changes = changes
         self.contours = contours
         self.circles_low = circles_low
         self.circles_high = circles_high
+        self.yolo = yolo
+        self.yolo_centers = yolo_centers
 
     def display(self):
         # merge_image should have four quadrents, each one the size of self.img
@@ -129,7 +131,10 @@ class GUI:
         # convert to color image
         merged_image = cv2.cvtColor(merged_image, cv2.COLOR_GRAY2BGR)
         # top left
-        frame = self.img.copy()
+        if self.img is not None:
+            frame = self.img.copy()
+        else:
+            self.img = zeros_frame.copy()
         if self.img is not None:
             # (as grayscale)
             merged_image[:IMG_HEIGHT, :IMG_WIDTH, 0] = frame
@@ -158,7 +163,7 @@ class GUI:
                     HIGH_COLOR,
                     1,
                 )
-        print(len(self.targets))
+        print("Number of targets:", len(self.targets))
         # top right
         if self.changes is not None:
             # (in green)
@@ -174,7 +179,16 @@ class GUI:
             merged_image[IMG_HEIGHT:2*IMG_HEIGHT, :IMG_WIDTH, 2] = zeros_frame
             cv2.putText(merged_image, " Contours", (0, IMG_HEIGHT + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
         # bottom right
-        # [add YOLO here]
+        if self.yolo is not None:
+            # (in red)
+            merged_image[IMG_HEIGHT:2*IMG_HEIGHT, IMG_WIDTH:2*IMG_WIDTH, 2] = self.yolo
+            merged_image[IMG_HEIGHT:2*IMG_HEIGHT, IMG_WIDTH:2*IMG_WIDTH, 0] = zeros_frame
+            merged_image[IMG_HEIGHT:2*IMG_HEIGHT, IMG_WIDTH:2*IMG_WIDTH, 1] = zeros_frame
+            cv2.putText(merged_image, " YOLO", (IMG_WIDTH, IMG_HEIGHT + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
+            for center in self.yolo_centers:
+                red = (100, 0, 255)
+                target_size = 2
+                cv2.circle(merged_image, (int(center[0]), int(center[1])), target_size, red, -1)
 
 
         cv2.imshow("CounterStrike Magdad", merged_image)
