@@ -50,6 +50,7 @@ class Gun:
         Returns:
             None
         """
+        print("Shooting!!!")
         self.board.digital[self.gun_pin].write(1)
         sleep(self.sleep_duration)
         self.board.digital[self.gun_pin].write(0)
@@ -82,7 +83,7 @@ class Gun:
     def aim_and_fire_target(self, target):
 
         P_ERROR = -75
-        I_ERROR = -25
+        I_ERROR = -30
         D_ERROR = 0
         fix = 0
         
@@ -94,12 +95,12 @@ class Gun:
         start_time = time.time()
         # Run the loop for 1 second
         # TODO - change time to global var
-        while time.time() - start_time < 1:
+        while time.time() - start_time < 2:
             self.rotate(thetaX + fix)
             motor_volt = self.get_voltage()
             if motor_volt is not None:
                 fix = fixer.PID(expected_volt,motor_volt) 
-            
+        sleep(0.5)
         self.shoot()
         return
 
