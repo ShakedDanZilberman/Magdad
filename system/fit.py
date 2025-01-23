@@ -11,15 +11,15 @@ BACKSPACE = 8
 
 STARTX = 20
 STARTY = 10
-deltaX = 2
+deltaX = 1
 deltaY = 5
 ENDX = 105
 ENDY = 85
 
 # Full MEASUREMENTS data (not truncated)
 
-MEASUREMENTS = [(614, 279, 50, 0.1593), (579, 281, 52, 0.1662), (558, 282, 54, 0.1681), (523, 282, 56, 0.176), (502, 281, 58, 0.1789), (459, 281, 60, 0.1857), (441, 281, 62, 0.1906), (402, 283, 64, 0.1955), (374, 283, 66, 0.2004), (334, 283, 68, 0.2072), (313, 281, 70, 0.2111), (270, 283, 72, 0.217), (254, 283, 74, 0.2209), (220, 283, 76, 0.2278), (195, 283, 78, 0.2326), (154, 280, 80, 0.2375), (133, 279, 82, 0.2414), (104, 280, 84, 0.2512), (89, 283, 86, 0.2512), (55, 279, 88, 0.2581), (45, 283, 90, 0.26), 
-(10, 281, 92, 0.2678)]
+MEASUREMENTS = [(611, 287, 51, 0.1652), (590, 288, 52, 0.1691), (570, 291, 54, 0.173), (558, 291, 55, 0.176), (534, 291, 56, 0.1808), (510, 293, 58, 0.1838), (491, 294, 59, 0.1848), (471, 293, 60, 0.1906), (455, 294, 62, 0.1916), (430, 294, 63, 0.1975), (416, 295, 64, 0.2043), (393, 295, 66, 0.2043), (364, 294, 67, 0.2092), (350, 295, 68, 0.2111), (328, 295, 70, 0.2151), (308, 293, 71, 0.218), (290, 292, 72, 0.2219), (270, 293, 74, 0.2248), (244, 293, 75, 0.2287), (236, 295, 76, 0.2307), (236, 295, 77, 0.2307), (209, 294, 78, 0.2356), (191, 291, 79, 0.2385), (172, 291, 80, 0.2444), (151, 291, 82, 0.2463), (137, 291, 83, 0.2512), (118, 291, 84, 0.2532), (105, 290, 86, 0.261), (87, 291, 87, 0.261), (71, 
+290, 88, 0.2639), (57, 287, 90, 0.2669), (42, 287, 91, 0.2698), (28, 287, 92, 0.2766), (11, 284, 94, 0.2776), (2, 283, 95, 0.2825)]
 def find_red_point(frame):
     """
     Finds the (x, y) coordinates of the single red point in the image.
@@ -195,9 +195,9 @@ def bilerp(x0, y0):
     else: 
         right_pointX = np.min(x[x >= x0])
     
-    print("Left:", left_pointX)
-    print("Right:", right_pointX)
-    print("x0:", x0)
+    # print("Left:", left_pointX)
+    # print("Right:", right_pointX)
+    # print("x0:", x0)
     
     left_point = np.where(x == left_pointX)[0]
     right_point = np.where(x == right_pointX)[0]
@@ -219,10 +219,13 @@ def bilerp(x0, y0):
         distance_to_left + distance_to_right
     )
     
-    if angleX0 < thetaX_left:
-        angleX0 = thetaX_left
-    if angleX0 > thetaX_right:
-        angleX0 = thetaX_right
+    try:
+        if angleX0 < thetaX_left:
+            angleX0 = thetaX_left
+        if angleX0 > thetaX_right:
+            angleX0 = thetaX_right
+    except:
+        return angleX0, motor_voltage0
 
     return angleX0, motor_voltage0
 
@@ -637,6 +640,6 @@ def measure_for_gun():
 
 if __name__ == "__main__":
     #measure_for_lidar()  # Uncomment this line to measure the angles.
-    # measure_for_gun()
-    show_graphs()
+    measure_for_gun()
+    #show_graphs()
     # display_grid()
