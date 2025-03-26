@@ -1,7 +1,7 @@
 from pyfirmata import Arduino, util
 import os
 import sys
-
+import numpy as np
 import serial
 from time import sleep
 import time
@@ -10,6 +10,8 @@ from constants import COM
 
 import fit
 import pid
+
+PRECISION = 1
 
 class Gun:
     def __init__(self, print_flag=False):
@@ -25,6 +27,7 @@ class Gun:
         self.gun_pin = 4
         self.servo_pin = 9
         self.sleep_duration = 0.2
+        self.gun_angle = 0
         try:
             self.board = Arduino(COM)
 
@@ -103,6 +106,33 @@ class Gun:
         sleep(0.5)
         self.shoot()
         return
+
+    def aim_and_fire_target_2(self, target):
+
+        P_ERROR = -75
+        I_ERROR = -30
+        D_ERROR = 0
+        fix = 0
+        
+        fixer = pid.PID(P_ERROR, I_ERROR, D_ERROR)
+
+        thetaX, expected_volt = fit.bilerp(*target)
+        self.rotate(thetaX)
+
+        start_time = time.time()
+        # Run the loop for 1 second
+        # TODO - change time to global var
+        # TODO: get rid of excess delay - in PID end condition and time.sleep. There might be some necessary delay
+        while time.time() - start_time < 2 and np.abs(expected_volt - motor_volt) > PRECISION:
+            self.rotate(thetaX + fix)
+            motor_volt = self.get_voltage()
+            if motor_volt is not None:
+                fix = fixer.PID(expected_volt, motor_volt) 
+        sleep(0.5)
+        self.shoot()
+        self.gun_angle = thetaX + fix
+        return
+    
 
     def exit(self):
         pass

@@ -85,4 +85,4 @@ class ChangesHandler(Handler):
             LOADING_IMAGE = np.ones((IMG_HEIGHT, IMG_WIDTH), np.uint8) * 128
             cv2.imshow(TITLE, LOADING_IMAGE)
         else:
-            cv2.imshow(TITLE, self.avg)
+            cv2.imshow(TITLE, self.diff)

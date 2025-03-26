@@ -128,7 +128,10 @@ def PID (expected_volt, motor_volt):
     # use PID      
         global total_error, last_error, error
         last_error = error
-        error = motor_volt - expected_volt
+        if motor_volt is None or expected_volt is None:
+            error = 0
+        else:
+            error = motor_volt - expected_volt
         dif_error = error - last_error
         total_error += error
         print("Motor voltage:", motor_volt, "Expected voltage:", expected_volt, "Error:", error)
@@ -315,6 +318,7 @@ def main_using_targets():
         global gun_targets
         gun = Gun(print_flag=True)
         while True:
+            # TODO: test out pop_closest_to_current_location as an alternative to pop() 
             center = target_manager.pop()
             # Move the laser pointer to the target
             if center is not None:
@@ -332,12 +336,6 @@ def main_using_targets():
         rawHandler.add(img)
         rawHandler.display()
         target_manager.add(timestep, img)
-        # targets = get_targets(target_manager.contours_handler.get())
-        # show_targets("targets from contours", target_manager.contours_handler.get(), targets)
-        # gui.add(img, target_manager.target_queue, target_manager.changes_handler.get(), target_manager.contours_handler.get(),
-        #         target_manager.low_targets, target_manager.high_targets)
-        # gui.display()
-
         # Press Escape to exit
         if cv2.waitKey(1) == 27:
             break
@@ -385,7 +383,7 @@ def test_main():
         contours_handler.display()
         img_contours = contours_handler.get()
         targets_contours = _, _, contours_centers = get_targets(img_contours)
-        show_targets("targets from contours", img_contours, targets_contours)
+        # show_targets("targets from contours", img_contours, targets_contours)
         
         if cv2.waitKey(1) == 27:
             break
@@ -404,6 +402,6 @@ def test():
 
 if __name__ == "__main__":
     #test()
-    #hit_cursor_main()
+    # hit_cursor_main()
     #just_changes_main()
     main_using_targets()

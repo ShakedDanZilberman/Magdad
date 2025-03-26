@@ -54,70 +54,94 @@ class Targets:
         self.frame_number = frame_number
         self.changes_handler.add(img)
         self.contours_handler.add(img)
-        self.contours_handler.display()
+        self.changes_handler.display()
         self.img_contours = self.contours_handler.get()
-        # at the "initial frame", add all current objects to the queue using contour identification
-        # TODO: figure out how to use the contours properly
-        # if self.frame_number == SAMPLE_RATE//4:
-        #     print("pulling targets from contours")
-        #     targets_contours = self.high_targets, self.low_targets, self.contours_centers = get_targets(self.img_contours)
-        #     print("targets contours", self.contours_centers)
-        #     show_targets("targets from contours", self.img_contours, targets_contours)
-        #     # self.contours_centers = sorted(self.contours_centers, key=lambda x: x[0], reverse=True)
-        #     # self.target_queue.extend(self.contours_centers)
-        #     if len(self.contours_centers) > 0:
-        #         # Remove from centers_contours any targets that are less than 20 pixels apart (unique targets)
-        #         targets = []
-        #         pixel_distance = 30
-        #         for center in self.contours_centers:
-        #             if all(np.linalg.norm(np.array(center) - np.array(target)) > pixel_distance for target in targets):
-        #                 insert_sorted(targets, center)
-        #         self.target_queue = list(merge(self.target_queue, targets.copy()))
+        self.img_changes = self.changes_handler.get()
 
+        # At the SAMPLE_RATE//4th frame, pull all targets from yolo detection
         if self.frame_number == SAMPLE_RATE//4:
-            if len(self.yolo_centers) > 0:
-                # Remove from centers_contours any targets that are less than 20 pixels apart (unique targets)
-                targets = []
-                pixel_distance = 30
-                for center in self.yolo_centers:
-                    if all(np.linalg.norm(np.array(center) - np.array(target)) > pixel_distance for target in targets):
-                        insert_sorted(targets, center)
-                self.target_queue = list(merge(self.target_queue, targets.copy()))
+            self.add_initial_targets_using_yolo(img)
+            print("target queue: ", self.target_queue)
 
-
+        # FIXME: isinstance(self.img_changes, np.ndarray) is always false, so no new targets are ever pulled from the changes image 
         # at a constant rate SAMPLE_RATE, get all new objects in the image
-        if self.frame_number%SAMPLE_RATE == SAMPLE_RATE-1 and isinstance(self.img_changes, np.ndarray) and self.img_changes.size > 1:
-            print("pulling targets from changes")
-            
-            self.yolo_handler.add(img)
-            self.yolo_centers = self.yolo_handler.get_centers()
-            detected = self.yolo_handler.get()
-            if isinstance(detected, np.ndarray) and detected.size > 1:
-                cv2.imshow("yolo image", detected)
-        
-            
-            
-            targets_changes = self.high_targets, self.low_targets, self.changes_centers = get_targets(self.img_changes)
-            # show_targets("targets from changes", self.img_changes, targets_changes)
-            # add the targets from the changes to the queue
-            if len(self.changes_centers) > 0:
-                # Remove from centers_changes any targets that are less than 30 pixels apart (unique targets)
-                targets = []
-                pixel_distance = 30
-                for center in self.changes_centers:
-                    if all(np.linalg.norm(np.array(center) - np.array(target)) > pixel_distance for target in targets):
-                        insert_sorted(targets, center)
-                self.target_queue = list(merge(self.target_queue, targets.copy()))
-            # reset the changes heatmap, so we get no duplicates
-            # print("Queue:", self.target_queue)
-            self.changes_handler.clear() 
-            
+        if self.frame_number%SAMPLE_RATE == SAMPLE_RATE-1: 
+            print(isinstance(self.img_changes, np.ndarray))
+            if isinstance(self.img_changes, np.ndarray) and self.img_changes.size > 1:
+                print("looking for changes")
+                self.add_new_targets_to_queue(img)
+                print("target queue: ", self.target_queue)
+
+
+    def show_yolo_detection(self, img):
+        '''shows what the AI model detected'''
+        self.yolo_handler.add(img)
+        self.yolo_centers = self.yolo_handler.get_centers()
+        detected = self.yolo_handler.get()
+        if isinstance(detected, np.ndarray) and detected.size > 1:
+            cv2.imshow("yolo image", detected)
+
+
+    def add_new_targets_to_queue(self, img):
+        print("pulling targets from changes")
+        targets_from_changes = _, _, self.changes_centers = get_targets(self.img_changes)
+        show_targets("targets from changes", img, targets_from_changes)
+        # add the targets from the changes to the queue
+        if len(self.changes_centers) > 0:
+            # Remove from centers_changes any targets that are less than 30 pixels apart (unique targets)
+            targets = []
+            pixel_distance = 30
+            for center in self.changes_centers:
+                if all(np.linalg.norm(np.array(center) - np.array(target)) > pixel_distance for target in targets):
+                    insert_sorted(targets, center)
+            self.target_queue = list(merge(self.target_queue, targets.copy()))
+        # reset the changes heatmap, so we get no duplicates
+        self.changes_handler.clear() 
+
+
+    def add_initial_targets_using_contours(self, img):
+        print("pulling targets from contours")
+        targets_contours = self.high_targets, self.low_targets, self.contours_centers = get_targets(self.img_contours)
+        print("targets contours", self.contours_centers)
+        show_targets("targets from contours", self.img_contours, targets_contours)
+        # self.contours_centers = sorted(self.contours_centers, key=lambda x: x[0], reverse=True)
+        # self.target_queue.extend(self.contours_centers)
+        if len(self.contours_centers) > 0:
+            # Remove from centers_contours any targets that are less than 20 pixels apart (unique targets)
+            targets = []
+            pixel_distance = 30
+            for center in self.contours_centers:
+                if all(np.linalg.norm(np.array(center) - np.array(target)) > pixel_distance for target in targets):
+                    insert_sorted(targets, center)
+            self.target_queue = list(merge(self.target_queue, targets.copy()))
+
+
+    def add_initial_targets_using_yolo(self, img):
+        self.show_yolo_detection(img)
+        if len(self.yolo_centers) > 0:
+            # Remove from centers_contours any targets that are less than 20 pixels apart (unique targets)
+            targets = []
+            pixel_distance = 30
+            for center in self.yolo_centers:
+                if all(np.linalg.norm(np.array(center) - np.array(target)) > pixel_distance for target in targets):
+                    insert_sorted(targets, center)
+            # add new targets to the target queue, sorted by x coordinate
+            self.target_queue = list(merge(self.target_queue, targets.copy()))
+
+
     def pop(self):
         if self.target_queue:
             target = self.target_queue.pop(0)
             return target
         return
     
+    def pop_closest_to_current_location(self, current_loaction):
+        if self.target_queue:
+            target_to_pop = min(self.target_queue, key=lambda target: abs(target[0] - current_loaction[0]))[0]
+            return target_to_pop
+        return
+
+
     def clear(self):
         self.changes_handler.clear() 
 
