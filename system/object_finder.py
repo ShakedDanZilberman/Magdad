@@ -75,14 +75,15 @@ class Targets:
         #         self.target_queue = list(merge(self.target_queue, targets.copy()))
 
         if self.frame_number == SAMPLE_RATE//4:
-            if len(self.yolo_centers) > 0:
-                # Remove from centers_contours any targets that are less than 20 pixels apart (unique targets)
-                targets = []
-                pixel_distance = 30
-                for center in self.yolo_centers:
-                    if all(np.linalg.norm(np.array(center) - np.array(target)) > pixel_distance for target in targets):
-                        insert_sorted(targets, center)
-                self.target_queue = list(merge(self.target_queue, targets.copy()))
+            if self.yolo_centers != None:
+                if len(self.yolo_centers) > 0:
+                    # Remove from centers_contours any targets that are less than 20 pixels apart (unique targets)
+                    targets = []
+                    pixel_distance = 30
+                    for center in self.yolo_centers:
+                        if all(np.linalg.norm(np.array(center) - np.array(target)) > pixel_distance for target in targets):
+                            insert_sorted(targets, center)
+                    self.target_queue = list(merge(self.target_queue, targets.copy()))
 
 
         # at a constant rate SAMPLE_RATE, get all new objects in the image
