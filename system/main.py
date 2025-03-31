@@ -26,6 +26,7 @@ from gui import LIDARDistancesGraph
 from gun import Gun, DummyGun
 from constants import CAMERA_INDEX
 from object_finder import Targets
+from constants import IMG_WIDTH, IMG_HEIGHT
 
 timestep = 0  # Global timestep, used to keep track of the number of frames processed
 laser_targets = [(30, 60)]  # List of targets for the laser pointer, used to share information between threads
@@ -320,15 +321,16 @@ def main_using_targets():
         print("Gun thread started.")
         global gun_targets
         gun = Gun(print_flag=True)
+        center = (IMG_WIDTH//2, IMG_HEIGHT//2)
         while True:
             # TODO: test out pop_closest_to_current_location as an alternative to pop() 
-            center = target_manager.pop()
+            center = target_manager.pop_closest_to_current_location(center)
             # Move the laser pointer to the target
             if center is not None:
-                gun.aim_and_fire_target(center)
-                print("Shooting", center)
-                time.sleep(1)
-                target_manager.clear()
+                gun.aim_and_fire_target_2(center)
+                print("Shooting (theoretically)", center)
+                time.sleep(1) # this delay is here so we can wait for the objects to fall and then reset the changes image
+                target_manager.clear() # TODO: reduce the number of frames needed for initialization
     
     gun = threading.Thread(target=gun_thread)
     gun.start()

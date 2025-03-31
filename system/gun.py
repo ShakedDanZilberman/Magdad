@@ -11,7 +11,7 @@ from constants import COM
 import fit
 import pid
 
-PRECISION = 1
+PRECISION = 16.0 # should result in precision of one degree 
 
 class Gun:
     def __init__(self, print_flag=False):
@@ -73,6 +73,7 @@ class Gun:
         angle = int(angle)
         angle *= 180 / 240  # The servo thinks in terms of 0-180 degrees, but the servo can move 240 degrees
         self.servo.write(angle)
+        
 
     def get_voltage(self):
         """
@@ -123,11 +124,15 @@ class Gun:
         # Run the loop for 1 second
         # TODO - change time to global var
         # TODO: get rid of excess delay - in PID end condition and time.sleep. There might be some necessary delay
-        while time.time() - start_time < 2 and np.abs(expected_volt - motor_volt) > PRECISION:
+        motor_volt = self.get_voltage()
+        if motor_volt is None:
+            motor_volt = 0
+        while time.time() - start_time < 1 and np.abs(expected_volt - motor_volt) > PRECISION:
             self.rotate(thetaX + fix)
-            motor_volt = self.get_voltage()
-            if motor_volt is not None:
+            motor_volt_temp = self.get_voltage()
+            if motor_volt_temp is not None:
                 fix = fixer.PID(expected_volt, motor_volt) 
+                motor_volt = motor_volt_temp
         sleep(0.5)
         self.shoot()
         self.gun_angle = thetaX + fix

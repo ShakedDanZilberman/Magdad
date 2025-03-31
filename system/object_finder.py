@@ -86,7 +86,7 @@ class Targets:
     def add_new_targets_to_queue(self):
         print("pulling targets from changes")
         targets_from_changes = _, _, self.changes_centers = get_targets(self.img_changes)
-        show_targets("targets from changes", self.changes_handler.get(), targets_from_changes)
+        show_targets("targets from changes", self.img_changes, targets_from_changes)
         # add the targets from the changes to the queue
         if len(self.changes_centers) > 0:
             # Remove from centers_changes any targets that are less than 30 pixels apart (unique targets)
@@ -138,7 +138,9 @@ class Targets:
     
     def pop_closest_to_current_location(self, current_loaction):
         if self.target_queue:
-            target_to_pop = min(self.target_queue, key=lambda target: abs(target[0] - current_loaction[0]))[0]
+            target_to_pop = min(self.target_queue, key=lambda target: abs(target[0] - current_loaction[0]))
+            print("target to pop is: ", target_to_pop)
+            self.target_queue.remove(target_to_pop)
             return target_to_pop
         return
 
