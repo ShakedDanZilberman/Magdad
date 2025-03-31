@@ -17,6 +17,7 @@ SAMPLE_RATE = 48
 FRAMES_FOR_INITIALISATION = 15
 BRIGHTNESS_THRESHOLD = 240
 
+MINIMAL_OBJECT_AREA = 30
 
 def insert_sorted(sorted_list, new_tuple):
     pos = bisect(sorted_list, new_tuple)
@@ -69,7 +70,7 @@ class Targets:
             print(isinstance(self.img_changes, np.ndarray))
             if isinstance(self.img_changes, np.ndarray) and self.img_changes.size > 1:
                 print("looking for changes")
-                self.add_new_targets_to_queue(img)
+                self.add_new_targets_to_queue()
                 print("target queue: ", self.target_queue)
 
 
@@ -82,10 +83,10 @@ class Targets:
             cv2.imshow("yolo image", detected)
 
 
-    def add_new_targets_to_queue(self, img):
+    def add_new_targets_to_queue(self):
         print("pulling targets from changes")
         targets_from_changes = _, _, self.changes_centers = get_targets(self.img_changes)
-        show_targets("targets from changes", img, targets_from_changes)
+        show_targets("targets from changes", self.changes_handler.get(), targets_from_changes)
         # add the targets from the changes to the queue
         if len(self.changes_centers) > 0:
             # Remove from centers_changes any targets that are less than 30 pixels apart (unique targets)
@@ -239,17 +240,20 @@ def get_targets(heatmap: cv2.typing.MatLike):
     contour_centers = []
     for contour in contours_high:
         # add accurate CEP to list
-        (x, y), radius = cv2.minEnclosingCircle(contour)
-        new_circle = (x, y), radius
-        high_targets.append(new_circle)
-        # add contour center to list
-        M = cv2.moments(contour)
-        if not M["m00"] == 0:
-            cx = int(M["m10"] / M["m00"])
-            cy = int(M["m01"] / M["m00"])
-            contour_centers.append((int(cx), int(cy)))
-        else:
-            contour_centers.append((int(x), int(y)))
+        # TODO: right now we ignore contours that are "too small" to avoid excess contours - 
+        # possibly look into ignoring contours whose edges are too close
+        if cv2.contourArea(contour) > MINIMAL_OBJECT_AREA:
+            (x, y), radius = cv2.minEnclosingCircle(contour)
+            new_circle = (x, y), radius
+            high_targets.append(new_circle)
+            # add contour center to list
+            M = cv2.moments(contour)
+            if not M["m00"] == 0:
+                cx = int(M["m10"] / M["m00"])
+                cy = int(M["m01"] / M["m00"])
+                contour_centers.append((int(cx), int(cy)))
+            else:
+                contour_centers.append((int(x), int(y)))
     for contour in contours_low:
         # add inaccurate CEP to list
         (x, y), radius = cv2.minEnclosingCircle(contour)

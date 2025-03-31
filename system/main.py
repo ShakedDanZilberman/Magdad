@@ -1,6 +1,7 @@
 import time
 import threading
 
+
 from import_defence import ImportDefence
 
 with ImportDefence():
@@ -25,6 +26,7 @@ from gui import LIDARDistancesGraph
 from gun import Gun, DummyGun
 from constants import CAMERA_INDEX
 from object_finder import Targets
+from logger import log_print
 
 timestep = 0  # Global timestep, used to keep track of the number of frames processed
 laser_targets = [(30, 60)]  # List of targets for the laser pointer, used to share information between threads
@@ -39,6 +41,8 @@ fix = 0
 DIFF_THRESH = 0
 INITIAL_CONTOUR_EXTRACT_FRAME_NUM = 30
 CHECK_FOR_NEW_OBJECTS = 48
+
+
 
 
 def shoot(target):
