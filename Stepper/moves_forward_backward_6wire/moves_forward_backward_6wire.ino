@@ -1,15 +1,20 @@
 // This code successfully moves a 6-wire stepper motor forward and backward.
 // Choose the direction by changing the value of the dir variable in the doStep function in the loop.
 
-#define RED 7 // Coil 1 - A
-#define BLU 6 // Coil 1 - B
-#define BLK 5 // Coil 2 - A'
+#define RED 3 // Coil 1 - A
+#define BLU 5 // Coil 1 - B
+#define BLK 6 // Coil 2 - A'
 #define GRN 4 // Coil 2 - B'
+
+// #define pin1 6
+// #define pin2 5
+// #define pin3 4
+// #define pin4 3
 
 #define POSITIVE 1
 #define NEGATIVE 0
 
-#define DELAY_TIME 3 // Adjust to change speed
+#define DELAY_TIME 30 // Adjust to change speed
 
 void setup()
 {
