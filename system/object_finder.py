@@ -149,6 +149,48 @@ class Targets:
         self.changes_handler.clear() 
 
 
+class GlobalTargets:
+    """this class holds the targets from all the cameras.
+    it saves a list of targets in the global coordinates system.
+    it has a method to add targets from all the cameras, that uses homography to transform the targets to the global coordinates system.
+    it has a method to get the targets in the global coordinates system.
+    
+    """
+    def __init__(self, target_manager1, target_manager2, target_manager3):
+        self.target_managers = [target_manager1, target_manager2, target_manager3]
+        self.target_queue = []
+        self.homography_matrixs = []
+
+    def add_homography_matrix(self, homography_matrix):
+        """add a homography matrix to the list of homography matrixs"""
+        self.homography_matrixs.append(homography_matrix)
+
+    def add(self, target_manager, camera_index):
+        """add a target manager to the list of target managers"""
+        # get the homography matrix for the camera index
+        homography_matrix = self.homography_matrixs[camera_index]
+        # get the targets from the target manager
+        targets = target_manager.target_queue
+        # transform the targets to the global coordinates system using the homography matrix
+        targets = cv2.perspectiveTransform(np.array(targets), homography_matrix)
+        # add the targets to the global target queue
+        self.target_queue.extend(targets)
+        # TODO: (ayala) remove duplicates from the target queue
+        # TODO: (ayala) remove targets that are too close to each other
+        # TODO: (ayala) test this method
+
+    def pop_closest_to_current_location():
+        # TODO: (ayala) implement this method
+        pass
+
+
+
+        
+
+
+
+
+
 def average_of_heatmaps(changes_map, contours_map):
     """Intersect two heatmaps
 
