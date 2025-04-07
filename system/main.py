@@ -26,6 +26,7 @@ from gui import LIDARDistancesGraph
 from gun import Gun, DummyGun
 from constants import CAMERA_INDEX
 from object_finder import Targets
+import homogrpahy
 from constants import IMG_WIDTH, IMG_HEIGHT
 
 timestep = 0  # Global timestep, used to keep track of the number of frames processed
@@ -127,6 +128,39 @@ def hit_cursor_main():
         if cv2.waitKey(1) == 27:
             break
     cv2.destroyAllWindows()
+
+
+def homography_calibration_main():
+    """
+    An alternative to the main function that uses the mouse cursor as the target for the laser pointer.
+    It does not use any image processing to detect targets.
+    """
+    global CAMERA_INDEX, timestep, laser_targets
+    import fit
+    detectCameras()
+    cam = Camera(CAMERA_INDEX)
+    handler = MouseCameraHandler()
+    # laser = threading.Thread(target=laser_thread)
+    # laser.start()  # comment this line to disable the laser pointer
+
+    cv2.namedWindow(handler.TITLE)
+    cv2.setMouseCallback(handler.TITLE, handler.mouse_callback)
+    source_points = []
+    while True:
+        img = cam.read()
+
+        handler.add(img)
+        handler.display()
+        if handler.has_new_click(): 
+            click_pos = handler.get_last_click()
+            source_points.append([float(click_pos[0]), float(click_pos[1])])
+
+        # Press Escape to exit
+        if cv2.waitKey(1) == 27:
+            print(source_points)
+            break
+    cv2.destroyAllWindows()
+
 
 def PID (expected_volt, motor_volt):
     # use PID      
@@ -404,9 +438,42 @@ def test():
         time.sleep(1)
     print("done")
 
+def test_homography():
+    global CAMERA_INDEX, timestep, laser_targets
+    import fit
+    detectCameras()
+    cam = Camera(CAMERA_INDEX)
+    handler = MouseCameraHandler()
+    # laser = threading.Thread(target=laser_thread)
+    # laser.start()  # comment this line to disable the laser pointer
+
+    cv2.namedWindow(handler.TITLE)
+    cv2.setMouseCallback(handler.TITLE, handler.mouse_callback)
+    source_points = []
+    while True:
+        img = cam.read()
+
+        handler.add(img)
+        handler.display()
+        if handler.has_new_click(): 
+            click_pos = handler.get_last_click()
+            click_pos_array = np.array([[[click_pos[0], click_pos[1]]]], dtype=np.float32)
+            print("click is in pixel: ", click_pos)
+            real_world_pos = cv2.perspectiveTransform(click_pos_array, homogrpahy.homogrpahy_matrix)
+
+
+
+        # Press Escape to exit
+        if cv2.waitKey(1) == 27:
+            print(real_world_pos)
+            break
+    cv2.destroyAllWindows()
+
 
 if __name__ == "__main__":
     #test()
     # hit_cursor_main()
     #just_changes_main()
-    main_using_targets()
+    # main_using_targets()
+    # homography_calibration_main()
+    test_homography()
