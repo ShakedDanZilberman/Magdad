@@ -21,4 +21,4 @@
 אם לא עובד לנסות גם:
 `py -m pip install ...`
 `python3 -m pip install ...`
-2. If torch fails, uninstall then install again.
+2. If `torch` fails, uninstall then install again.

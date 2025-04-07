@@ -77,6 +77,7 @@ class Gun:
             print(f"WARNING: The angle {angle} must be in the range [0, 240].")
         angle = int(angle)
         angle *= 180 / 240  # The servo thinks in terms of 0-180 degrees, but the servo can move 240 degrees
+        # print("Rotating to angle", angle)
         self.servo.write(angle)
 
     def get_voltage(self):
@@ -91,7 +92,7 @@ class Gun:
     def aim_and_fire_target(self, target):
 
         P_ERROR = -75
-        I_ERROR = -30
+        I_ERROR = -28
         D_ERROR = 0
         fix = 0
         
@@ -101,14 +102,16 @@ class Gun:
         self.rotate(thetaX)
 
         start_time = time.time()
-        # Run the loop for 1 second
-        # TODO - change time to global var
-        while time.time() - start_time < 2:
+        print("Start PID")
+        # Run the loop for 1.5 second
+        while time.time() - start_time < 1.5:
             self.rotate(thetaX + fix)
+            print("PIDing to", thetaX + fix)
             motor_volt = self.get_voltage()
             if motor_volt is not None:
                 fix = fixer.PID(expected_volt,motor_volt) 
-        sleep(0.5)
+        sleep(0.1)
+        print("Finished PID")
         self.shoot()
         return
 
