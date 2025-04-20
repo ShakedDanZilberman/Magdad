@@ -132,3 +132,16 @@ class DummyGun:
 
     def exit(self):
         pass
+
+
+if __name__ == "__main__":
+    gun = Gun(print_flag=True)
+    gun.rotate(0)
+    sleep(1)
+    gun.shoot()
+    sleep(1)
+    gun.rotate(240)
+    sleep(1)
+    gun.shoot()
+    sleep(1)
+    gun.exit()
