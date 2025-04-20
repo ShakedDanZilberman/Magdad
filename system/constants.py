@@ -3,8 +3,13 @@ import numpy as np
 IMG_WIDTH = 640
 IMG_HEIGHT = 480
 COM = "COM6"
-CAMERA_INDEX = 0
+CAMERA_INDEX = 1
+GUN = (0, 0)  # Coordinates of the gun in pixels
 
+# Constants for the homography transformation
+H1 = None
+H2 = None
+H3 = None
 
 # the following lists are for the homography, specifically used in the calibration in Beit Tzarfat
 
