@@ -2,6 +2,7 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 from image_processing import ImageParse
+import undistortion
 
 MAX_CAMERAS = 10
 
@@ -88,7 +89,8 @@ class Camera:
                 print("Failed to connect to camera")
                 return
 
-    def read(self):
+    def read(self, frame_num):
         ret_val, self.img = self.cam.read()
         self.img = ImageParse.toGrayscale(self.img)
+        self.img = undistortion.undistort(self.img, frame_num)
         return self.img

@@ -146,15 +146,17 @@ def homography_calibration_main():
     cv2.namedWindow(handler.TITLE)
     cv2.setMouseCallback(handler.TITLE, handler.mouse_callback)
     source_points = []
+    frame_num = 0
     while True:
-        img = cam.read()
+        img = cam.read(frame_num)
 
         handler.add(img)
         handler.display()
         if handler.has_new_click(): 
             click_pos = handler.get_last_click()
             source_points.append([float(click_pos[0]), float(click_pos[1])])
-
+            
+        frame_num+=1
         # Press Escape to exit
         if cv2.waitKey(1) == 27:
             print(source_points)
@@ -450,8 +452,9 @@ def test_homography():
     cv2.namedWindow(handler.TITLE)
     cv2.setMouseCallback(handler.TITLE, handler.mouse_callback)
     source_points = []
+    frame_num = 0
     while True:
-        img = cam.read()
+        img = cam.read(frame_num)
 
         handler.add(img)
         handler.display()
@@ -461,7 +464,7 @@ def test_homography():
             print("click is in pixel: ", click_pos)
             real_world_pos = cv2.perspectiveTransform(click_pos_array, homogrpahy.homogrpahy_matrix)
 
-
+        frame_num+=1
 
         # Press Escape to exit
         if cv2.waitKey(1) == 27:
@@ -475,5 +478,5 @@ if __name__ == "__main__":
     # hit_cursor_main()
     #just_changes_main()
     # main_using_targets()
-    # homography_calibration_main()
-    test_homography()
+    homography_calibration_main()
+    # test_homography()
