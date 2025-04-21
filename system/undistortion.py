@@ -5,14 +5,30 @@ from image_processing import ImageParse
 
 # the following parameters are intrinsic parameters of the camera, and are used to undistort the fisheye view:
 
-Intrinsic_matrix_K = np.array([[1.46078020e+03, 0.00000000e+00, 1.04335465e+03], 
-                               [0.00000000e+00, 1.47945106e+03, 5.75140043e+02], 
-                               [0.00000000e+00, 0.00000000e+00, 1.00000000e+00]])
+# Intrinsic_matrix_K = np.array([[1.46078020e+03, 0.00000000e+00, 1.04335465e+03], 
+#                                [0.00000000e+00, 1.47945106e+03, 5.75140043e+02], 
+#                                [0.00000000e+00, 0.00000000e+00, 1.00000000e+00]])
 
-Distortion_coefficients_D = np.array([[-0.77739624,  1.05602639, -0.00127229,  0.00214566, -0.78705656]])
+# Distortion_coefficients_D = np.array([[-0.77739624,  1.05602639, -0.00127229,  0.00214566, -0.78705656]])
 
-K = np.array([[1.44365244e+03, 5.26459870e+00, 1.05698538e+03], [0.00000000e+00, 1.46141676e+03, 5.65369589e+02], [0.00000000e+00, 0.00000000e+00, 1.00000000e+00]], dtype=np.float64)
-D = np.array([[-0.37036341], [-0.39595657], [ 3.82754419], [-5.52770641]], dtype=np.float64)
+# Intrinsic matrix (K):
+#  [[733.37748587   1.91525316 534.54322214]
+#  [  0.         742.2544063  284.85998079]
+#  [  0.           0.           1.        ]]
+# Distortion coefficients (D):
+#  [[-0.4984814 ]
+#  [ 1.08857853]
+#  [-2.21430799]
+#  [ 2.49281828]]
+
+
+
+K = np.array([
+    [733.37748587,   1.91525316, 534.54322214],
+    [0.0,           742.2544063, 284.85998079],
+    [0.0,             0.0,           1.0]
+], dtype=np.float64)
+D = np.array([-0.4984814, 1.08857853, -2.21430799, 2.49281828], dtype=np.float64)
 
 
 def undistort(img, frame_num, balance=0.6):
@@ -138,7 +154,7 @@ def find_distortion_params():
         
         # Read the image
         img = cv2.imread(image_path)
-
+        img = ImageParse.resize_proportionally(img, 0.5)
         # Check if the image was loaded successfully
         if img is None:
             print(f"Error: Could not load image {image_path}")

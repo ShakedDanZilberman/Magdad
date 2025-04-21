@@ -1,7 +1,7 @@
 import numpy as np
 
-IMG_WIDTH = 640
-IMG_HEIGHT = 480
+IMG_WIDTH = 960
+IMG_HEIGHT = 540
 COM = "COM6"
 CAMERA_INDEX = 0
 GUN = (0, 0)  # Coordinates of the gun in pixels
@@ -25,3 +25,15 @@ SLEEP_DURATION = 0.2  # seconds
 VOLTAGE_MOTOR_PIN = 4  # pin for the voltage sensor
 GUN_PIN = 4  # pin for the gun
 SERVO_PIN = 9  # pin for the servo motor
+# second calibration - this one worked!
+DEST_POINTS_2 = [[0.0, 0.0], [29.0, 0.0], [83.0, 30.0], [136.0, 0.0], [152.0, 0.0], [49.0, 31.0], [104.0, 31.0], [122.0, 48.0], [77.0, 57.0]]
+DEST_ARRAY_2 = np.array(DEST_POINTS_2, dtype=np.float32)
+SRC_POINTS_2 = [[7.0, 134.0], [163.0, 115.0], [527.0, 76.0], [865.0, 37.0], [958.0, 28.0], [234.0, 153.0], [721.0, 104.0], [955.0, 118.0], [480.0, 203.0]]
+SRC_ARRAY_2 = np.array(SRC_POINTS_2, dtype=np.float32)
+
+homography_matrix =  np.array([
+    [7.90667708e+00,  1.95694730e+01, -2.61089811e+03],
+    [3.24885079e+00,  2.87840326e+01, -3.67977831e+03],
+    [2.97848384e-02,  2.53935336e-01,  1.00000000e+00]
+], dtype=np.float64)
+
