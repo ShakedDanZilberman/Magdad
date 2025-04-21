@@ -30,10 +30,13 @@ void loop() {
 
     else if (command.startsWith("ROTATE:")) {
       long steps = command.substring(7).toInt(); // Read number of steps
-      Serial.println("Number of steps:");
+      Serial.print("Number of steps: ");
       Serial.println(steps);
       if (steps != 0) {
-        digitalWrite(dirPin, steps > 0 ? HIGH : LOW);
+        int direction = steps > 0 ? HIGH : LOW;
+        Serial.print("Rotating in direction (0=+, 1=-): ");
+        Serial.println(direction);
+        digitalWrite(dirPin, direction);
         steps = abs(steps);
         for (long i = 0; i < steps; i++) {
           digitalWrite(stepPin, HIGH);
