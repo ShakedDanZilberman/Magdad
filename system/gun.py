@@ -13,6 +13,17 @@ import pid
 
 class Gun:
     def __init__(self, print_flag=False):
+        """Initialize the Gun class, connect to the Arduino, and set the initial angle.
+        The class communicates with the Arduino via a serial connection.
+        The protocol:
+        - The Gun class sends commands to the Arduino in the format "SHOOT\n" or "ROTATE:<angle>\n" (where <angle> is the number of steps).
+        - The Gun class reads the Arduino's response line by line until it receives "Done".
+        Sent commands are printed to the console with a ">>>" prefix.
+        Received responses are printed with a "<<<" prefix.
+
+        Args:
+            print_flag (bool, optional): If True, print debug information. Defaults to False.
+        """
         self.current_angle = 0
 
         self.ser = self._connect_to_serial(COM)
@@ -39,18 +50,33 @@ class Gun:
                 sys.exit()
 
     def shoot(self):
-        print("Shooting!!!")
+        print(f"Shooting!!! at {self.current_angle} degrees")
         self.ser.write(b"SHOOT\n")
         print(f">>>SHOOT")
         self._wait_for_done()
 
     def rotate(self, angle):
+        """Rotate the gun to a specified angle.
+        The angle is specified in degrees, and the gun will rotate to that angle from its current position.
+        The angle is absolute, not relative.
+
+        Args:
+            angle (int): The angle to rotate to, in degrees.
+        """
         steps = angle - self.current_angle
         command = f"ROTATE:{steps}\n".encode()
         self.ser.write(command)
         print(f">>>{command}")
         self._wait_for_done()
         self.current_angle = angle
+
+    def get_angle(self):
+        """Get the current angle of the gun.
+
+        Returns:
+            int: The current angle of the gun.
+        """
+        return self.current_angle
 
     def _wait_for_done(self):
         while True:
@@ -81,12 +107,9 @@ class DummyGun:
 
 if __name__ == "__main__":
     gun = Gun(print_flag=True)
-    gun.rotate(100)
-    sleep(1)
-    gun.shoot()
-    sleep(1)
-    gun.rotate(240)
-    sleep(1)
-    gun.shoot()
-    sleep(1)
-    gun.exit()
+    angle_program = [50, 30, -80]
+    for angle in angle_program:
+        gun.rotate(angle)
+        sleep(1)
+        gun.shoot()
+        sleep(1)
