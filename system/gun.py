@@ -7,8 +7,9 @@ import subprocess
 import re
 
 from constants import COM
-import fit
-# import pid
+
+
+STEPS_IN_DEGREE = 2/1.8
 
 
 class Gun:
@@ -52,7 +53,7 @@ class Gun:
     def shoot(self):
         print(f"Shooting!!! at {self.current_angle} degrees")
         self.ser.write(b"SHOOT\n")
-        print(f">>>SHOOT")
+        print(f">>> SHOOT")
         self._wait_for_done()
 
     def rotate(self, angle):
@@ -63,10 +64,11 @@ class Gun:
         Args:
             angle (int): The angle to rotate to, in degrees.
         """
-        steps = angle - self.current_angle
+        dθ = angle - self.current_angle
+        steps = int(STEPS_IN_DEGREE * dθ)
         command = f"ROTATE:{steps}\n".encode()
         self.ser.write(command)
-        print(f">>>{command}")
+        print(f">>> {command}")
         self._wait_for_done()
         self.current_angle = angle
 
@@ -79,11 +81,16 @@ class Gun:
         return self.current_angle
 
     def _wait_for_done(self):
+        TIMEOUT = 10  # messages
+        count = 0
         while True:
             response = self.ser.readline().decode().strip()
             print("<<<", response)
+            count += 1
             if response == "Done":
                 break
+            if count > TIMEOUT:
+                raise TimeoutError("Timeout waiting for Arduino response \"Done\" in Gun class.")
 
     def exit(self):
         pass
@@ -109,7 +116,7 @@ class DummyGun:
 
 if __name__ == "__main__":
     gun = Gun(print_flag=True)
-    angle_program = [50, 30, -80]
+    angle_program = [0, 360, 0, 180, 0, 90, 0, -90, 0, 180, 0, 360, 0, -180, 0, 90, 0, -90, 0, 180, 0, 360, 0, -180]
     for angle in angle_program:
         gun.rotate(angle)
         sleep(1)

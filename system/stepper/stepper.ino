@@ -1,23 +1,50 @@
+#include <Servo.h>
+
+const int gunPin = 4;
 const int dirPin = 2;
 const int stepPin = 3;
 const int speed = 1000;
+const int SHOOT_COOLDOWN = 200;  // ms
+Servo myServo;
+int currentAngle = 0;
+
 void setup() {
-  pinMode(stepPin, OUTPUT);
-  pinMode(dirPin, OUTPUT);
   Serial.begin(9600);
+  pinMode(gunPin, OUTPUT);
+  pinMode(dirPin, OUTPUT);
+  pinMode(stepPin, OUTPUT);
+  myServo.write(0);
 }
 
 void loop() {
-  if (Serial.available() > 0) {
-    long steps = Serial.parseInt(); // Read number of steps
-    if (steps != 0) {
-      digitalWrite(dirPin, steps > 0 ? HIGH : LOW);
-      steps = abs(steps);
-      for (long i = 0; i < steps; i++) {
-        digitalWrite(stepPin, HIGH);
-        delayMicroseconds(speed);  // Adjust speed here
-        digitalWrite(stepPin, LOW);
-        delayMicroseconds(speed);
+  if (Serial.available()) {
+    String command = Serial.readStringUntil('\n');
+    command.trim();
+
+    if (command == "SHOOT") {
+      digitalWrite(gunPin, HIGH);
+      Serial.println("Shooting.");
+      delay(SHOOT_COOLDOWN);
+      digitalWrite(gunPin, LOW);
+      Serial.println("Done");
+    }
+
+    else if (command.startsWith("ROTATE:")) {
+      long steps = command.substring(7).toInt(); // Read number of steps
+      Serial.print("Number of steps: ");
+      Serial.println(steps);
+      if (steps != 0) {
+        int direction = steps > 0 ? HIGH : LOW;
+        Serial.print("Rotating in direction (0=+, 1=-): ");
+        Serial.println(direction);
+        digitalWrite(dirPin, direction);
+        steps = abs(steps);
+        for (long i = 0; i < steps; i++) {
+          digitalWrite(stepPin, HIGH);
+          delayMicroseconds(speed);  // Adjust speed here
+          digitalWrite(stepPin, LOW);
+          delayMicroseconds(speed);
+        }
       }
       Serial.println("Done");
     }
