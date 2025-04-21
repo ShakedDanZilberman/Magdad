@@ -6,7 +6,7 @@ import serial
 from time import sleep
 import time
 
-from constants import COM
+from constants import COM, SLEEP_DURATION, VOLTAGE_MOTOR_PIN, GUN_PIN, SERVO_PIN
 
 import fit
 import pid
@@ -19,14 +19,10 @@ class Gun:
         Initializes the Gun.
         Steps of initialization:
         1. Connect to the Arduino board.
-        2. Define the pins for the gun and the servo.
+        2. Define the pins for the gun and the servo in the constants file.
         3. Attach the servo to the board.
         4. Start an iterator thread.
         """
-        self.voltage_motor_pin = 4
-        self.gun_pin = 4
-        self.servo_pin = 9
-        self.sleep_duration = 0.2
         self.gun_angle = 0
         try:
             self.board = Arduino(COM)
@@ -38,8 +34,8 @@ class Gun:
             sys.exit()
         it = util.Iterator(self.board)
         it.start()
-        self.servo = self.board.get_pin(f"d:{self.servo_pin}:s")
-        self.voltage_sensor = self.board.analog[self.voltage_motor_pin]
+        self.servo = self.board.get_pin(f"d:{SERVO_PIN}:s")
+        self.voltage_sensor = self.board.analog[VOLTAGE_MOTOR_PIN]
         self.voltage_sensor.enable_reporting()
         if print_flag:
             print("Gun initialised and connected.")
@@ -54,9 +50,9 @@ class Gun:
             None
         """
         print("Shooting!!!")
-        self.board.digital[self.gun_pin].write(1)
-        sleep(self.sleep_duration)
-        self.board.digital[self.gun_pin].write(0)
+        self.board.digital[GUN_PIN].write(1)
+        sleep(SLEEP_DURATION)
+        self.board.digital[GUN_PIN].write(0)
 
     def rotate(self, angle):
         """
@@ -137,6 +133,38 @@ class Gun:
         self.shoot()
         self.gun_angle = thetaX + fix
         return
+    
+    def aim_and_fire_target_3(self, target):
+        # TODO: (ayala) change this method so it gets global coordinates
+        P_ERROR = -75
+        I_ERROR = -30
+        D_ERROR = 0
+        fix = 0
+        
+        fixer = pid.PID(P_ERROR, I_ERROR, D_ERROR)
+
+        thetaX, expected_volt = fit.bilerp(*target)
+        self.rotate(thetaX)
+
+        start_time = time.time()
+        # Run the loop for 1 second
+        # TODO - change time to global var
+        # TODO: get rid of excess delay - in PID end condition and time.sleep. There might be some necessary delay
+        motor_volt = self.get_voltage()
+        if motor_volt is None:
+            motor_volt = 0
+        while time.time() - start_time < 1 and np.abs(expected_volt - motor_volt) > PRECISION:
+            self.rotate(thetaX + fix)
+            motor_volt_temp = self.get_voltage()
+            if motor_volt_temp is not None:
+                fix = fixer.PID(expected_volt, motor_volt) 
+                motor_volt = motor_volt_temp
+        sleep(0.5)
+        self.shoot()
+        self.gun_angle = thetaX + fix
+        return
+    
+    
     
 
     def exit(self):
