@@ -21,3 +21,5 @@
 אם לא עובד לנסות גם:
 `py -m pip install ...`
 `python3 -m pip install ...`
+2. If `torch` fails, uninstall then install again.
+3. if you get an error of "getargspec", change to getfullargspec in pyfirmata.

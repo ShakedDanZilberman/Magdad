@@ -20,3 +20,8 @@ SRC_POINTS = [[16.0, 92.0], [621.0, 19.0], [134.0, 87.0], [517.0, 45.0]]
 SRC_ARRAY = np.array(SRC_POINTS, dtype=np.float32)
 
 
+# constants for the gun
+SLEEP_DURATION = 0.2  # seconds
+VOLTAGE_MOTOR_PIN = 4  # pin for the voltage sensor
+GUN_PIN = 4  # pin for the gun
+SERVO_PIN = 9  # pin for the servo motor

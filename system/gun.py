@@ -134,35 +134,6 @@ class Gun:
         self.gun_angle = thetaX + fix
         return
     
-    def aim_and_fire_target_3(self, target):
-        # TODO: (ayala) change this method so it gets global coordinates
-        P_ERROR = -75
-        I_ERROR = -30
-        D_ERROR = 0
-        fix = 0
-        
-        fixer = pid.PID(P_ERROR, I_ERROR, D_ERROR)
-
-        thetaX, expected_volt = fit.bilerp(*target)
-        self.rotate(thetaX)
-
-        start_time = time.time()
-        # Run the loop for 1 second
-        # TODO - change time to global var
-        # TODO: get rid of excess delay - in PID end condition and time.sleep. There might be some necessary delay
-        motor_volt = self.get_voltage()
-        if motor_volt is None:
-            motor_volt = 0
-        while time.time() - start_time < 1 and np.abs(expected_volt - motor_volt) > PRECISION:
-            self.rotate(thetaX + fix)
-            motor_volt_temp = self.get_voltage()
-            if motor_volt_temp is not None:
-                fix = fixer.PID(expected_volt, motor_volt) 
-                motor_volt = motor_volt_temp
-        sleep(0.5)
-        self.shoot()
-        self.gun_angle = thetaX + fix
-        return
     
     
     
