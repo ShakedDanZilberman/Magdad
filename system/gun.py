@@ -81,11 +81,16 @@ class Gun:
         return self.current_angle
 
     def _wait_for_done(self):
+        TIMEOUT = 10  # messages
+        count = 0
         while True:
             response = self.ser.readline().decode().strip()
             print("<<<", response)
+            count += 1
             if response == "Done":
                 break
+            if count > TIMEOUT:
+                raise TimeoutError("Timeout waiting for Arduino response \"Done\" in Gun class.")
 
     def exit(self):
         pass
