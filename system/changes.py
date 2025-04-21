@@ -1,9 +1,7 @@
 import cv2
 from image_processing import Handler, ImageParse
 import numpy as np
-from constants import IMG_HEIGHT, IMG_WIDTH
-
-FRAMES_FOR_INITIALISATION = 15
+from constants import IMG_HEIGHT, IMG_WIDTH, FRAMES_FOR_INITIALISATION
 BRIGHTNESS_THRESHOLD = 240
 
 class ChangesHandler(Handler):
@@ -26,6 +24,7 @@ class ChangesHandler(Handler):
         self.loading_img = None
         self.title = f"Average of First {FRAMES_FOR_INITIALISATION} Frames"
         self.avg = None
+        self.frames_remaining_to_initialize = FRAMES_FOR_INITIALISATION
 
     def add(self, img):
         """Adds the image to the handler."""
@@ -86,3 +85,75 @@ class ChangesHandler(Handler):
             cv2.imshow(TITLE, LOADING_IMAGE)
         else:
             cv2.imshow(TITLE, self.diff)
+
+
+class NewChangesHandler(Handler):
+    """
+    ChangesHandler class to accumulate the first N valid frames and calculate the average.
+    It calculates the difference between the current frame and the average of those frames.
+    """
+
+    def __init__(self):
+        self.images = []
+        self.index = 0
+        self.valid_count = 0
+        self.avg = None
+        self.diff = None
+        self.title = f"Average of First {FRAMES_FOR_INITIALISATION} Frames"
+
+    def add(self, img):
+        """Adds the image to the handler."""
+
+        if img is None:
+            print("Skipped: Image is None")
+            return
+
+        mean_brightness = np.mean(img)
+        if mean_brightness > BRIGHTNESS_THRESHOLD:
+            print(f"Skipped: Bright frame (mean = {mean_brightness:.2f})")
+            return
+
+        if self.valid_count < FRAMES_FOR_INITIALISATION:
+            self.images.append(img)
+            self.valid_count += 1
+            print(f"Added frame {self.valid_count}/{FRAMES_FOR_INITIALISATION} (mean brightness = {mean_brightness:.2f})")
+
+            if self.valid_count == FRAMES_FOR_INITIALISATION:
+                print("Initialization complete: computing average image...")
+                self.avg = np.zeros_like(self.images[0], dtype=np.float32)
+                for i in range(FRAMES_FOR_INITIALISATION):
+                    self.avg = cv2.addWeighted(self.avg, 1, self.images[i].astype(np.float32), 1 / FRAMES_FOR_INITIALISATION, 0)
+                self.avg = self.avg.astype(np.uint8)
+
+            return  # Don't compute diff until initialized
+
+        # Once initialized, calculate diff
+        self.diff = ImageParse.differenceImage(img, self.avg)
+        self.diff = ImageParse.blurImage(self.diff, 20)
+        self.diff = ImageParse.aboveThreshold(self.diff, 10)
+
+    def get(self):
+        """Returns the difference image if ready."""
+        return self.diff if self.isReady() else None
+
+    def clear(self):
+        """Clears the accumulated images and resets the handler."""
+        print("changes are being cleared")
+        self.images.clear()
+        self.valid_count = 0
+        self.avg = None
+        self.diff = None
+
+    def isReady(self):
+        """Checks if the average has been computed."""
+        return self.valid_count >= FRAMES_FOR_INITIALISATION and self.avg is not None
+
+    def display(self):
+        """Displays the current difference image or loading screen."""
+        TITLE = "Changes from Original"
+        if not self.isReady():
+            loading_img = np.ones((IMG_HEIGHT, IMG_WIDTH), np.uint8) * 128
+            cv2.imshow(TITLE, loading_img)
+        else:
+            cv2.imshow(TITLE, self.diff)
+

@@ -197,6 +197,8 @@ class ImageParse:
     @staticmethod
     def resize_proportionally(img, factor):
         # Get original dimensions
+        if img is None:
+            return
         (h, w) = img.shape[:2]
         new_width = int(w*factor)
         new_height = int(h * factor)

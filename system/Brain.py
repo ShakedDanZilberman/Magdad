@@ -1,2 +1,5 @@
+
+
 class Brain():
-    pass
+    def __init__(self):
+        eyes = 

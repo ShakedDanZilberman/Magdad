@@ -361,9 +361,11 @@ def main_using_targets():
         center = (IMG_WIDTH//2, IMG_HEIGHT//2)
         while True:
             # TODO: test out pop_closest_to_current_location as an alternative to pop() 
-            center = target_manager.pop_closest_to_current_location(center)
+            # center, to_shoot = target_manager.pop_closest_to_current_location(center)
+            center = target_manager.pop()
             # Move the laser pointer to the target
-            if center is not None:
+            to_shoot = center is not None
+            if to_shoot:
                 gun.aim_and_fire_target_2(center)
                 print("Shooting (theoretically)", center)
                 time.sleep(1) # this delay is here so we can wait for the objects to fall and then reset the changes image
@@ -374,7 +376,8 @@ def main_using_targets():
     
     while True:
         timestep += 1
-        img = cam.read()
+        # the following if is to reduce the FPS to 10:
+        img = cam.read(timestep)
         rawHandler.add(img)
         rawHandler.display()
         target_manager.add(timestep, img)

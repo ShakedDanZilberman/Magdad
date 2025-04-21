@@ -87,7 +87,9 @@ class Gun:
 
     def exit(self):
         pass
-
+    
+    def aim_and_fire_target_2(self, center):
+        pass
 
 class DummyGun:
     # This class has exactly the same interface as Gun, but does nothing.
