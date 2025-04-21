@@ -92,5 +92,5 @@ class Camera:
     def read(self, frame_num):
         ret_val, self.img = self.cam.read()
         self.img = ImageParse.toGrayscale(self.img)
-        self.img = undistortion.undistort(self.img, frame_num)
+        # self.img = undistortion.undistort(self.img, frame_num)
         return self.img

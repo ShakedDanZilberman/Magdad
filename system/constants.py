@@ -3,7 +3,7 @@ import numpy as np
 IMG_WIDTH = 640
 IMG_HEIGHT = 480
 COM = "COM6"
-CAMERA_INDEX = 1
+CAMERA_INDEX = 0
 GUN = (0, 0)  # Coordinates of the gun in pixels
 
 # Constants for the homography transformation

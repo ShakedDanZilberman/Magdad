@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 import os
-
+from image_processing import ImageParse
 
 # the following parameters are intrinsic parameters of the camera, and are used to undistort the fisheye view:
 
@@ -15,16 +15,24 @@ K = np.array([[1.44365244e+03, 5.26459870e+00, 1.05698538e+03], [0.00000000e+00,
 D = np.array([[-0.37036341], [-0.39595657], [ 3.82754419], [-5.52770641]], dtype=np.float64)
 
 
-def undistort(img, frame_num, balance=0.0):
+def undistort(img, frame_num, balance=0.6):
     h, w = img.shape[:2]
-
 
     # Estimate optimal new camera matrix
     # TODO: new_K is totally off and needs to be fixed. currently it causes the entire image to go black.
-    new_K = cv2.fisheye.estimateNewCameraMatrixForUndistortRectify(K, D, (w, h), np.eye(3), balance=balance)
+    global K, D
+    K = K.astype(np.float64)
+    D = D.astype(np.float64)
+    # new_K = cv2.fisheye.estimateNewCameraMatrixForUndistortRectify(K, D, (w, h), None, balance=balance)
+    new_K = K.copy()
+    # new_K[0, 0] *= 0.8  # fx
+    # new_K[1, 1] *= 0.8  # fy
     if frame_num == 5:
+        print("shape of D is", D.shape)
         print("new_K =\n", new_K)
         print("K =\n", K)
+        print("D =\n", D)
+        print ("height = ", h, "width = ", w)
 
     # Generate rectification maps
     map1, map2 = cv2.fisheye.initUndistortRectifyMap(
@@ -36,6 +44,77 @@ def undistort(img, frame_num, balance=0.0):
 
     return undistorted
 
+
+def direct_undistort(img):
+    h, w = img.shape[:2]
+    
+    # Map the source image to the normalized plane
+    undistorted_img = np.zeros_like(img)
+    
+    # Create mapping function for each pixel
+    mapx = np.zeros((h, w), dtype=np.float32)
+    mapy = np.zeros((h, w), dtype=np.float32)
+    
+    # Get normalized pixel coordinates
+    for y in range(h):
+        for x in range(w):
+            # Convert to normalized coordinates
+            x_normalized = (x - K[0, 2]) / K[0, 0]
+            y_normalized = (y - K[1, 2]) / K[1, 1]
+            
+            # Calculate radius
+            r = np.sqrt(x_normalized**2 + y_normalized**2)
+            
+            # Skip if the radius is too large (might be beyond the fisheye)
+            if r > 1.0:
+                continue
+                
+            # Apply fisheye distortion model
+            theta_d = r
+            theta = theta_d * (1 + D[0, 0]*theta_d**2 + D[1, 0]*theta_d**4 + 
+                               D[2, 0]*theta_d**6 + D[3, 0]*theta_d**8)
+            
+            # Scale by theta/r to get the undistorted point
+            scale = 1.0 if r == 0 else theta/r
+            x_undistorted = scale * x_normalized
+            y_undistorted = scale * y_normalized
+            
+            # Convert back to pixel coordinates
+            mapx[y, x] = x_undistorted * K[0, 0] + K[0, 2]
+            mapy[y, x] = y_undistorted * K[1, 1] + K[1, 2]
+    
+    # Use remap to create the undistorted image
+    undistorted = cv2.remap(img, mapx, mapy, interpolation=cv2.INTER_LINEAR, 
+                           borderMode=cv2.BORDER_CONSTANT)
+    
+    return undistorted
+
+
+def improved_undistort(img, fov_scale=0.7, center_offset_x=0.0, center_offset_y=0.0):
+    h, w = img.shape[:2]
+    
+    # Create a custom camera matrix with controlled parameters
+    new_K = K.copy()
+    
+    # 1. Scale the focal length to control field of view
+    new_K[0, 0] = K[0, 0] * fov_scale
+    new_K[1, 1] = K[1, 1] * fov_scale
+    
+    # 2. Adjust the principal point to shift the center of projection
+    # This can help with the smearing on one side
+    new_K[0, 2] = K[0, 2] + (center_offset_x * w)  # Shift center point horizontally
+    new_K[1, 2] = K[1, 2] + (center_offset_y * h)  # Shift center point vertically
+    
+    # Create maps with explicit dimensions
+    map1, map2 = cv2.fisheye.initUndistortRectifyMap(
+        K, D, np.eye(3), new_K, (w, h), cv2.CV_32FC1)
+    
+    # Apply remapping with optimized border handling
+    undistorted = cv2.remap(img, map1, map2, 
+                           interpolation=cv2.INTER_LANCZOS4,  # Higher quality interpolation
+                           borderMode=cv2.BORDER_REFLECT)  # Better border handling
+    
+    return undistorted
 
 
 def find_distortion_params():
@@ -143,6 +222,17 @@ def find_distortion_params():
 
 # find_distortion_params()
 
-print("K shape:", K.shape, "dtype:", K.dtype)
-print("D shape:", D.shape, "dtype:", D.dtype)
+# print("K shape:", K.shape, "dtype:", K.dtype)
+# print("D shape:", D.shape, "dtype:", D.dtype)
 
+# image_for_experiments = ImageParse.resize_proportionally(cv2.imread('homography_pics\WIN_20250407_21_25_44_Pro.jpg'),0.5)
+# directly_undistorted = improved_undistort(image_for_experiments)
+# undistorted = undistort(image_for_experiments, 5)
+
+# while True:
+#     cv2.imshow("originial", image_for_experiments)
+#     cv2.imshow("directly undistorted", directly_undistorted)
+#     cv2.imshow("undistorted", undistorted)    
+#     # Press Escape to exit
+#     if cv2.waitKey(1) == 27:
+#         break

@@ -516,19 +516,44 @@ def test_homography():
 
         # Press Escape to exit
         if cv2.waitKey(1) == 27:
-            print(real_world_pos)
+            # print(real_world_pos)
             break
     cv2.destroyAllWindows()
 
+
+
+def test_camera():
+    global CAMERA_INDEX, timestep
+    detectCameras()
+    cam = Camera(CAMERA_INDEX)
+    handler = RawHandler()
+    # laser = threading.Thread(target=laser_thread)
+    # laser.start()  # comment this line to disable the laser pointer
+
+    # cv2.namedWindow(handler.TITLE)
+    frame_num = 0
+    while True:
+        img = cam.read(frame_num)
+
+        handler.add(img)
+        handler.display()
+        frame_num+=1
+
+        # Press Escape to exit
+        if cv2.waitKey(1) == 27:
+            # print(real_world_pos)
+            break
+    cv2.destroyAllWindows()
 
 def main_using_targets_3_cameras():
     pass
 
 
 if __name__ == "__main__":
-    #test()
+    # test()
     # hit_cursor_main()
-    #just_changes_main()
+    # just_changes_main()
     # main_using_targets()
-    homography_calibration_main()
+    # homography_calibration_main()
     # test_homography()
+    test_camera()

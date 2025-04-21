@@ -193,3 +193,14 @@ class ImageParse:
             np.ndarray: The image with increased contrast
         """
         return cv2.convertScaleAbs(img, factor, 0)
+    
+    @staticmethod
+    def resize_proportionally(img, factor):
+        # Get original dimensions
+        (h, w) = img.shape[:2]
+        new_width = int(w*factor)
+        new_height = int(h * factor)
+
+        # Resize the image
+        resized = cv2.resize(img, (new_width, new_height))
+        return resized
