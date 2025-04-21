@@ -45,7 +45,6 @@ void loop() {
           digitalWrite(stepPin, LOW);
           delayMicroseconds(speed);
         }
-        Serial.println("Finished the turn loop");
       }
       Serial.println("Done");
     }

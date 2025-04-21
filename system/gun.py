@@ -53,7 +53,7 @@ class Gun:
     def shoot(self):
         print(f"Shooting!!! at {self.current_angle} degrees")
         self.ser.write(b"SHOOT\n")
-        print(f">>>SHOOT")
+        print(f">>> SHOOT")
         self._wait_for_done()
 
     def rotate(self, angle):
@@ -68,7 +68,7 @@ class Gun:
         steps = int(STEPS_IN_DEGREE * dθ)
         command = f"ROTATE:{steps}\n".encode()
         self.ser.write(command)
-        print(f">>>{command}")
+        print(f">>> {command}")
         self._wait_for_done()
         self.current_angle = angle
 
@@ -114,7 +114,7 @@ class DummyGun:
 
 if __name__ == "__main__":
     gun = Gun(print_flag=True)
-    angle_program = [0, 360, 0, 180, 0, 90, 0, -90, 0]
+    angle_program = [0, 360, 0, 180, 0, 90, 0, -90, 0, 180, 0, 360, 0, -180, 0, 90, 0, -90, 0, 180, 0, 360, 0, -180]
     for angle in angle_program:
         gun.rotate(angle)
         sleep(1)
