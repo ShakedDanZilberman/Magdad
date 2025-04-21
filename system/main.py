@@ -27,7 +27,7 @@ from gun import Gun, DummyGun
 from constants import CAMERA_INDEX
 from object_finder import Targets, GlobalTargets
 import homogrpahy
-from constants import IMG_WIDTH, IMG_HEIGHT
+from constants import IMG_WIDTH, IMG_HEIGHT, homography_matrix
 
 timestep = 0  # Global timestep, used to keep track of the number of frames processed
 laser_targets = [(30, 60)]  # List of targets for the laser pointer, used to share information between threads
@@ -154,6 +154,7 @@ def homography_calibration_main():
         handler.display()
         if handler.has_new_click(): 
             click_pos = handler.get_last_click()
+            print(click_pos)
             source_points.append([float(click_pos[0]), float(click_pos[1])])
             
         frame_num+=1
@@ -510,8 +511,8 @@ def test_homography():
             click_pos = handler.get_last_click()
             click_pos_array = np.array([[[click_pos[0], click_pos[1]]]], dtype=np.float32)
             print("click is in pixel: ", click_pos)
-            real_world_pos = cv2.perspectiveTransform(click_pos_array, homogrpahy.homogrpahy_matrix)
-
+            real_world_pos = cv2.perspectiveTransform(click_pos_array, homography_matrix)
+            print(real_world_pos)
         frame_num+=1
 
         # Press Escape to exit
@@ -534,7 +535,7 @@ def test_camera():
     frame_num = 0
     while True:
         img = cam.read(frame_num)
-
+        # cv2.imshow("raw image", img)
         handler.add(img)
         handler.display()
         frame_num+=1
@@ -555,5 +556,5 @@ if __name__ == "__main__":
     # just_changes_main()
     # main_using_targets()
     # homography_calibration_main()
-    # test_homography()
-    test_camera()
+    test_homography()
+    # test_camera()
