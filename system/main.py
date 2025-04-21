@@ -136,6 +136,7 @@ def PID(expected_volt, motor_volt):
         print("Motor voltage:", motor_volt, "Expected voltage:", expected_volt, "Error:", error)
         return error*P_ERROR + total_error*I_ERROR + dif_error*D_ERROR
 
+
 def just_changes_main():
     """
     This function uses the changes in the image to detect targets.
