@@ -361,6 +361,52 @@ def main_using_targets():
         center = (IMG_WIDTH//2, IMG_HEIGHT//2)
         while True:
             # TODO: test out pop_closest_to_current_location as an alternative to pop() 
+            # center, to_shoot = target_manager.pop_closest_to_current_location(center)
+            center = target_manager.pop()
+            # Move the laser pointer to the target
+            to_shoot = center is not None
+            if to_shoot:
+                gun.aim_and_fire_target_2(center)
+                print("Shooting (theoretically)", center)
+                time.sleep(1) # this delay is here so we can wait for the objects to fall and then reset the changes image
+                target_manager.clear() # TODO: reduce the number of frames needed for initialization
+    
+    gun = threading.Thread(target=gun_thread)
+    gun.start()
+    
+    while True:
+        timestep += 1
+        # the following if is to reduce the FPS to 10:
+        img = cam.read(timestep)
+        rawHandler.add(img)
+        rawHandler.display()
+        target_manager.add(timestep, img)
+        # Press Escape to exit
+        if cv2.waitKey(1) == 27:
+            break
+    cv2.destroyAllWindows()
+
+
+def main_using_targets_and_homography():
+    global CAMERA_INDEX, timestep, gun_targets
+    from gui import GUI
+    detectCameras()
+    cam = Camera(CAMERA_INDEX)
+    rawHandler = RawHandler()
+    target_manager = Targets()
+    gui = GUI()
+    def gun_thread():
+        """
+        Thread that moves the gun to the target and shoots.
+        The targets are aquired as an asynchronous input from the main thread.
+        """
+        import fit
+        print("Gun thread started.")
+        global gun_targets
+        gun = Gun(print_flag=True)
+        center = (IMG_WIDTH//2, IMG_HEIGHT//2)
+        while True:
+            # TODO: test out pop_closest_to_current_location as an alternative to pop() 
             center = target_manager.pop_closest_to_current_location(center)
             # Move the laser pointer to the target
             if center is not None:

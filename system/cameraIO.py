@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from image_processing import ImageParse
 import undistortion
+from constants import FPS
 
 MAX_CAMERAS = 10
 
@@ -80,7 +81,9 @@ class Camera:
         self.cam = cv2.VideoCapture(index, cv2.CAP_MSMF)
         self.cam.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
         self.cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
-
+        self.cam.set(cv2.CAP_PROP_FPS, 10)
+        actual_fps = self.cam.get(cv2.CAP_PROP_FPS)
+        print(f"Actual FPS set: {actual_fps}")
         ret_val, self.img = self.cam.read()
         self.img = ImageParse.resize_proportionally(self.img, 0.5)
         if not ret_val:
