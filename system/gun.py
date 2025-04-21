@@ -7,8 +7,9 @@ import subprocess
 import re
 
 from constants import COM
-import fit
-# import pid
+
+
+STEPS_IN_DEGREE = 2/1.8
 
 
 class Gun:
@@ -63,7 +64,8 @@ class Gun:
         Args:
             angle (int): The angle to rotate to, in degrees.
         """
-        steps = angle - self.current_angle
+        dθ = angle - self.current_angle
+        steps = int(STEPS_IN_DEGREE * dθ)
         command = f"ROTATE:{steps}\n".encode()
         self.ser.write(command)
         print(f">>>{command}")
@@ -107,7 +109,7 @@ class DummyGun:
 
 if __name__ == "__main__":
     gun = Gun(print_flag=True)
-    angle_program = [90, 0, -90]
+    angle_program = [0, 360, 0, 180, 0, 90, 0, -90, 0]
     for angle in angle_program:
         gun.rotate(angle)
         sleep(1)

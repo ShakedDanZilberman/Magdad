@@ -11,6 +11,7 @@ int currentAngle = 0;
 void setup() {
   Serial.begin(9600);
   pinMode(gunPin, OUTPUT);
+  pinMode(dirPin, OUTPUT);
   pinMode(stepPin, OUTPUT);
   myServo.write(0);
 }
