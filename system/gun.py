@@ -8,7 +8,7 @@ import re
 
 from constants import COM
 import fit
-import pid
+# import pid
 
 
 class Gun:
