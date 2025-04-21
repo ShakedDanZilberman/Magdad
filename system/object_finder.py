@@ -133,8 +133,7 @@ class Targets:
 
     def pop(self):
         if self.target_queue:
-            # target = self.target_queue.pop(0)
-            target = self.target_queue[0]
+            target = self.target_queue.pop(0)
             return target
         return
     
