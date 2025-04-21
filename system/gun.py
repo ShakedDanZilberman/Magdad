@@ -6,7 +6,7 @@ import serial
 from time import sleep
 import time
 
-from constants import COM, SLEEP_DURATION, VOLTAGE_MOTOR_PIN, GUN_PIN, SERVO_PIN
+# from constants import COM, SLEEP_DURATION, VOLTAGE_MOTOR_PIN, GUN_PIN, SERVO_PIN
 
 import fit
 import pid
