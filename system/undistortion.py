@@ -43,12 +43,12 @@ def undistort(img, frame_num, balance=0.6):
     new_K = K.copy()
     # new_K[0, 0] *= 0.8  # fx
     # new_K[1, 1] *= 0.8  # fy
-    if frame_num == 5:
-        print("shape of D is", D.shape)
-        print("new_K =\n", new_K)
-        print("K =\n", K)
-        print("D =\n", D)
-        print ("height = ", h, "width = ", w)
+    # if frame_num == 5:
+        # print("shape of D is", D.shape)
+        # print("new_K =\n", new_K)
+        # print("K =\n", K)
+        # print("D =\n", D)
+        # print ("height = ", h, "width = ", w)
 
     # Generate rectification maps
     map1, map2 = cv2.fisheye.initUndistortRectifyMap(

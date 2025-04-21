@@ -5,11 +5,23 @@ IMG_HEIGHT = 540
 COM = "COM6"
 CAMERA_INDEX = 0
 GUN = (0, 0)  # Coordinates of the gun in pixels
-
 # Constants for the homography transformation
 H1 = None
 H2 = None
 H3 = None
+FPS = 10
+
+INITIAL_BLURRING_KERNEL = (3, 3)
+
+HIGH_CEP_INDEX = 0.9
+LOW_CEP_INDEX = 0.5
+# sample rate - in frames, not in seconds
+# note - SAMPLE_RATE has to be higher than FRAMES_FOR_INITIALISATION
+SAMPLE_RATE = 16
+FRAMES_FOR_INITIALISATION = 5
+BRIGHTNESS_THRESHOLD = 240
+
+MINIMAL_OBJECT_AREA = 30
 
 # the following lists are for the homography, specifically used in the calibration in Beit Tzarfat
 
