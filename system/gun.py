@@ -107,7 +107,7 @@ class DummyGun:
 
 if __name__ == "__main__":
     gun = Gun(print_flag=True)
-    angle_program = [50, 30, -80]
+    angle_program = [90, 0, -90]
     for angle in angle_program:
         gun.rotate(angle)
         sleep(1)
