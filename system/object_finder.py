@@ -59,7 +59,6 @@ class Targets:
             self.add_initial_targets_using_yolo(img)
             print("target queue: ", self.target_queue)
 
-        # FIXME: isinstance(self.img_changes, np.ndarray) is always false, so no new targets are ever pulled from the changes image 
         # at a constant rate SAMPLE_RATE, get all new objects in the image
         if to_check: 
             self.new_targets = []
@@ -73,7 +72,9 @@ class Targets:
 
 
     def show_yolo_detection(self, img):
-        '''shows what the AI model detected'''
+        '''
+        shows what the AI model detected
+        '''
         self.yolo_handler.add(img)
         self.yolo_centers = self.yolo_handler.get_centers()
         detected = self.yolo_handler.get()

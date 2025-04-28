@@ -1,6 +1,9 @@
 from Eye import Eye
 from gun import Gun, DummyGun
 from cameraIO import Camera
+import threading
+from constants import *
+import time
 
 
 class Brain():
@@ -12,6 +15,7 @@ class Brain():
         self.eyes = [eye1]
         self.targets = []
         self.timestep = 0
+        coordinates = 
 
     
     
@@ -20,7 +24,6 @@ class Brain():
             import fit
             print("Gun thread started.")
             global gun_targets
-            gun = Gun(print_flag=True)
             center = (IMG_WIDTH//2, IMG_HEIGHT//2)
             while True:
                 # TODO: test out pop_closest_to_current_location as an alternative to pop() 
@@ -45,10 +48,16 @@ class Brain():
     def get_guns(self):
         pass
     
-    def add():
+    def add(self):
         for eye in self.eyes:
             target = eye.add()
         
-
-    
         
+    def too_close(self, target, distance):
+        if all(np.linalg.norm(np.array(target) - np.array(old_target)) > distance for old_target in self.targets):
+                return True
+        return False
+
+    def add_to_target_list(self, new_targets: list, gun: Gun, distance: float = MIN_DISTANCE):
+        for target in new_targets:
+            if not self.too_close(target, MIN_DISTANCE):

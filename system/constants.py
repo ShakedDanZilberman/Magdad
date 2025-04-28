@@ -22,6 +22,7 @@ FRAMES_FOR_INITIALISATION = 5
 BRIGHTNESS_THRESHOLD = 240
 
 MINIMAL_OBJECT_AREA = 30
+MIN_DISTANCE = 6.0
 
 # the following lists are for the homography, specifically used in the calibration in Beit Tzarfat
 

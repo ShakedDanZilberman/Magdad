@@ -27,4 +27,5 @@ class Eye():
         if to_check or to_init:
             return self.target_manager.new_targets
         return
-        
+    
+    
