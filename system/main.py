@@ -414,9 +414,20 @@ def main_using_targets_and_homography():
             # Move the laser pointer to the target
             if center is not None:
                 aim_and_fire(gun,center)
+                aim_and_fire(gun,center)
                 print("Shooting (theoretically)", center)
                 time.sleep(1) # this delay is here so we can wait for the objects to fall and then reset the changes image
                 target_manager.clear() # TODO: reduce the number of frames needed for initialization
+    
+    def aim_and_fire(gun,center_pixels):
+        import math
+        gun_real_pos = (0,0)
+        real_world_pos = cv2.perspectiveTransform(center_pixels, homography_matrix)
+        theta = math.arctan((real_world_pos[0]-gun_real_pos[0])/(real_world_pos[1]-gun_real_pos[1]))*180/math.pi
+        gun.rotate(theta)
+        time.sleep(0.2)
+        gun.shoot
+        
     
     def aim_and_fire(gun,center_pixels):
         import math
