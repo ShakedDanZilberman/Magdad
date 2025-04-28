@@ -1,52 +1,39 @@
-#include <Servo.h>
-
-const int gunPin = 4;
+// Define pin connections & motor's steps per revolution
 const int dirPin = 2;
 const int stepPin = 3;
-const int speed = 1000;
-const int SHOOT_COOLDOWN = 200;  // ms
-Servo myServo;
-int currentAngle = 0;
+const int stepsPerRevolution = 200;
 
-void setup() {
-  Serial.begin(9600);
-  pinMode(gunPin, OUTPUT);
-  pinMode(dirPin, OUTPUT);
+void setup()
+{
+  // Declare pins as Outputs
   pinMode(stepPin, OUTPUT);
-  myServo.write(0);
+  pinMode(dirPin, OUTPUT);
 }
+void loop()
+{
+  // Set motor direction clockwise
+  digitalWrite(dirPin, HIGH);
 
-void loop() {
-  if (Serial.available()) {
-    String command = Serial.readStringUntil('\n');
-    command.trim();
-
-    if (command == "SHOOT") {
-      digitalWrite(gunPin, HIGH);
-      Serial.println("Shooting.");
-      delay(SHOOT_COOLDOWN);
-      digitalWrite(gunPin, LOW);
-      Serial.println("Done");
-    }
-
-    else if (command.startsWith("ROTATE:")) {
-      long steps = command.substring(7).toInt(); // Read number of steps
-      Serial.print("Number of steps: ");
-      Serial.println(steps);
-      if (steps != 0) {
-        int direction = steps > 0 ? HIGH : LOW;
-        Serial.print("Rotating in direction (0=+, 1=-): ");
-        Serial.println(direction);
-        digitalWrite(dirPin, direction);
-        steps = abs(steps);
-        for (long i = 0; i < steps; i++) {
-          digitalWrite(stepPin, HIGH);
-          delayMicroseconds(speed);  // Adjust speed here
-          digitalWrite(stepPin, LOW);
-          delayMicroseconds(speed);
-        }
-      }
-      Serial.println("Done");
-    }
+  // Spin motor slowly
+  for(int x = 0; x < stepsPerRevolution; x++)
+  {
+    digitalWrite(stepPin, HIGH);
+    delayMicroseconds(1000);
+    digitalWrite(stepPin, LOW);
+    delayMicroseconds(100);
   }
+  delay(1000); // Wait a second
+  
+  // Set motor direction counterclockwise
+  digitalWrite(dirPin, LOW);
+
+  // Spin motor quickly
+  for(int x = 0; x < stepsPerRevolution; x++)
+  {
+    digitalWrite(stepPin, HIGH);
+    delayMicroseconds(2000);
+    digitalWrite(stepPin, LOW);
+    delayMicroseconds(2000);
+  }
+  delay(1000); // Wait a second
 }
