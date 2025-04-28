@@ -455,6 +455,52 @@ def main_using_targets_and_homography():
 
 
 
+def main_using_targets_3_cameras():
+    global CAMERA_INDEX, timestep, gun_targets
+    from gui import GUI
+    detectCameras()
+    cam = Camera(CAMERA_INDEX)
+    rawHandler = RawHandler()
+    target_manager1 = Targets()
+    target_manager2 = Targets()
+    target_manager3 = Targets()
+    global_target_manager = GlobalTargets(target_manager1, target_manager2, target_manager3)
+    gui = GUI()
+    def gun_thread():
+        """
+        Thread that moves the gun to the target and shoots.
+        The targets are aquired as an asynchronous input from the main thread.
+        """
+        import fit
+        print("Gun thread started.")
+        global gun_targets
+        gun = Gun(print_flag=True)
+        center = (IMG_WIDTH//2, IMG_HEIGHT//2)
+        while True:
+            # TODO: (ayala) write the function pop_closest_to_current_location or regular pop, in the GlobalTargets class
+            # TODO: test out pop_closest_to_current_location as an alternative to pop()
+            center = global_target_manager.pop_closest_to_current_location(center)
+            # Move the laser pointer to the target
+            if center is not None:
+                gun.aim_and_fire_target_2(center)
+                print("Shooting (theoretically)", center)
+                time.sleep(1) # this delay is here so we can wait for the objects to fall and then reset the changes image
+                target_manager1.clear() # TODO: reduce the number of frames needed for initialization
+    
+    gun = threading.Thread(target=gun_thread)
+    gun.start()
+    
+    while True:
+        timestep += 1
+        img = cam.read()
+        rawHandler.add(img)
+        rawHandler.display()
+        target_manager1.add(timestep, img)
+        # Press Escape to exit
+        if cv2.waitKey(1) == 27:
+            break
+    cv2.destroyAllWindows()
+
 
 def test_main():
     global CAMERA_INDEX, timestep, gun_targets
@@ -690,11 +736,11 @@ def homography_targets():
 
 if __name__ == "__main__":
     # test()
-    hit_cursor_main()
+    # hit_cursor_main()
     # just_changes_main()
     # main_using_targets_4()
     # homography_calibration_main()
-    #test_homography()
+    test_homography()
     # test_camera()
     # homography_targets()1
     

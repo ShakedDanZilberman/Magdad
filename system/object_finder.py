@@ -46,29 +46,34 @@ class Targets:
         # self.frame_number = frame_number
         # print("frame number is", frame_number)
         # if self.frames_remaining_to_initialize > 0:
-        self.changes_handler.add(img)
+        #self.changes_handler.add(img)
             # self.frames_remaining_to_initialize -= 1
         # print(self.frames_remaining_to_initialize, "frames remaining")
         # self.contours_handler.add(img)
-        self.changes_handler.display()
+        #self.changes_handler.display()
         # self.img_contours = self.contours_handler.get()
         self.img_changes = self.changes_handler.get()
 
         # At the SAMPLE_RATE//4th frame, pull all targets from yolo detection
-        if to_init: # SAMPLE_RATE//4:
+        if to_init or to_check: # SAMPLE_RATE//4:
+            self.add_initial_targets_using_yolo(img)
+            #print("target queue: ", self.target_queue)
+
+        # at a constant rate SAMPLE_RATE, get all new objects in the image
+        # if to_check: 
+        #     self.new_targets = []
+        #     self.changes_handler.add(img)
+        #     self.changes_handler.display()
+        #     #print(isinstance(self.img_changes, np.ndarray))
+        #     if isinstance(self.img_changes, np.ndarray) and self.img_changes.size > 1:
+        #         #print("looking for changes")
+        #         self.add_new_targets_to_queue()
+        #         #print("target queue: ", self.target_queue)
+    
+    def add_only_from_yolo(self, img):
             self.add_initial_targets_using_yolo(img)
             print("target queue: ", self.target_queue)
 
-        # at a constant rate SAMPLE_RATE, get all new objects in the image
-        if to_check: 
-            self.new_targets = []
-            self.changes_handler.add(img)
-            self.changes_handler.display()
-            print(isinstance(self.img_changes, np.ndarray))
-            if isinstance(self.img_changes, np.ndarray) and self.img_changes.size > 1:
-                print("looking for changes")
-                self.add_new_targets_to_queue()
-                print("target queue: ", self.target_queue)
 
 
     def show_yolo_detection(self, img):
@@ -97,6 +102,7 @@ class Targets:
                 if all(np.linalg.norm(np.array(center) - np.array(target)) > pixel_distance for target in targets):
                     insert_sorted(targets, center)
             self.new_targets = targets.copy()
+            print("new targets:", self.new_targets)
             self.target_queue = list(merge(self.target_queue, targets.copy()))
             # reset the changes heatmap, so we get no duplicates
         self.changes_handler.clear()
@@ -131,9 +137,10 @@ class Targets:
                 if all(np.linalg.norm(np.array(center) - np.array(target)) > pixel_distance for target in targets):
                     insert_sorted(targets, center)
             # add new targets to the target queue, sorted by x coordinate
+            self.new_targets = targets.copy()
+            print("new targets:", self.new_targets)
             self.target_queue = list(merge(self.target_queue, targets.copy()))
-            self.new_targets = self.target_queue.copy()
-            print("added targets from yolo")
+            print("added targets from yolo:" , self.target_queue)
 
 
     def pop(self):

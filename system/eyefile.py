@@ -25,7 +25,6 @@ class Eye():
         frame = self.camera.read()
         self.raw_handler.add(frame)
         self.raw_handler.display()
-        print("00000")
         
         self.target_manager.add(frame, to_check, to_init)
         if to_check or to_init:
