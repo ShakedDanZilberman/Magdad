@@ -12,28 +12,6 @@ class Brain():
         self.eyes = [eye1]
         self.targets = []
         self.timestep = 0
-
-    
-    
-    def aim_using_targets(self):
-        def gun_thread():
-            import fit
-            print("Gun thread started.")
-            global gun_targets
-            gun = Gun(print_flag=True)
-            center = (IMG_WIDTH//2, IMG_HEIGHT//2)
-            while True:
-                # TODO: test out pop_closest_to_current_location as an alternative to pop() 
-                center = target_manager.pop_closest_to_current_location(center)
-                # Move the laser pointer to the target
-                if center is not None:
-                    gun.aim_and_fire_target_2(center)
-                    print("Shooting (theoretically)", center)
-                    time.sleep(1) # this delay is here so we can wait for the objects to fall and then reset the changes image
-                    target_manager.clear() # TODO: reduce the number of frames needed for initialization
-        
-        gun = threading.Thread(target=gun_thread)
-        gun.start()
     
         
     def get_targets(self):
@@ -45,9 +23,27 @@ class Brain():
     def get_guns(self):
         pass
     
-    def add():
+    def add(self):
+        if self.timestep > 5:
+            to_init = False
+        else:
+            to_init = True
+        if self.timestep % 15 == 0:
+            to_check = True
+        else:
+            to_check = False
+        
         for eye in self.eyes:
-            target = eye.add()
+            target = eye.add(to_check, to_init)
+
+    def game_loop(self):
+        while True:
+            self.timestep += 1
+            self.add()
+
+
+            
+
         
 
     

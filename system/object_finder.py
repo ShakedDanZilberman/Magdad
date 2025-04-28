@@ -54,20 +54,21 @@ class Targets:
         self.img_changes = self.changes_handler.get()
 
         # At the SAMPLE_RATE//4th frame, pull all targets from yolo detection
-        if self.frame_number == 5: # SAMPLE_RATE//4:
+        # if self.frame_number == 5: # SAMPLE_RATE//4:
+        if self.frame_number%SAMPLE_RATE == SAMPLE_RATE//2: 
             self.add_initial_targets_using_yolo(img)
             print("target queue: ", self.target_queue)
 
         # FIXME: isinstance(self.img_changes, np.ndarray) is always false, so no new targets are ever pulled from the changes image 
-        # at a constant rate SAMPLE_RATE, get all new objects in the image
-        if self.frame_number%SAMPLE_RATE == SAMPLE_RATE//2: 
-            self.changes_handler.add(img)
-            self.changes_handler.display()
-            print(isinstance(self.img_changes, np.ndarray))
-            if isinstance(self.img_changes, np.ndarray) and self.img_changes.size > 1:
-                print("looking for changes")
-                self.add_new_targets_to_queue()
-                print("target queue: ", self.target_queue)
+        # # at a constant rate SAMPLE_RATE, get all new objects in the image
+        # if self.frame_number%SAMPLE_RATE == SAMPLE_RATE//2: 
+        #     self.changes_handler.add(img)
+        #     self.changes_handler.display()
+        #     print(isinstance(self.img_changes, np.ndarray))
+        #     if isinstance(self.img_changes, np.ndarray) and self.img_changes.size > 1:
+        #         print("looking for changes")
+        #         self.add_new_targets_to_queue()
+        #         print("target queue: ", self.target_queue)
 
 
     def show_yolo_detection(self, img):
@@ -151,39 +152,6 @@ class Targets:
         self.changes_handler.clear() 
 
 
-class GlobalTargets:
-    """this class holds the targets from all the cameras.
-    it saves a list of targets in the global coordinates system.
-    it has a method to add targets from all the cameras, that uses homography to transform the targets to the global coordinates system.
-    it has a method to get the targets in the global coordinates system.
-    
-    """
-    def __init__(self, target_manager1, target_manager2, target_manager3):
-        self.target_managers = [target_manager1, target_manager2, target_manager3]
-        self.target_queue = []
-        self.homography_matrixs = []
-
-    def add_homography_matrix(self, homography_matrix):
-        """add a homography matrix to the list of homography matrixs"""
-        self.homography_matrixs.append(homography_matrix)
-
-    def add(self, target_manager, camera_index):
-        """add a target manager to the list of target managers"""
-        # get the homography matrix for the camera index
-        homography_matrix = self.homography_matrixs[camera_index]
-        # get the targets from the target manager
-        targets = target_manager.target_queue
-        # transform the targets to the global coordinates system using the homography matrix
-        targets = cv2.perspectiveTransform(np.array(targets), homography_matrix)
-        # add the targets to the global target queue
-        self.target_queue.extend(targets)
-        # TODO: (ayala) remove duplicates from the target queue
-        # TODO: (ayala) remove targets that are too close to each other
-        # TODO: (ayala) test this method
-
-    def pop_closest_to_current_location():
-        # TODO: (ayala) implement this method
-        pass
 
 
 
