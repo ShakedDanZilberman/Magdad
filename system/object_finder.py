@@ -39,10 +39,11 @@ class Targets:
         self.low_targets = []
         self.high_targets = []
         self.target_queue = []
+        self.new_targets = []
         self.frames_remaining_to_initialize = FRAMES_FOR_INITIALISATION
 
-    def add(self, frame_number, img):
-        self.frame_number = frame_number
+    def add(self, img, to_check: bool=False, to_init: bool=False):
+        # self.frame_number = frame_number
         # print("frame number is", frame_number)
         # if self.frames_remaining_to_initialize > 0:
         self.changes_handler.add(img)
@@ -54,13 +55,13 @@ class Targets:
         self.img_changes = self.changes_handler.get()
 
         # At the SAMPLE_RATE//4th frame, pull all targets from yolo detection
-        if self.frame_number == 5: # SAMPLE_RATE//4:
+        if to_init: # SAMPLE_RATE//4:
             self.add_initial_targets_using_yolo(img)
             print("target queue: ", self.target_queue)
 
-        # FIXME: isinstance(self.img_changes, np.ndarray) is always false, so no new targets are ever pulled from the changes image 
         # at a constant rate SAMPLE_RATE, get all new objects in the image
-        if self.frame_number%SAMPLE_RATE == SAMPLE_RATE//2: 
+        if to_check: 
+            self.new_targets = []
             self.changes_handler.add(img)
             self.changes_handler.display()
             print(isinstance(self.img_changes, np.ndarray))
@@ -71,7 +72,9 @@ class Targets:
 
 
     def show_yolo_detection(self, img):
-        '''shows what the AI model detected'''
+        '''
+        shows what the AI model detected
+        '''
         self.yolo_handler.add(img)
         self.yolo_centers = self.yolo_handler.get_centers()
         detected = self.yolo_handler.get()
@@ -93,6 +96,7 @@ class Targets:
             for center in self.changes_centers:
                 if all(np.linalg.norm(np.array(center) - np.array(target)) > pixel_distance for target in targets):
                     insert_sorted(targets, center)
+            self.new_targets = targets.copy()
             self.target_queue = list(merge(self.target_queue, targets.copy()))
             # reset the changes heatmap, so we get no duplicates
         self.changes_handler.clear()
@@ -128,6 +132,7 @@ class Targets:
                     insert_sorted(targets, center)
             # add new targets to the target queue, sorted by x coordinate
             self.target_queue = list(merge(self.target_queue, targets.copy()))
+            self.new_targets = self.target_queue.copy()
             print("added targets from yolo")
 
 
@@ -149,47 +154,6 @@ class Targets:
     def clear(self):
         print("clearing changes")
         self.changes_handler.clear() 
-
-
-class GlobalTargets:
-    """this class holds the targets from all the cameras.
-    it saves a list of targets in the global coordinates system.
-    it has a method to add targets from all the cameras, that uses homography to transform the targets to the global coordinates system.
-    it has a method to get the targets in the global coordinates system.
-    
-    """
-    def __init__(self, target_manager1, target_manager2, target_manager3):
-        self.target_managers = [target_manager1, target_manager2, target_manager3]
-        self.target_queue = []
-        self.homography_matrixs = []
-
-    def add_homography_matrix(self, homography_matrix):
-        """add a homography matrix to the list of homography matrixs"""
-        self.homography_matrixs.append(homography_matrix)
-
-    def add(self, target_manager, camera_index):
-        """add a target manager to the list of target managers"""
-        # get the homography matrix for the camera index
-        homography_matrix = self.homography_matrixs[camera_index]
-        # get the targets from the target manager
-        targets = target_manager.target_queue
-        # transform the targets to the global coordinates system using the homography matrix
-        targets = cv2.perspectiveTransform(np.array(targets), homography_matrix)
-        # add the targets to the global target queue
-        self.target_queue.extend(targets)
-        # TODO: (ayala) remove duplicates from the target queue
-        # TODO: (ayala) remove targets that are too close to each other
-        # TODO: (ayala) test this method
-
-    def pop_closest_to_current_location():
-        # TODO: (ayala) implement this method
-        pass
-
-
-
-        
-
-
 
 
 

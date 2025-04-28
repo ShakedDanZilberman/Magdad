@@ -13,7 +13,7 @@ STEPS_IN_DEGREE = 2/1.8
 
 
 class Gun:
-    def __init__(self, print_flag=False):
+    def __init__(self, gun_location, print_flag=False):
         """Initialize the Gun class, connect to the Arduino, and set the initial angle.
         The class communicates with the Arduino via a serial connection.
         The protocol:
@@ -26,6 +26,7 @@ class Gun:
             print_flag (bool, optional): If True, print debug information. Defaults to False.
         """
         self.current_angle = 0
+        self.gun_location = gun_location
 
         self.ser = self._connect_to_serial(COM)
         time.sleep(2)  # Give Arduino time to reset; setup delay sleep for 2 seconds
@@ -117,6 +118,8 @@ class DummyGun:
 if __name__ == "__main__":
     gun = Gun(print_flag=True)
     angle_program = [0, 360, 0, 180, 0, 90, 0, -90, 0, 180, 0, 360, 0, -180, 0, 90, 0, -90, 0, 180, 0, 360, 0, -180, 0, 90, 0, -90, 0, 180, 0, 360, 0, -180, 0, 90, 0, -90, 0, 180, 0, 360]
+    angle_program = [0, 360, 0, 180, 0, 90, 0, -90]
+    angle_program *= 5
     for angle in angle_program:
         gun.rotate(angle)
         sleep(1)

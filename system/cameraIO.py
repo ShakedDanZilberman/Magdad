@@ -78,7 +78,7 @@ def showMultipleFrames(imgs, titles=None, title=None):
 class Camera:
     def __init__(self, index):
         self.index = index
-        self.cam = cv2.VideoCapture(index, cv2.CAP_MSMF)
+        self.cam = cv2.VideoCapture(self.index, cv2.CAP_MSMF)
         self.cam.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
         self.cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
         self.cam.set(cv2.CAP_PROP_FPS, 10)
@@ -95,9 +95,9 @@ class Camera:
                 print("Failed to connect to camera")
                 return
 
-    def read(self, frame_num):
+    def read(self):
         ret_val, self.img = self.cam.read()
         self.img = ImageParse.resize_proportionally(self.img, 0.5)
         self.img = ImageParse.toGrayscale(self.img)
-        self.img = undistortion.undistort(self.img, frame_num)
+        self.img = undistortion.undistort(self.img)
         return self.img
