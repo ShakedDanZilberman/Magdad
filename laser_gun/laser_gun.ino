@@ -1,27 +1,52 @@
-#include <Servo.h> // include servo library
- 
-Servo servo1; // define servos
-Servo servo2;
- 
-int joyX = 0; // give variable to joystick readings
-int joyY = 1;
- 
-int joyVal; // create variable for joystick value
- 
-void setup()
-{
-  servo1.attach(9); // start servos
-  servo2.attach(3);
-  pinMode(8,OUTPUT);
+#include <Servo.h>
 
+const int gunPin = 4;
+const int dirPin = 2;
+const int stepPin = 3;
+const int speed = 1000;
+const int SHOOT_COOLDOWN = 200;  // ms
+Servo myServo;
+int currentAngle = 0;
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(gunPin, OUTPUT);
+  pinMode(dirPin, OUTPUT);
+  pinMode(stepPin, OUTPUT);
+  myServo.write(0);
 }
- 
- 
-void loop()
-{
 
-  servo1.write(0); // write value to servo
-  delay(2000); // add small delay to reduce noise
-  servo1.write(180); // write value to servo
-  delay(2000);
+void loop() {
+  if (Serial.available()) {
+    String command = Serial.readStringUntil('\n');
+    command.trim();
+
+    if (command == "SHOOT") {
+      digitalWrite(gunPin, HIGH);
+      Serial.println("Shooting.");
+      delay(SHOOT_COOLDOWN);
+      digitalWrite(gunPin, LOW);
+      Serial.println("Done");
+    }
+
+    else if (command.startsWith("ROTATE:")) {
+      long steps = command.substring(7).toInt(); // Read number of steps
+      Serial.print("Number of steps: ");
+      Serial.println(steps);
+      if (steps != 0) {
+        int direction = steps > 0 ? HIGH : LOW;
+        Serial.print("Rotating in direction (0=+, 1=-): ");
+        Serial.println(direction);
+        digitalWrite(dirPin, direction);
+        steps = abs(steps);
+        for (long i = 0; i < steps; i++) {
+          digitalWrite(stepPin, HIGH);
+          delayMicroseconds(speed);  // Adjust speed here
+          digitalWrite(stepPin, LOW);
+          delayMicroseconds(speed);
+        }
+      }
+      Serial.println("Done");
+    }
+  }
 }
