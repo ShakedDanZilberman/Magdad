@@ -1,10 +1,11 @@
-from Eye import Eye
+from eyefile import Eye
 from gun import Gun, DummyGun
 from cameraIO import Camera
 import threading
 from constants import *
 import time
-
+import cv2
+import numpy as np
 
 class Brain():
     def __init__(self, gun_locations, cam_info):
@@ -19,7 +20,7 @@ class Brain():
         self.eyes = []
         for cam in cam_info:
             new_eye = Eye(cam[0], cam[1])
-            self.guns.append(new_eye)
+            self.eyes.append(new_eye)
         self.targets = []
         self.timestep = 0
     
@@ -44,15 +45,16 @@ class Brain():
             to_check = False
         
         for eye in self.eyes:
-            target = eye.add(to_check, to_init)
+            targets = eye.add(to_check, to_init)
+            self.add_to_target_list(targets, eye, MIN_DISTANCE)
+        if to_check or to_init:
+                print(self.targets)
 
     def game_loop(self):
         while True:
             self.timestep += 1
             self.add()
 
-
-            
 
         
         
@@ -66,7 +68,7 @@ class Brain():
             return
         for target in new_targets:
             real_coords = self.calculate_real_coords(target, camera)
-            if not self.too_close(real_coords, camera, MIN_DISTANCE):
+            if not self.too_close(real_coords, MIN_DISTANCE):
                 self.add_smart(real_coords, camera)
 
     def add_smart(self, target, cam):
@@ -80,14 +82,11 @@ class Brain():
     def game_loop(self):
         while True:
             self.timestep += 1
-            to_init = self.timestep == 5
-            to_check = self.timestep % 15 == 7
-            self.add(to_check, to_init)
+            self.add()
             # Press Escape to exit
             if cv2.waitKey(1) == 27:
                 break
-            if to_check or to_init:
-                print(self.targets)
+            
         cv2.destroyAllWindows()
 
 
