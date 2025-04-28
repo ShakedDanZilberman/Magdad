@@ -108,18 +108,19 @@ def hit_cursor_main():
         laser_targets = [mousePos]
         last_thetaX = thetaX
         thetaX, expected_volt = fit.bilerp(*mousePos)
-        # use PID
-        global fix
-        if thetaX != last_thetaX:
-            gun.rotate(thetaX)
-            global last_error, total_error
-            last_error = 0 
-            total_error = 0
-            time.sleep(0.5)
-        else:
-            gun.rotate(thetaX + fix)
-        motor_volt = gun.get_voltage()
-        fix = PID(expected_volt,motor_volt) 
+        
+        # # use PID
+        # global fix
+        # if thetaX != last_thetaX:
+        #     gun.rotate(thetaX)
+        #     global last_error, total_error
+        #     last_error = 0 
+        #     total_error = 0
+        #     time.sleep(0.5)
+        # else:
+        #     gun.rotate(thetaX + fix)
+        # motor_volt = gun.get_voltage()
+        # fix = PID(expected_volt,motor_volt) 
         
         
         if cv2.waitKey(1) == 32:  # Whitespace
@@ -412,10 +413,20 @@ def main_using_targets_and_homography():
             center = target_manager.pop_closest_to_current_location(center)
             # Move the laser pointer to the target
             if center is not None:
-                gun.aim_and_fire_target_2(center)
+                aim_and_fire(gun,center)
                 print("Shooting (theoretically)", center)
                 time.sleep(1) # this delay is here so we can wait for the objects to fall and then reset the changes image
                 target_manager.clear() # TODO: reduce the number of frames needed for initialization
+    
+    def aim_and_fire(gun,center_pixels):
+        import math
+        gun_real_pos = (0,0)
+        real_world_pos = cv2.perspectiveTransform(center_pixels, homography_matrix)
+        theta = math.arctan((real_world_pos[0]-gun_real_pos[0])/(real_world_pos[1]-gun_real_pos[1]))*180/math.pi
+        gun.rotate(theta)
+        time.sleep(0.2)
+        gun.shoot
+        
     
     gun = threading.Thread(target=gun_thread)
     gun.start()
@@ -597,12 +608,130 @@ def test_camera():
 def main_using_targets_3_cameras():
     pass
 
+def main_using_targets():
+    global CAMERA_INDEX, timestep, gun_targets
+    from gui import GUI
+    detectCameras()
+    cam = Camera(CAMERA_INDEX)
+    rawHandler = RawHandler()
+    target_manager = Targets()
+    gui = GUI()
+    def gun_thread():
+        """
+        Thread that moves the gun to the target and shoots.
+        The targets are aquired as an asynchronous input from the main thread.
+        """
+        import fit
+        print("Gun thread started.")
+        global gun_targets
+        gun = Gun(print_flag=True)
+        center = (IMG_WIDTH//2, IMG_HEIGHT//2)
+        while True:
+            # TODO: test out pop_closest_to_current_location as an alternative to pop() 
+            center = target_manager.pop_closest_to_current_location(center)
+            # Move the laser pointer to the target
+            if center is not None:
+                gun.aim_and_fire_target_2(center)
+                print("Shooting (theoretically)", center)
+                time.sleep(1) # this delay is here so we can wait for the objects to fall and then reset the changes image
+                target_manager.clear() # TODO: reduce the number of frames needed for initialization
+    
+    gun = threading.Thread(target=gun_thread)
+    gun.start()
+    
+    while True:
+        timestep += 1
+        img = cam.read()
+        rawHandler.add(img)
+        rawHandler.display()
+        target_manager.add(timestep, img)
+        # Press Escape to exit
+        if cv2.waitKey(1) == 27:
+            break
+    cv2.destroyAllWindows()
+
+def hit_cursor_main_2():
+    """
+    An alternative to the main function that uses the mouse cursor as the target for the laser pointer.
+    It does not use any image processing to detect targets.
+    """
+    global CAMERA_INDEX, timestep, laser_targets
+    import fit
+    detectCameras()
+    cam = Camera(CAMERA_INDEX)
+    handler = MouseCameraHandler()
+    # laser = threading.Thread(target=laser_thread)
+    # laser.start()  # comment this line to disable the laser pointer
+    gun = Gun()  # DummyGun() or Gun()
+
+    cv2.namedWindow(handler.TITLE)
+    cv2.setMouseCallback(handler.TITLE, handler.mouse_callback)
+    thetaX = 90.00
+    while True:
+        img = cam.read()
+
+        handler.add(img)
+        handler.display()
+
+        mousePos = handler.getMousePosition()
+        laser_targets = [mousePos]
+        last_thetaX = thetaX
+        thetaX, expected_volt = fit.bilerp(*mousePos)
+        # use PID
+        global fix
+        if thetaX != last_thetaX:
+            gun.rotate(thetaX)
+            global last_error, total_error
+            last_error = 0 
+            total_error = 0
+            time.sleep(0.5)
+        else:
+            gun.rotate(thetaX + fix)
+        motor_volt = gun.get_voltage()
+        fix = PID(expected_volt,motor_volt) 
+        
+        
+        if cv2.waitKey(1) == 32:  # Whitespace
+            gun.shoot()
+        # Press Escape to exit
+        if cv2.waitKey(1) == 27:
+            break
+    cv2.destroyAllWindows() 
+    
+def homography_targets():
+    global CAMERA_INDEX, timestep, gun_targets
+    from gui import GUI
+    detectCameras()
+    cam = Camera(CAMERA_INDEX)
+    rawHandler = RawHandler()
+    target_manager = Targets()
+    frame_num = 0
+    while True:
+        timestep += 1
+        img = cam.read(frame_num)
+        rawHandler.add(img)
+        rawHandler.display()
+        target_manager.add(timestep, img)
+        # Press Escape to exit
+        center = target_manager.pop_closest_to_current_location(center)
+        real_world_pos = cv2.perspectiveTransform(center, homography_matrix)
+        print("real world")
+        print(real_world_pos)
+        frame_num+=1
+        
+        if cv2.waitKey(1) == 27:
+            break
+    cv2.destroyAllWindows()
+
+
 
 if __name__ == "__main__":
     # test()
-    # hit_cursor_main()
+    hit_cursor_main()
     # just_changes_main()
-    # main_using_targets()
+    # main_using_targets_4()
     # homography_calibration_main()
-    test_homography()
+    #test_homography()
     # test_camera()
+    # homography_targets()1
+    
