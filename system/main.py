@@ -25,7 +25,7 @@ from object_finder import average_of_heatmaps
 from gui import LIDARDistancesGraph
 from gun import Gun, DummyGun
 from constants import CAMERA_INDEX
-from object_finder import Targets, GlobalTargets
+from object_finder import Targets #GlobalTargets
 import homogrpahy
 from constants import IMG_WIDTH, IMG_HEIGHT, homography_matrix
 
@@ -148,7 +148,7 @@ def homography_calibration_main():
     source_points = []
     frame_num = 0
     while True:
-        img = cam.read(frame_num)
+        img = cam.read()
 
         handler.add(img)
         handler.display()
@@ -377,10 +377,12 @@ def main_using_targets():
     while True:
         timestep += 1
         # the following if is to reduce the FPS to 10:
-        img = cam.read(timestep)
+        img = cam.read()
+        to_check = timestep % 15 == 7
+        to_init = timestep == 5
         rawHandler.add(img)
         rawHandler.display()
-        target_manager.add(timestep, img)
+        target_manager.add(img, to_check)
         # Press Escape to exit
         if cv2.waitKey(1) == 27:
             break
@@ -549,7 +551,7 @@ def test_homography():
     source_points = []
     frame_num = 0
     while True:
-        img = cam.read(frame_num)
+        img = cam.read()
 
         handler.add(img)
         handler.display()
@@ -600,7 +602,7 @@ if __name__ == "__main__":
     # test()
     # hit_cursor_main()
     # just_changes_main()
-    main_using_targets()
+    # main_using_targets()
     # homography_calibration_main()
-    # test_homography()
+    test_homography()
     # test_camera()
