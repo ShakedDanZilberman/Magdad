@@ -31,7 +31,7 @@ K = np.array([
 D = np.array([-0.4984814, 1.08857853, -2.21430799, 2.49281828], dtype=np.float64)
 
 
-def undistort(img, frame_num, balance=0.6):
+def undistort(img):
     h, w = img.shape[:2]
 
     # Estimate optimal new camera matrix
@@ -41,16 +41,7 @@ def undistort(img, frame_num, balance=0.6):
     D = D.astype(np.float64)
     # new_K = cv2.fisheye.estimateNewCameraMatrixForUndistortRectify(K, D, (w, h), None, balance=balance)
     new_K = K.copy()
-    # new_K[0, 0] *= 0.8  # fx
-    # new_K[1, 1] *= 0.8  # fy
-    # if frame_num == 5:
-        # print("shape of D is", D.shape)
-        # print("new_K =\n", new_K)
-        # print("K =\n", K)
-        # print("D =\n", D)
-        # print ("height = ", h, "width = ", w)
 
-    # Generate rectification maps
     map1, map2 = cv2.fisheye.initUndistortRectifyMap(
         K, D, np.eye(3), new_K, (w, h), cv2.CV_16SC2
     )

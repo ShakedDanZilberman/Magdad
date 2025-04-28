@@ -95,9 +95,9 @@ class Camera:
                 print("Failed to connect to camera")
                 return
 
-    def read(self, frame_num):
+    def read(self):
         ret_val, self.img = self.cam.read()
         self.img = ImageParse.resize_proportionally(self.img, 0.5)
         self.img = ImageParse.toGrayscale(self.img)
-        self.img = undistortion.undistort(self.img, frame_num)
+        self.img = undistortion.undistort(self.img)
         return self.img

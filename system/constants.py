@@ -22,6 +22,7 @@ FRAMES_FOR_INITIALISATION = 5
 BRIGHTNESS_THRESHOLD = 240
 
 MINIMAL_OBJECT_AREA = 30
+MIN_DISTANCE = 6.0
 
 # the following lists are for the homography, specifically used in the calibration in Beit Tzarfat
 
@@ -40,12 +41,11 @@ SERVO_PIN = 9  # pin for the servo motor
 # second calibration - this one worked!
 DEST_POINTS_2 = [[0.0, 0.0], [29.0, 0.0], [83.0, 30.0], [136.0, 0.0], [152.0, 0.0], [49.0, 31.0], [104.0, 31.0], [122.0, 48.0], [77.0, 57.0]]
 DEST_ARRAY_2 = np.array(DEST_POINTS_2, dtype=np.float32)
-SRC_POINTS_2 = [[7.0, 134.0], [163.0, 115.0], [527.0, 76.0], [865.0, 37.0], [958.0, 28.0], [234.0, 153.0], [721.0, 104.0], [955.0, 118.0], [480.0, 203.0]]
+SRC_POINTS_2 = [[14.0, 244.0], [176.0, 236.0], [529.0, 223.0], [855.0, 200.0], [958.0, 199.0], [238.0, 279.0], [711.0, 256.0], [944.0, 284.0], [463.0, 343.0]]
 SRC_ARRAY_2 = np.array(SRC_POINTS_2, dtype=np.float32)
 
 homography_matrix =  np.array([
-    [7.90667708e+00,  1.95694730e+01, -2.61089811e+03],
-    [3.24885079e+00,  2.87840326e+01, -3.67977831e+03],
-    [2.97848384e-02,  2.53935336e-01,  1.00000000e+00]
-], dtype=np.float64)
+    [-0.192775351, -0.661251156, 163.023994],
+    [-0.0448410188, -0.882899496, 211.920863],
+    [-0.000409580076, -0.00814512380, 1.0]], dtype=np.float64)
 
