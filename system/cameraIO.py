@@ -20,6 +20,11 @@ def detectCameras():
         cam.release()
         return True
     # Otherwise, try to connect to all cameras
+    showAllCameras(CAMERA_INDEX)
+    return False
+
+
+def showAllCameras(camera_index=-1):
     imgs = [None] * MAX_CAMERAS
     for i in range(MAX_CAMERAS):
         cam = cv2.VideoCapture(i)
@@ -32,10 +37,9 @@ def detectCameras():
     showMultipleFrames(
         imgs,
         [f"Camera {i}" for i in range(MAX_CAMERAS)],
-        f"Failed to connect to camera #{CAMERA_INDEX}\nAll Available Cameras",
+        (f"Failed to connect to camera #{camera_index}\n" if camera_index > -1 else "") + "All Available Cameras",
     )
     plt.show()
-    return False
 
 
 def showMultipleFrames(imgs, titles=None, title=None):
@@ -113,3 +117,6 @@ class Camera:
 #         if cv2.waitKey(1) & 0xFF == ord("q"):
 #             break
 #     cam.cam.release()
+
+if __name__ == "__main__":
+    showAllCameras()

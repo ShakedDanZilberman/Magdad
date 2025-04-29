@@ -125,6 +125,6 @@ class Brain:
 
 if __name__ == "__main__":
     gun_locations = [(30, 48)]  # add gun locations here
-    cam_info = [(0, (0, 0))]  # add tuples of (camera index, camera location)
+    cam_info = [(1, (0, 0))]  # add tuples of (camera index, camera location)
     brain = Brain(gun_locations, cam_info)
     brain.game_loop()

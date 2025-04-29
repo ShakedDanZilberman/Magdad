@@ -84,7 +84,9 @@ class Targets:
         self.yolo_centers = self.yolo_handler.get_centers()
         detected = self.yolo_handler.get()
         if isinstance(detected, np.ndarray) and detected.size > 1:
-            cv2.imshow("yolo image", detected)
+            # cv2.imshow("yolo image", detected)
+            # show the product of detected and img, so we can see the detected objects
+            cv2.imshow("yolo image", detected * img)
 
 
     def add_new_targets_to_queue(self):
