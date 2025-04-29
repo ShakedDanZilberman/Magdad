@@ -29,13 +29,13 @@ class Brain():
 
 
     def get_targets(self):
-        pass 
+        return self.targets
     
     def get_eyes(self):
-        pass
+        return self.eyes
     
     def get_guns(self):
-        pass
+        return self.guns
     
     def add(self):
         to_init = self.timestep == 5
@@ -97,7 +97,6 @@ class Brain():
             print(f"Gun {gun.gun_location} is ready to shoot")
             while True:
                 if self.targets is not None and len(self.targets)>0:
-                    print("Targets in gun thread:", self.targets)   
                     # Get the target coordinates from the last camera
                     target = self.targets.pop(0)              
                     print(f"Gun {gun.gun_location} is aiming at target {target}")
