@@ -19,10 +19,10 @@ from mouseCamera import MouseCameraHandler
 from object_finder import show_targets, get_targets
 from motion import DifferenceHandler
 # from yolo import YOLOHandler
-from laser import LaserPointer
+from Trash.laser import LaserPointer
 from cameraIO import Camera
 from object_finder import average_of_heatmaps
-from gui import LIDARDistancesGraph
+from Trash.gui import LIDARDistancesGraph
 from gun import Gun, DummyGun
 from constants import CAMERA_INDEX
 from object_finder import Targets #GlobalTargets
@@ -87,7 +87,7 @@ def hit_cursor_main():
     It does not use any image processing to detect targets.
     """
     global CAMERA_INDEX, timestep, laser_targets
-    import fit
+    import Trash.fit as fit
     detectCameras()
     cam = Camera(CAMERA_INDEX)
     handler = MouseCameraHandler()
@@ -137,7 +137,7 @@ def homography_calibration_main():
     It does not use any image processing to detect targets.
     """
     global CAMERA_INDEX, timestep, laser_targets
-    import fit
+    import Trash.fit as fit
     detectCameras()
     cam = Camera(CAMERA_INDEX)
     handler = MouseCameraHandler()
@@ -196,7 +196,7 @@ def just_changes_main():
         Thread that moves the gun to the target and shoots.
         The targets are aquired as an asynchronous input from the main thread.
         """
-        import fit
+        import Trash.fit as fit
         print("Gun thread started.")
         global gun_targets
         gun = Gun()
@@ -344,7 +344,7 @@ def main():
 
 def main_using_targets():
     global CAMERA_INDEX, timestep, gun_targets
-    from gui import GUI
+    from Trash.gui import GUI
     detectCameras()
     cam = Camera(CAMERA_INDEX)
     rawHandler = RawHandler()
@@ -355,7 +355,7 @@ def main_using_targets():
         Thread that moves the gun to the target and shoots.
         The targets are aquired as an asynchronous input from the main thread.
         """
-        import fit
+        import Trash.fit as fit
         print("Gun thread started.")
         global gun_targets
         gun = Gun(print_flag=True)
@@ -392,7 +392,7 @@ def main_using_targets():
 
 def main_using_targets_and_homography():
     global CAMERA_INDEX, timestep, gun_targets
-    from gui import GUI
+    from Trash.gui import GUI
     detectCameras()
     cam = Camera(CAMERA_INDEX)
     rawHandler = RawHandler()
@@ -403,7 +403,7 @@ def main_using_targets_and_homography():
         Thread that moves the gun to the target and shoots.
         The targets are aquired as an asynchronous input from the main thread.
         """
-        import fit
+        import Trash.fit as fit
         print("Gun thread started.")
         global gun_targets
         gun = Gun(print_flag=True)
@@ -457,7 +457,7 @@ def main_using_targets_and_homography():
 
 def main_using_targets_3_cameras():
     global CAMERA_INDEX, timestep, gun_targets
-    from gui import GUI
+    from Trash.gui import GUI
     detectCameras()
     cam = Camera(CAMERA_INDEX)
     rawHandler = RawHandler()
@@ -471,7 +471,7 @@ def main_using_targets_3_cameras():
         Thread that moves the gun to the target and shoots.
         The targets are aquired as an asynchronous input from the main thread.
         """
-        import fit
+        import Trash.fit as fit
         print("Gun thread started.")
         global gun_targets
         gun = Gun(print_flag=True)
@@ -561,7 +561,7 @@ def test():
 
 def test_homography():
     global CAMERA_INDEX, timestep, laser_targets
-    import fit
+    import Trash.fit as fit
     detectCameras()
     cam = Camera(CAMERA_INDEX)
     handler = MouseCameraHandler()
@@ -619,7 +619,7 @@ def test_camera():
 
 def main_using_targets():
     global CAMERA_INDEX, timestep, gun_targets
-    from gui import GUI
+    from Trash.gui import GUI
     detectCameras()
     cam = Camera(CAMERA_INDEX)
     rawHandler = RawHandler()
@@ -630,7 +630,7 @@ def main_using_targets():
         Thread that moves the gun to the target and shoots.
         The targets are aquired as an asynchronous input from the main thread.
         """
-        import fit
+        import Trash.fit as fit
         print("Gun thread started.")
         global gun_targets
         gun = Gun(print_flag=True)
@@ -665,7 +665,7 @@ def hit_cursor_main_2():
     It does not use any image processing to detect targets.
     """
     global CAMERA_INDEX, timestep, laser_targets
-    import fit
+    import Trash.fit as fit
     detectCameras()
     cam = Camera(CAMERA_INDEX)
     handler = MouseCameraHandler()
@@ -709,7 +709,7 @@ def hit_cursor_main_2():
     
 def homography_targets():
     global CAMERA_INDEX, timestep, gun_targets
-    from gui import GUI
+    from Trash.gui import GUI
     detectCameras()
     cam = Camera(CAMERA_INDEX)
     rawHandler = RawHandler()

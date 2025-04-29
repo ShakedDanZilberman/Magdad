@@ -4,7 +4,7 @@ import math
 import time
 from pyfirmata import Arduino, util
 from time import sleep
-import system.fit as fit
+import Trash.fit as fit
 import system.pid
 
 CAMERA_INDEX = 1 

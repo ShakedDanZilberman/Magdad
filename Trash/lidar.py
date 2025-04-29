@@ -2,7 +2,7 @@ from pyfirmata import Arduino, util
 import cv2
 import numpy as np
 import serial
-import fit
+import Trash.fit as fit
 import sys
 import os
 import time

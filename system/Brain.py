@@ -21,9 +21,13 @@ class Brain():
         for cam in cam_info:
             new_eye = Eye(cam[0], cam[1])
             self.eyes.append(new_eye)
-        self.targets = []
+        self.targets = [[0.0, 0.0], [29.0, 0.0], [83.0, 0.0], [136.0, 0.0], [152.0, 0.0]]
         self.timestep = 0
         
+
+
+
+
     def get_targets(self):
         pass 
     
@@ -40,16 +44,16 @@ class Brain():
         else:
             to_check = False
         
-        eye1 = self.eyes[0]
-        targets = eye1.add(to_check, to_init)
-        self.add_to_target_list(targets, eye1, MIN_DISTANCE)
+        # eye1 = self.eyes[0]
+        # targets = eye1.add(to_check, to_init)
+        # self.add_to_target_list(targets, eye1, MIN_DISTANCE)
+        # if to_check or to_init:
+        #     print("targets in brain:", self.targets)
+        for eye in self.eyes:
+            targets = eye.add(to_check, to_init)
+            self.add_to_target_list(targets, eye, MIN_DISTANCE)
         if to_check or to_init:
             print("targets in brain:", self.targets)
-        # for eye in self.eyes:
-        #     targets = eye.add(to_check, to_init)
-        #     self.add_to_target_list(targets, eye, MIN_DISTANCE)
-        # # if to_check or to_init:
-        #         print("targets in brain:", self.targets)
 
 
         
@@ -76,11 +80,13 @@ class Brain():
         
     def calculate_angle(self, target, gun_index = 0):
         gun = self.guns[gun_index]
-        slope = (target[0] - gun.gun_location[0]) / (target[1] - gun.gun_location[1])
-        if target[0] - gun.gun_location[0] < 0:
-            angle = np.arctan(slope) * 180 / np.pi + 180
-        else:
+        if target[0] < gun.gun_location[0]:
+            slope = (gun.gun_location[0]- target[0]) / (gun.gun_location[1] - target[1])
             angle = np.arctan(slope) * 180 / np.pi
+            angle = angle * (-1)
+        else:
+            slope = (gun.gun_location[1]- target[1]) / (target[0] - gun.gun_location[0])
+            angle = 90 - np.arctan(slope) * 180 / np.pi
         return angle
     
     def game_loop(self):
@@ -93,12 +99,12 @@ class Brain():
                 if self.targets is not None and len(self.targets)>0:
                     print("Targets in gun thread:", self.targets)   
                     # Get the target coordinates from the last camera
-                    target = self.targets[0] # Get the first target from the list
+                    target = self.targets.pop(0)              
                     print(f"Gun {gun.gun_location} is aiming at target {target}")
                     # Calculate the angle to rotate to
                     angle = self.calculate_angle(target)
-                    print(angle)
-                    gun.rotate(angle)
+                    print("angle to shoot: ", angle)
+                    gun.rotate(angle*(-1))
                     gun.shoot()
                     time.sleep(0.5) 
 
@@ -108,7 +114,6 @@ class Brain():
         print("Gun 1 is ready to shoot")
 
 
-
         while True:
             self.timestep += 1
             self.add()
@@ -116,8 +121,6 @@ class Brain():
             # Press Escape to exit
             if cv2.waitKey(1) == 27:
                 break
-            # print("targets list size: ", len(self.targets))
-            
         cv2.destroyAllWindows()
 
 
@@ -127,6 +130,6 @@ class Brain():
 
 if __name__=="__main__":
     gun_locations = [(30,48)] # add gun locations here
-    cam_info = [(1, (0,0))] # add tuples of (camera index, camera location)
+    cam_info = [] # add tuples of (camera index, camera location)
     brain = Brain(gun_locations, cam_info)
     brain.game_loop()

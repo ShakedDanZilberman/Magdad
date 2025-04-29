@@ -32,6 +32,7 @@ class YOLOHandler(Handler):
             return
         img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
         # remove printing
+        print("before prediction")
         results = self.model.predict(img, imgsz=640, stream=True, verbose=False)
         # convert the image back to grayscale
         img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
@@ -48,6 +49,7 @@ class YOLOHandler(Handler):
                         'x2': int(x2),                              # Bottom-right corner x-coordinate
                         'y2': int(y2)                               # Bottom-right corner y-coordinate
                     })
+        print("bounding boxes = ", self.bounding_boxes)
 
 
     def get(self):
@@ -67,7 +69,7 @@ class YOLOHandler(Handler):
             topleft = (box['x1'], box['y1'])
             bottomright = (box['x2'], box['y2'])
             cv2.rectangle(black_image, topleft, bottomright, white, -1)
-
+        cv2.imshow("image from get", black_image)
         return black_image
     
 
