@@ -33,6 +33,7 @@ class Gun:
 
         if print_flag:
             print(f"Gun initialized and connected at {COM}.")
+        print("Gun initialized and connected.")
 
     def _connect_to_serial(self, port):
         try:
@@ -116,10 +117,10 @@ class DummyGun:
 
 
 if __name__ == "__main__":
-    gun = Gun(print_flag=True)
-    angle_program = [0, 360, 0, 180, 0, 90, 0, -90, 0, 180, 0, 360, 0, -180, 0, 90, 0, -90, 0, 180, 0, 360, 0, -180, 0, 90, 0, -90, 0, 180, 0, 360, 0, -180, 0, 90, 0, -90, 0, 180, 0, 360]
-    angle_program = [0, 360, 0, 180, 0, 90, 0, -90]
-    angle_program *= 5
+    gun = Gun((3,4), print_flag=True)
+    #angle_program = [0, 360, 0, 180, 0, 90, 0, -90, 0, 180, 0, 360, 0, -180, 0, 90, 0, -90, 0, 180, 0, 360, 0, -180, 0, 90, 0, -90, 0, 180, 0, 360, 0, -180, 0, 90, 0, -90, 0, 180, 0, 360]
+    angle_program = [-50,-65,-85]
+    #angle_program *= 5
     for angle in angle_program:
         gun.rotate(angle)
         sleep(1)

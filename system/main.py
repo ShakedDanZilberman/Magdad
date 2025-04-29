@@ -616,8 +616,6 @@ def test_camera():
             break
     cv2.destroyAllWindows()
 
-def main_using_targets_3_cameras():
-    pass
 
 def main_using_targets():
     global CAMERA_INDEX, timestep, gun_targets
@@ -738,11 +736,11 @@ def homography_targets():
 
 if __name__ == "__main__":
     # test()
-    hit_cursor_main()
+    # hit_cursor_main()
     # just_changes_main()
     # main_using_targets_4()
     # homography_calibration_main()
-    #test_homography()
+    test_homography()
     # test_camera()
     # homography_targets()1
     
