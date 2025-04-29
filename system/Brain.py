@@ -23,7 +23,6 @@ class Brain():
             self.eyes.append(new_eye)
         self.targets = []
         self.timestep = 0
-    
         
     def get_targets(self):
         pass 
@@ -75,24 +74,30 @@ class Brain():
         # for now, we are assuming that the homography matrix is built such that the real coordinates are returned originally.
         return target
         
+    def calculate_angle(self, target, gun_index = 0):
+        gun = self.guns[gun_index]
+        slope = (target[0] - gun.gun_location[0]) / (target[1] - gun.gun_location[1])
+        if target[0] - gun.gun_location[0] < 0:
+            angle = np.arctan(slope) * 180 / np.pi + 180
+        else:
+            angle = np.arctan(slope) * 180 / np.pi
+        return angle
+    
     def game_loop(self):
+        print("running main")
         def run_gun():
             gun = self.guns[0]
             # This function will run in a separate thread for each gun
             print(f"Gun {gun.gun_location} is ready to shoot")
             while True:
-                print("gun thread running")
-                if self.targets is not None:
+                if self.targets is not None and len(self.targets)>0:
                     print("Targets in gun thread:", self.targets)   
                     # Get the target coordinates from the last camera
                     target = self.targets[0] # Get the first target from the list
                     print(f"Gun {gun.gun_location} is aiming at target {target}")
                     # Calculate the angle to rotate to
-                    slope = (target[0] - gun.gun_location[0]) / (target[1] - gun.gun_location[1])
-                    if target[0] - gun.gun_location[0] < 0:
-                        angle = np.arctan(slope) * 180 / np.pi + 180
-                    else:
-                        angle = np.arctan(slope) * 180 / np.pi
+                    angle = self.calculate_angle(target)
+                    print(angle)
                     gun.rotate(angle)
                     gun.shoot()
                     time.sleep(0.5) 
@@ -121,6 +126,6 @@ class Brain():
 
 if __name__=="__main__":
     gun_locations = [(30,48)] # add gun locations here
-    cam_info = [(1, (0,0))] # add tuples of (camera index, camera location)
+    cam_info = [(0, (0,0))] # add tuples of (camera index, camera location)
     brain = Brain(gun_locations, cam_info)
     brain.game_loop()

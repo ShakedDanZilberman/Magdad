@@ -78,6 +78,7 @@ def showMultipleFrames(imgs, titles=None, title=None):
 class Camera:
     def __init__(self, index):
         self.index = index
+        print("index is", self.index)
         self.cam = cv2.VideoCapture(self.index, cv2.CAP_MSMF)
         self.cam.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
         self.cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
@@ -87,7 +88,7 @@ class Camera:
         ret_val, self.img = self.cam.read()
         self.img = ImageParse.resize_proportionally(self.img, 0.5)
         if not ret_val:
-            print("Camera @ index 1 not connected")
+            print(f"Camera @ index {self.index} not connected")
             self.index = int(input("Enter the index of the camera you want to connect to: "))
             self.cam = cv2.VideoCapture(self.index)
             img = self.cam.read()

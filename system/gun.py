@@ -70,6 +70,8 @@ class Gun:
         steps = int(STEPS_IN_DEGREE * dθ)
         command = f"ROTATE:{steps}\n".encode()
         self.ser.write(command)
+        print("rotating")
+
         print(f">>> {command}")
         self._wait_for_done()
         self.current_angle = angle
