@@ -109,7 +109,6 @@ class Targets:
         self.frames_remaining_to_initialize = FRAMES_FOR_INITIALISATION 
         
 
-
     def add_initial_targets_using_contours(self, img):
         print("pulling targets from contours")
         targets_contours = self.high_targets, self.low_targets, self.contours_centers = get_targets(self.img_contours)
