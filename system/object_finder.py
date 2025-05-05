@@ -82,8 +82,10 @@ class Targets:
         self.yolo_centers = self.yolo_handler.get_centers()
         print("added centers to yolo centers")
         detected = self.yolo_handler.get()
-        if isinstance(detected, np.ndarray) and detected.size > 0:
-            cv2.imshow("yolo image", detected)
+        if isinstance(detected, np.ndarray) and detected.size > 1:
+            # cv2.imshow("yolo image", detected)
+            # show the product of detected and img, so we can see the detected objects
+            cv2.imshow("yolo image", detected * img)
 
 
     def add_new_targets_to_queue(self):
@@ -107,7 +109,6 @@ class Targets:
         self.changes_handler.clear()
         self.frames_remaining_to_initialize = FRAMES_FOR_INITIALISATION 
         
-
 
     def add_initial_targets_using_contours(self, img):
         print("pulling targets from contours")

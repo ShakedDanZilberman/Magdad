@@ -125,8 +125,9 @@ if __name__ == "__main__":
     #angle_program = [0, 360, 0, 180, 0, 90, 0, -90, 0, 180, 0, 360, 0, -180, 0, 90, 0, -90, 0, 180, 0, 360, 0, -180, 0, 90, 0, -90, 0, 180, 0, 360, 0, -180, 0, 90, 0, -90, 0, 180, 0, 360]
     angle_program = [-50,-65,-85]
     #angle_program *= 5
-    for angle in angle_program:
-        gun.rotate(angle)
-        sleep(1)
-        gun.shoot()
-        sleep(1)
+    while True:
+        for angle in angle_program:
+            gun.rotate(angle)
+            sleep(1)
+            gun.shoot()
+            sleep(1)

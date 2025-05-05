@@ -7,7 +7,8 @@ import time
 import cv2
 import numpy as np
 
-class Brain():
+
+class Brain:
     def __init__(self, gun_locations, cam_info):
         """
         cam info is an array of tuples, for each camera: (cam_index, cam_location)
@@ -55,14 +56,17 @@ class Brain():
         if to_check or to_init:
             print("targets in brain:", self.targets)
 
-
-        
     def too_close(self, target, distance):
-        if all(np.linalg.norm(np.array(target) - np.array(old_target)) > distance for old_target in self.targets):
-                return False
+        if all(
+            np.linalg.norm(np.array(target) - np.array(old_target)) > distance
+            for old_target in self.targets
+        ):
+            return False
         return True
 
-    def add_to_target_list(self, new_targets: list, camera: Eye, distance: float = MIN_DISTANCE):
+    def add_to_target_list(
+        self, new_targets: list, camera: Eye, distance: float = MIN_DISTANCE
+    ):
         if new_targets is None:
             return
         for target in new_targets:
@@ -73,12 +77,12 @@ class Brain():
     def add_smart(self, target, cam):
         # this is temporary:
         self.targets.append(target)
-    
+
     def calculate_real_coords(self, target, camera):
         # for now, we are assuming that the homography matrix is built such that the real coordinates are returned originally.
         return target
-        
-    def calculate_angle(self, target, gun_index = 0):
+
+    def calculate_angle(self, target, gun_index=0):
         gun = self.guns[gun_index]
         if target[0] < gun.gun_location[0]:
             slope = (gun.gun_location[0]- target[0]) / (gun.gun_location[1] - target[1])
@@ -88,9 +92,10 @@ class Brain():
             slope = (gun.gun_location[1]- target[1]) / (target[0] - gun.gun_location[0])
             angle = 90 - np.arctan(slope) * 180 / np.pi
         return angle
-    
+
     def game_loop(self):
         print("running main")
+
         def run_gun():
             gun = self.guns[0]
             # This function will run in a separate thread for each gun
@@ -105,13 +110,11 @@ class Brain():
                     print("angle to shoot: ", angle)
                     gun.rotate(angle*(-1))
                     gun.shoot()
-                    time.sleep(0.5) 
-
+                    time.sleep(0.5)
 
         gun1 = threading.Thread(target=run_gun)
         gun1.start()
         print("Gun 1 is ready to shoot")
-
 
         while True:
             self.timestep += 1
