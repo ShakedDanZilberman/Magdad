@@ -78,10 +78,10 @@ def measure_for_lidar():
     mouseX, mouseY = 0, 0
     from laser import LaserPointer
     from cameraIO import Camera
-    from constants import CAMERA_INDEX
+    from constants import CAMERA_INDEX_0
 
     laser_pointer = LaserPointer()
-    camera = Camera(CAMERA_INDEX)
+    camera = Camera(CAMERA_INDEX_0)
     title = "Camera Feed"
 
     def on_mouse(event, x, y, flags, param):
@@ -548,10 +548,10 @@ def measure_for_gun():
     mouseX, mouseY = 0, 0
     from gun import Gun
     from cameraIO import Camera
-    from main import CAMERA_INDEX
+    from main import CAMERA_INDEX_0
 
     gun = Gun()
-    camera = Camera(CAMERA_INDEX)
+    camera = Camera(CAMERA_INDEX_0)
     title = "Camera Feed"
 
     def on_mouse(event, x, y, flags, param):

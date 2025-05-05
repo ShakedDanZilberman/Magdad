@@ -10,21 +10,21 @@ MAX_CAMERAS = 10
 def detectCameras():
     """Detect all connected cameras and display their images in a grid using matplotlib
 
-    If the camera at CAMERA_INDEX is connected, the function will print a message and return.
+    If the camera at CAMERA_INDEX_0 is connected, the function will print a message and return.
     """
-    from constants import CAMERA_INDEX
-    # first try to connect to CAMERA_INDEX
-    cam = cv2.VideoCapture(CAMERA_INDEX)
+    from constants import CAMERA_INDEX_0
+    # first try to connect to CAMERA_INDEX_0
+    cam = cv2.VideoCapture(CAMERA_INDEX_0)
     if cam.isOpened():
-        print(f"Camera @ index {CAMERA_INDEX} is connected")
+        print(f"Camera @ index {CAMERA_INDEX_0} is connected")
         cam.release()
         return True
     # Otherwise, try to connect to all cameras
-    showAllCameras(CAMERA_INDEX)
+    showAllCameras(CAMERA_INDEX_0)
     return False
 
 
-def showAllCameras(camera_index=-1):
+def showAllCameras(CAMERA_INDEX_0=-1):
     imgs = [None] * MAX_CAMERAS
     for i in range(MAX_CAMERAS):
         cam = cv2.VideoCapture(i)
@@ -37,7 +37,7 @@ def showAllCameras(camera_index=-1):
     showMultipleFrames(
         imgs,
         [f"Camera {i}" for i in range(MAX_CAMERAS)],
-        (f"Failed to connect to camera #{camera_index}\n" if camera_index > -1 else "") + "All Available Cameras",
+        (f"Failed to connect to camera #{CAMERA_INDEX_0}\n" if CAMERA_INDEX_0 > -1 else "") + "All Available Cameras",
     )
     plt.show()
 

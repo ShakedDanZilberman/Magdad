@@ -7,11 +7,10 @@ import time
 import cv2
 import numpy as np
 
-
-class Brain:
+class Brain():
     def __init__(self, gun_locations, cam_info):
         """
-        cam info is an array of tuples, for each camera: (cam_index, cam_location)
+        cam info is an array of tuples, for each camera: (cam_index, CAMERA_LOCATION_0)
         gun_locations is an array of tuples, for each gun: its location
         """
         self.guns = []
@@ -20,9 +19,9 @@ class Brain:
             self.guns.append(new_gun)
         self.eyes = []
         for cam in cam_info:
-            new_eye = Eye(cam[0], cam[1])
+            new_eye = Eye(cam[0], cam[1], cam[2])
             self.eyes.append(new_eye)
-        self.targets = [[0.0, 0.0], [29.0, 0.0], [83.0, 0.0], [136.0, 0.0], [152.0, 0.0]]
+        self.targets = []
         self.timestep = 0
         
 
@@ -95,7 +94,6 @@ class Brain:
 
     def game_loop(self):
         print("running main")
-
         def run_gun():
             gun = self.guns[0]
             # This function will run in a separate thread for each gun
@@ -112,26 +110,127 @@ class Brain:
                     gun.shoot()
                     time.sleep(0.5)
 
-        gun1 = threading.Thread(target=run_gun)
-        gun1.start()
+        # gun1 = threading.Thread(target=run_gun)
+        # gun1.start()
         print("Gun 1 is ready to shoot")
-
+        
         while True:
             self.timestep += 1
             self.add()
-            print("timestep: ", self.timestep)
+            # print("timestep: ", self.timestep)
             # Press Escape to exit
             if cv2.waitKey(1) == 27:
                 break
         cv2.destroyAllWindows()
 
+if __name__ == "__main__":
+    gun_locations = []  # example
+    # cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0]), (CAMERA_INDEX_1, CAMERA_LOCATION_1, homography_matrices[1])]  # (cam_index, CAMERA_LOCATION_0, homography_matrix)
+    cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0])]  # (cam_index, CAMERA_LOCATION_0, homography_matrix)
+    Brain(gun_locations, cam_info).game_loop()
+
+
+# class Brain:
+#     def __init__(self, gun_locations, cam_info):
+#         """
+#         cam_info: list of (cam_index, CAMERA_LOCATION_0)
+#         gun_locations: list of gun positions
+#         """
+#         self.guns = [Gun(loc, True) for loc in gun_locations]
+#         self.eyes = [Eye(cam_idx, cam_loc) for cam_idx, cam_loc in cam_info]
+#         self.targets = []
+#         self.timestep = 0
+#         self.running = True
+
+#     def add(self):
+#         to_init = (self.timestep == 5)
+#         to_check = (self.timestep % 15 == 14)
+#         for eye in self.eyes:
+#             # get latest frame copy
+#             frame = eye.get_frame()
+#             if frame is None:
+#                 continue
+#             new = eye.add(frame, to_check, to_init)
+#             self._merge_targets(new)
+#         if to_check or to_init:
+#             print("targets in brain:", self.targets)
+
+#     def _merge_targets(self, new_targets):
+#         if not new_targets:
+#             return
+#         for t in new_targets:
+#             if not self._too_close(t, MIN_DISTANCE):
+#                 self.targets.append(t)
+
+#     def _too_close(self, tgt, dist):
+#         return any(np.linalg.norm(np.array(tgt)-np.array(old)) <= dist for old in self.targets)
+
+#     def calculate_angle(self, target, gun_index=0):
+#         gun = self.guns[gun_index]
+#         dx = target[0] - gun.gun_location[0]
+#         dy = target[1] - gun.gun_location[1]
+#         angle = np.degrees(np.arctan2(dy, dx))
+#         return angle
+
+#     def game_loop(self):
+#         print("running main")
+#         # start producer threads for each camera
+#         for idx, eye in enumerate(self.eyes):
+#             t = threading.Thread(target=self._frame_producer, args=(idx,), daemon=True)
+#             t.start()
+#         # display threads
+#         for idx, eye in enumerate(self.eyes):
+#             t = threading.Thread(target=self._show_display, args=(idx,), daemon=True)
+#             t.start()
+#         # gun thread(s)
+#         # gun_t = threading.Thread(target=self._run_gun, daemon=True)
+#         # gun_t.start()
+
+#         # main loop: target processing
+#         try:
+#             while self.running:
+#                 self.timestep += 1
+#                 self.add()
+#                 time.sleep(0.02)
+#         except KeyboardInterrupt:
+#             self.running = False
+#             cv2.destroyAllWindows()
+
+#     def _frame_producer(self, cam_idx):
+#         print(f"frame producer {cam_idx} started")
+#         eye = self.eyes[cam_idx]
+#         while self.running:
+#             frame = eye.camera.read()
+#             with eye.frame_lock:
+#                 eye.latest_frame = frame.copy()
+#             time.sleep(0.001)
+
+#     def _show_display(self, cam_idx):
+#         print(f"display {cam_idx} started")
+#         eye = self.eyes[cam_idx]
+#         while self.running:
+#             with eye.frame_lock:
+#                 if eye.latest_frame is None:
+#                     continue
+#                 frame = eye.latest_frame.copy()
+#             eye.raw_handler.add(frame)
+#             eye.raw_handler.display()
+#             if cv2.waitKey(1) == 27:
+#                 self.running = False
+#                 break
+
+#     def _run_gun(self):
+#         gun = self.guns[0]
+#         print(f"Gun {gun.gun_location} is ready to shoot")
+#         while self.running:
+#             if self.targets:
+#                 tgt = self.targets.pop(0)
+#                 angle = self.calculate_angle(tgt)
+#                 gun.rotate(-angle)
+#                 gun.shoot()
+#                 time.sleep(0.5)
 
 
 
 
 
-if __name__=="__main__":
-    gun_locations = [(30,48)] # add gun locations here
-    cam_info = [] # add tuples of (camera index, camera location)
-    brain = Brain(gun_locations, cam_info)
-    brain.game_loop()
