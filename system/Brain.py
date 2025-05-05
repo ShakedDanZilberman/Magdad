@@ -26,8 +26,6 @@ class Brain():
         
 
 
-
-
     def get_targets(self):
         return self.targets
     
@@ -123,11 +121,47 @@ class Brain():
                 break
         cv2.destroyAllWindows()
 
+    def game_loop_independent(self):
+        """
+        This function is the main loop of the program. It runs independently of image procesing.
+        the user spots the targets and the gun shoots at them.
+        """
+        print("running main")
+        def run_gun():
+            gun = self.guns[0]
+            # This function will run in a separate thread for each gun
+            print(f"Gun {gun.gun_location} is ready to shoot")
+            while True:
+                if self.targets is not None and len(self.targets)>0:
+                    # Get the target coordinates from the last camera
+                    target = self.targets.pop(0)              
+                    print(f"Gun {gun.gun_location} is aiming at target {target}")
+                    # Calculate the angle to rotate to
+                    angle = self.calculate_angle(target)
+                    print("angle to shoot: ", angle)
+                    gun.rotate(angle*(-1))
+                    gun.shoot()
+                    time.sleep(0.5)
+
+        # gun1 = threading.Thread(target=run_gun)
+        # gun1.start()
+        print("Gun 1 is ready to shoot")
+        
+        while True:
+            self.timestep += 1
+            self.add()
+            # print("timestep: ", self.timestep)
+            # Press Escape to exit
+            if cv2.waitKey(1) == 27:
+                break
+        cv2.destroyAllWindows()
+
+
 if __name__ == "__main__":
     gun_locations = []  # example
     # cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0]), (CAMERA_INDEX_1, CAMERA_LOCATION_1, homography_matrices[1])]  # (cam_index, CAMERA_LOCATION_0, homography_matrix)
     cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0])]  # (cam_index, CAMERA_LOCATION_0, homography_matrix)
-    Brain(gun_locations, cam_info).game_loop()
+    Brain(gun_locations, cam_info).game_loop_independent()
 
 
 # class Brain:

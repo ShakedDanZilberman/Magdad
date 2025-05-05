@@ -18,7 +18,8 @@ class Eye():
         self.real_coords_targets = []
 
     def add(self, to_check, to_init):
-        """Add the image to Raw_Handler and Targets.
+        """
+        Add the image to Raw_Handler and Targets.
         This function is called by the main loop to add the image to the handler.
         after adding to the target_manager it calculates the real world coordinates using homography matrix
 
@@ -37,6 +38,13 @@ class Eye():
             
         return
     
+
+    def independent_add(self, frame, to_check, to_init):
+        """
+        Add the image to Raw_Handler but not to Targets.
+        
+        """
+        pass
     
 # class Eye:
 #     def __init__(self, CAMERA_INDEX_0, camera_location):

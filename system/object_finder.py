@@ -66,12 +66,22 @@ class Targets:
         #         #print("looking for changes")
         #         self.add_new_targets_to_queue()
         #         #print("target queue: ", self.target_queue)
-    
-    def add_only_from_yolo(self, img):
-            self.add_initial_targets_using_yolo(img)
-            print("target queue: ", self.target_queue)
 
-
+    def add_initial_targets_using_yolo(self, img):
+        print("pulling targets from yolo")
+        self.show_yolo_detection(img)
+        if len(self.yolo_centers) > 0:
+            # Remove from centers_contours any targets that are less than 20 pixels apart (unique targets)
+            targets = []
+            pixel_distance = 30
+            for center in self.yolo_centers:
+                if all(np.linalg.norm(np.array(center) - np.array(target)) > pixel_distance for target in targets):
+                    insert_sorted(targets, center)
+            # add new targets to the target queue, sorted by x coordinate
+            self.new_targets = targets.copy()
+            print("new targets that yolo sees right now:", self.new_targets)
+            # self.target_queue = list(merge(self.target_queue, targets.copy()))
+            # print("added targets from yolo:" , self.target_queue)
 
     def show_yolo_detection(self, img):
         '''
@@ -86,6 +96,29 @@ class Targets:
             # cv2.imshow("yolo image", detected)
             # show the product of detected and img, so we can see the detected objects
             cv2.imshow("yolo image", detected * img)
+
+            
+               
+    def add_only_from_yolo(self, img):
+            self.add_initial_targets_using_yolo(img)
+            print("target queue: ", self.target_queue)
+
+    def add_initial_targets_using_contours(self, img):
+        print("pulling targets from contours")
+        targets_contours = self.high_targets, self.low_targets, self.contours_centers = get_targets(self.img_contours)
+        print("targets contours", self.contours_centers)
+        show_targets("targets from contours", self.img_contours, targets_contours)
+        # self.contours_centers = sorted(self.contours_centers, key=lambda x: x[0], reverse=True)
+        # self.target_queue.extend(self.contours_centers)
+        if len(self.contours_centers) > 0:
+            # Remove from centers_contours any targets that are less than 20 pixels apart (unique targets)
+            targets = []
+            pixel_distance = 30
+            for center in self.contours_centers:
+                if all(np.linalg.norm(np.array(center) - np.array(target)) > pixel_distance for target in targets):
+                    insert_sorted(targets, center)
+            self.target_queue = list(merge(self.target_queue, targets.copy()))
+
 
 
     def add_new_targets_to_queue(self):
@@ -109,39 +142,6 @@ class Targets:
         self.changes_handler.clear()
         self.frames_remaining_to_initialize = FRAMES_FOR_INITIALISATION 
         
-
-    def add_initial_targets_using_contours(self, img):
-        print("pulling targets from contours")
-        targets_contours = self.high_targets, self.low_targets, self.contours_centers = get_targets(self.img_contours)
-        print("targets contours", self.contours_centers)
-        show_targets("targets from contours", self.img_contours, targets_contours)
-        # self.contours_centers = sorted(self.contours_centers, key=lambda x: x[0], reverse=True)
-        # self.target_queue.extend(self.contours_centers)
-        if len(self.contours_centers) > 0:
-            # Remove from centers_contours any targets that are less than 20 pixels apart (unique targets)
-            targets = []
-            pixel_distance = 30
-            for center in self.contours_centers:
-                if all(np.linalg.norm(np.array(center) - np.array(target)) > pixel_distance for target in targets):
-                    insert_sorted(targets, center)
-            self.target_queue = list(merge(self.target_queue, targets.copy()))
-
-
-    def add_initial_targets_using_yolo(self, img):
-        print("pulling targets from yolo")
-        self.show_yolo_detection(img)
-        if len(self.yolo_centers) > 0:
-            # Remove from centers_contours any targets that are less than 20 pixels apart (unique targets)
-            targets = []
-            pixel_distance = 30
-            for center in self.yolo_centers:
-                if all(np.linalg.norm(np.array(center) - np.array(target)) > pixel_distance for target in targets):
-                    insert_sorted(targets, center)
-            # add new targets to the target queue, sorted by x coordinate
-            self.new_targets = targets.copy()
-            print("new targets:", self.new_targets)
-            self.target_queue = list(merge(self.target_queue, targets.copy()))
-            print("added targets from yolo:" , self.target_queue)
 
 
     def pop(self):

@@ -19,14 +19,14 @@ from mouseCamera import MouseCameraHandler
 from object_finder import show_targets, get_targets
 from motion import DifferenceHandler
 # from yolo import YOLOHandler
-from Trash.laser import LaserPointer
+# from Trash.laser import LaserPointer
 from cameraIO import Camera
 from object_finder import average_of_heatmaps
-from Trash.gui import LIDARDistancesGraph
+# from Trash.gui import LIDARDistancesGraph
 from gun import Gun, DummyGun
 from constants import CAMERA_INDEX_0
 from object_finder import Targets #GlobalTargets
-import homogrpahy
+# import homogrpahy
 from constants import IMG_WIDTH, IMG_HEIGHT, homography_matrix
 
 timestep = 0  # Global timestep, used to keep track of the number of frames processed
@@ -137,7 +137,6 @@ def homography_calibration_main():
     It does not use any image processing to detect targets.
     """
     global CAMERA_INDEX_0, timestep, laser_targets
-    import Trash.fit as fit
     detectCameras()
     cam = Camera(CAMERA_INDEX_0)
     handler = MouseCameraHandler()
@@ -561,7 +560,7 @@ def test():
 
 def test_homography():
     global CAMERA_INDEX_0, timestep, laser_targets
-    import Trash.fit as fit
+    # import Trash.fit as fit
     detectCameras()
     cam = Camera(CAMERA_INDEX_0)
     handler = MouseCameraHandler()

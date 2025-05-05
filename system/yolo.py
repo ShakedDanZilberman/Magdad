@@ -193,36 +193,36 @@ class YOLOHandler:
 #         self.bounding_boxes = []
 
 
-# if __name__ == "__main__":
-#     # read the images from camera of the computer and display the bounding boxes using the YOLOHandler class inside some loop
-#     global CAMERA_INDEX_0, timestep, laser_targets
-#     import fit
-#     from cameraIO import detectCameras
-#     from cameraIO import Camera
-#     from mouseCamera import MouseCameraHandler
-#     from main import CAMERA_INDEX_0
+if __name__ == "__main__":
+    # read the images from camera of the computer and display the bounding boxes using the YOLOHandler class inside some loop
+    global timestep, laser_targets
+    #import fit
+    from cameraIO import detectCameras
+    from cameraIO import Camera
+    from mouseCamera import MouseCameraHandler
+    from constants import *
 
-#     detectCameras()
-#     cam = Camera(CAMERA_INDEX_0)
-#     handler = MouseCameraHandler()
-#     yoloHandler = YOLOHandler()
-#     # laser = threading.Thread(target=laser_thread)
-#     # laser.start()  # comment this line to disable the laser pointer
+    detectCameras()
+    cam = Camera(CAMERA_INDEX_0)
+    handler = MouseCameraHandler()
+    yoloHandler = YOLOHandler()
+    # laser = threading.Thread(target=laser_thread)
+    # laser.start()  # comment this line to disable the laser pointer
 
-#     cv2.namedWindow(handler.TITLE)
-#     cv2.setMouseCallback(handler.TITLE, handler.mouse_callback)
+    cv2.namedWindow(handler.TITLE)
+    cv2.setMouseCallback(handler.TITLE, handler.mouse_callback)
 
-#     while True:
-#         img = cam.read()
+    while True:
+        img = cam.read()
 
-#         handler.add(img)
-#         handler.display()
+        handler.add(img)
+        handler.display()
 
-#         yoloHandler.add(img)
-#         yoloHandler.display()
+        yoloHandler.add(img)
+        yoloHandler.display()
 
 
-#         # Press Escape to exit
-#         if cv2.waitKey(1) == 27:
-#             break
-#     cv2.destroyAllWindows()
+        # Press Escape to exit
+        if cv2.waitKey(1) == 27:
+            break
+    cv2.destroyAllWindows()
