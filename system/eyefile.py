@@ -36,7 +36,7 @@ class Eye():
             self.real_coords_targets = cv2.perspectiveTransform(pixel_coords, self.homography)
 
             
-        return
+#         return
     
 
     def independent_add(self, frame, to_check, to_init):
@@ -46,15 +46,30 @@ class Eye():
         """
         pass
     
-# class Eye:
-#     def __init__(self, CAMERA_INDEX_0, camera_location):
+# import threading
+
+# class Eye():
+#     def __init__(self, camera_index, camera_location):
 #         self.camera_location = camera_location
-#         self.CAMERA_INDEX_0 = CAMERA_INDEX_0
-#         self.camera = Camera(CAMERA_INDEX_0)
+#         self.camera_index = camera_index
+#         self.camera = Camera(self.camera_index) 
 #         self.raw_handler = RawHandler()
 #         self.target_manager = Targets()
-#         self.frame_lock = threading.Lock()
+#         self.homography = None
+
 #         self.latest_frame = None
+#         self.frame_lock = threading.Lock()
+#         self.running = True
+
+#         # Start frame update thread
+#         self.capture_thread = threading.Thread(target=self._frame_producer, daemon=True)
+#         self.capture_thread.start()
+
+#     def _frame_producer(self):
+#         while self.running:
+#             frame = self.camera.read()
+#             with self.frame_lock:
+#                 self.latest_frame = frame.copy()
 
 #     def get_frame(self):
 #         with self.frame_lock:
@@ -63,12 +78,11 @@ class Eye():
 #             return self.latest_frame.copy()
 
 #     def add(self, frame, to_check, to_init):
-#         self.raw_handler.add(frame)
-#         self.raw_handler.display()
 #         self.target_manager.add(frame, to_check=to_check, to_init=to_init)
 #         if to_check or to_init:
 #             return self.target_manager.new_targets
-#         return []
+#         return
+
 
 
 
