@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 
-CAMERA_INDEX = 1
+CAMERA_INDEX_0 = 1
 averageFirstNFrames = 30
 WINDOW_NAME = 'Camera Connection'
 MAX_CAMERAS = 10
@@ -157,10 +157,10 @@ def aboveThreshold(img, threshold):
     return cv2.threshold(img, threshold, 255, cv2.THRESH_TOZERO)[1]
 
 def detectCameras():
-    # first try to connect to CAMERA_INDEX
-    cam = cv2.VideoCapture(CAMERA_INDEX)
+    # first try to connect to CAMERA_INDEX_0
+    cam = cv2.VideoCapture(CAMERA_INDEX_0)
     if cam.isOpened():
-        print(f'Camera @ index {CAMERA_INDEX} is connected')
+        print(f'Camera @ index {CAMERA_INDEX_0} is connected')
         cam.release()
         return
     # Otherwise, try to connect to all cameras
@@ -173,7 +173,7 @@ def detectCameras():
             ret_val, imgs[i] = cam.read()
             cam.release()
     # Show all images in matplotlib window
-    showMultipleFrames(imgs, [f'Camera {i}' for i in range(MAX_CAMERAS)], f'Failed to connect to camera #{CAMERA_INDEX}\nAll Available Cameras')
+    showMultipleFrames(imgs, [f'Camera {i}' for i in range(MAX_CAMERAS)], f'Failed to connect to camera #{CAMERA_INDEX_0}\nAll Available Cameras')
     plt.show()
 
 def find_objects(img):
@@ -228,7 +228,7 @@ def find_objects(img):
 
 def main():
     detectCameras()
-    cam = cv2.VideoCapture(CAMERA_INDEX)
+    cam = cv2.VideoCapture(CAMERA_INDEX_0)
     firstFramesHandler = FirstNImagesHandler(averageFirstNFrames)
     prev = None
 

@@ -195,15 +195,15 @@ class YOLOHandler:
 
 # if __name__ == "__main__":
 #     # read the images from camera of the computer and display the bounding boxes using the YOLOHandler class inside some loop
-#     global CAMERA_INDEX, timestep, laser_targets
+#     global CAMERA_INDEX_0, timestep, laser_targets
 #     import fit
 #     from cameraIO import detectCameras
 #     from cameraIO import Camera
 #     from mouseCamera import MouseCameraHandler
-#     from main import CAMERA_INDEX
+#     from main import CAMERA_INDEX_0
 
 #     detectCameras()
-#     cam = Camera(CAMERA_INDEX)
+#     cam = Camera(CAMERA_INDEX_0)
 #     handler = MouseCameraHandler()
 #     yoloHandler = YOLOHandler()
 #     # laser = threading.Thread(target=laser_thread)

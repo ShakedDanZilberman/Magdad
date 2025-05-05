@@ -19,12 +19,12 @@ def coordinate_to_angle(x, y):
 
     return angle_deg
 
-def show_camera_feed_from_2_cameras(camera_index_1, camera_index_2):
+def show_camera_feed_from_2_cameras(CAMERA_INDEX_0_1, CAMERA_INDEX_1):
     """
     Show camera feed from two cameras side by side.
     """
-    cam1 = cv2.VideoCapture(camera_index_1)
-    cam2 = cv2.VideoCapture(camera_index_2)
+    cam1 = cv2.VideoCapture(CAMERA_INDEX_0_1)
+    cam2 = cv2.VideoCapture(CAMERA_INDEX_1)
 
     while True:
         ret1, frame1 = cam1.read()
@@ -51,13 +51,13 @@ def show_camera_feed_from_2_cameras(camera_index_1, camera_index_2):
     cam2.release()
     cv2.destroyAllWindows()
 
-def show_camera_feed_from_3_cameras(camera_index_1, camera_index_2, camera_index_3):
+def show_camera_feed_from_3_cameras(CAMERA_INDEX_0_1, CAMERA_INDEX_1, CAMERA_INDEX_0_3):
     """
     Show camera feed from three cameras side by side.
     """
-    cam1 = cv2.VideoCapture(camera_index_1)
-    cam2 = cv2.VideoCapture(camera_index_2)
-    cam3 = cv2.VideoCapture(camera_index_3)
+    cam1 = cv2.VideoCapture(CAMERA_INDEX_0_1)
+    cam2 = cv2.VideoCapture(CAMERA_INDEX_1)
+    cam3 = cv2.VideoCapture(CAMERA_INDEX_0_3)
 
     while True:
         ret1, frame1 = cam1.read()

@@ -7,7 +7,7 @@ from pyfirmata import Arduino, util
 from time import sleep, time
 
 # Configuration for the Arduino and Camera
-CAMERA_INDEX = 1
+CAMERA_INDEX_0 = 1
 WINDOW_NAME = 'Camera Connection'
 
 board = Arduino('COM8')  # Adjust the COM port
@@ -87,7 +87,7 @@ def remove_consecutive_duplicates(input_list):
 def main():
     global mx, my, angleX, angleY, clicked
 
-    cam = cv2.VideoCapture(CAMERA_INDEX)
+    cam = cv2.VideoCapture(CAMERA_INDEX_0)
     cv2.namedWindow(WINDOW_NAME)
     cam.set(cv2.CAP_PROP_AUTO_EXPOSURE, 1)
     cv2.setMouseCallback(WINDOW_NAME, click_event)

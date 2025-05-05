@@ -7,7 +7,7 @@ from pyfirmata import Arduino, util
 from time import sleep
 
 
-CAMERA_INDEX = 1
+CAMERA_INDEX_0 = 1
 WINDOW_NAME = 'Camera Connection'
 
 
@@ -63,7 +63,7 @@ def click_event(event, x, y, flags, param):
 def main():
     global mouse_x,mouse_y, flag
     #create camera and nonesense
-    cam = cv2.VideoCapture(CAMERA_INDEX)
+    cam = cv2.VideoCapture(CAMERA_INDEX_0)
     cv2.namedWindow(WINDOW_NAME)
     # make sure there is an image to be read\sent
     ret_val, img = cam.read()

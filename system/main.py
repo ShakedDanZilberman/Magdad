@@ -24,7 +24,7 @@ from cameraIO import Camera
 from object_finder import average_of_heatmaps
 from Trash.gui import LIDARDistancesGraph
 from gun import Gun, DummyGun
-from constants import CAMERA_INDEX
+from constants import CAMERA_INDEX_0
 from object_finder import Targets #GlobalTargets
 import homogrpahy
 from constants import IMG_WIDTH, IMG_HEIGHT, homography_matrix
@@ -86,10 +86,10 @@ def hit_cursor_main():
     An alternative to the main function that uses the mouse cursor as the target for the laser pointer.
     It does not use any image processing to detect targets.
     """
-    global CAMERA_INDEX, timestep, laser_targets
+    global CAMERA_INDEX_0, timestep, laser_targets
     import Trash.fit as fit
     detectCameras()
-    cam = Camera(CAMERA_INDEX)
+    cam = Camera(CAMERA_INDEX_0)
     handler = MouseCameraHandler()
     # laser = threading.Thread(target=laser_thread)
     # laser.start()  # comment this line to disable the laser pointer
@@ -136,10 +136,10 @@ def homography_calibration_main():
     An alternative to the main function that uses the mouse cursor as the target for the laser pointer.
     It does not use any image processing to detect targets.
     """
-    global CAMERA_INDEX, timestep, laser_targets
+    global CAMERA_INDEX_0, timestep, laser_targets
     import Trash.fit as fit
     detectCameras()
-    cam = Camera(CAMERA_INDEX)
+    cam = Camera(CAMERA_INDEX_0)
     handler = MouseCameraHandler()
     # laser = threading.Thread(target=laser_thread)
     # laser.start()  # comment this line to disable the laser pointer
@@ -185,9 +185,9 @@ def just_changes_main():
     It does not use contours or YOLO.
     It is a simplified version of the main function.
     """
-    global CAMERA_INDEX, timestep, gun_targets
+    global CAMERA_INDEX_0, timestep, gun_targets
     detectCameras()
-    cam = Camera(CAMERA_INDEX)
+    cam = Camera(CAMERA_INDEX_0)
     rawHandler = RawHandler("Whitespace to clear")
     changesHandler = ChangesHandler()
 
@@ -262,9 +262,9 @@ def just_changes_main():
 
 
 def main():
-    global CAMERA_INDEX, timestep, laser_targets
+    global CAMERA_INDEX_0, timestep, laser_targets
     detectCameras()
-    cam = Camera(CAMERA_INDEX)
+    cam = Camera(CAMERA_INDEX_0)
     rawHandler = RawHandler()
     changesHandler = ChangesHandler()
     differenceHandler = DifferenceHandler()
@@ -343,10 +343,10 @@ def main():
 
 
 def main_using_targets():
-    global CAMERA_INDEX, timestep, gun_targets
+    global CAMERA_INDEX_0, timestep, gun_targets
     from Trash.gui import GUI
     detectCameras()
-    cam = Camera(CAMERA_INDEX)
+    cam = Camera(CAMERA_INDEX_0)
     rawHandler = RawHandler()
     target_manager = Targets()
     gui = GUI()
@@ -391,10 +391,10 @@ def main_using_targets():
 
 
 def main_using_targets_and_homography():
-    global CAMERA_INDEX, timestep, gun_targets
+    global CAMERA_INDEX_0, timestep, gun_targets
     from Trash.gui import GUI
     detectCameras()
-    cam = Camera(CAMERA_INDEX)
+    cam = Camera(CAMERA_INDEX_0)
     rawHandler = RawHandler()
     target_manager = Targets()
     gui = GUI()
@@ -456,10 +456,10 @@ def main_using_targets_and_homography():
 
 
 def main_using_targets_3_cameras():
-    global CAMERA_INDEX, timestep, gun_targets
+    global CAMERA_INDEX_0, timestep, gun_targets
     from Trash.gui import GUI
     detectCameras()
-    cam = Camera(CAMERA_INDEX)
+    cam = Camera(CAMERA_INDEX_0)
     rawHandler = RawHandler()
     target_manager1 = Targets()
     target_manager2 = Targets()
@@ -503,9 +503,9 @@ def main_using_targets_3_cameras():
 
 
 def test_main():
-    global CAMERA_INDEX, timestep, gun_targets
+    global CAMERA_INDEX_0, timestep, gun_targets
     detectCameras()
-    cam = Camera(CAMERA_INDEX)
+    cam = Camera(CAMERA_INDEX_0)
     rawHandler = RawHandler()
     contours_handler = ChangesHandler()
     # target_manager = Targets()
@@ -560,10 +560,10 @@ def test():
     print("done")
 
 def test_homography():
-    global CAMERA_INDEX, timestep, laser_targets
+    global CAMERA_INDEX_0, timestep, laser_targets
     import Trash.fit as fit
     detectCameras()
-    cam = Camera(CAMERA_INDEX)
+    cam = Camera(CAMERA_INDEX_0)
     handler = MouseCameraHandler()
     # laser = threading.Thread(target=laser_thread)
     # laser.start()  # comment this line to disable the laser pointer
@@ -594,9 +594,9 @@ def test_homography():
 
 
 def test_camera():
-    global CAMERA_INDEX, timestep
+    global CAMERA_INDEX_0, timestep
     detectCameras()
-    cam = Camera(CAMERA_INDEX)
+    cam = Camera(CAMERA_INDEX_0)
     handler = RawHandler()
     # laser = threading.Thread(target=laser_thread)
     # laser.start()  # comment this line to disable the laser pointer
@@ -618,10 +618,10 @@ def test_camera():
 
 
 def main_using_targets():
-    global CAMERA_INDEX, timestep, gun_targets
+    global CAMERA_INDEX_0, timestep, gun_targets
     from Trash.gui import GUI
     detectCameras()
-    cam = Camera(CAMERA_INDEX)
+    cam = Camera(CAMERA_INDEX_0)
     rawHandler = RawHandler()
     target_manager = Targets()
     gui = GUI()
@@ -664,10 +664,10 @@ def hit_cursor_main_2():
     An alternative to the main function that uses the mouse cursor as the target for the laser pointer.
     It does not use any image processing to detect targets.
     """
-    global CAMERA_INDEX, timestep, laser_targets
+    global CAMERA_INDEX_0, timestep, laser_targets
     import Trash.fit as fit
     detectCameras()
-    cam = Camera(CAMERA_INDEX)
+    cam = Camera(CAMERA_INDEX_0)
     handler = MouseCameraHandler()
     # laser = threading.Thread(target=laser_thread)
     # laser.start()  # comment this line to disable the laser pointer
@@ -708,10 +708,10 @@ def hit_cursor_main_2():
     cv2.destroyAllWindows() 
     
 def homography_targets():
-    global CAMERA_INDEX, timestep, gun_targets
+    global CAMERA_INDEX_0, timestep, gun_targets
     from Trash.gui import GUI
     detectCameras()
-    cam = Camera(CAMERA_INDEX)
+    cam = Camera(CAMERA_INDEX_0)
     rawHandler = RawHandler()
     target_manager = Targets()
     frame_num = 0

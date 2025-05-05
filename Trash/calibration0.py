@@ -7,7 +7,7 @@ from pyfirmata import Arduino, util
 from time import sleep
 from mpl_toolkits.mplot3d import Axes3D
 
-CAMERA_INDEX = 1
+CAMERA_INDEX_0 = 1
 WINDOW_NAME = 'Camera Connection'
 MAX_CAMERAS = 10
 
@@ -105,7 +105,7 @@ def main():
     servoH.write(STARTX)
     servoV.write(STARTY)
     sleep(1)
-    cam = cv2.VideoCapture(CAMERA_INDEX)
+    cam = cv2.VideoCapture(CAMERA_INDEX_0)
     cv2.namedWindow(WINDOW_NAME)
 
     global mouse_x, mouse_y, click_flag
