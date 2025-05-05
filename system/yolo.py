@@ -3,12 +3,12 @@ import os
 import numpy as np
 import cv2
 from ultralytics import YOLO
-# from openvino.runtime/ import Core
+from openvino.runtime import Core
 
 
 
 class YOLOHandler:
-    def __init__(self, model_path: str = 'last.pt', imgsz: int = 320, conf_thres: float = 0.5):
+    def __init__(self, model_path: str = 'last.pt', imgsz: int = 640, conf_thres: float = 0.5):
         # Resolve model path
         base = os.path.dirname(os.path.abspath(__file__))
         self.model = YOLO(os.path.join(base, model_path))
@@ -80,6 +80,8 @@ class YOLOHandler:
     def clear(self):
         self.img = None
         self.bounding_boxes = []
+
+
 
 # class YOLOHandler:
 #     def __init__(self,
@@ -195,15 +197,15 @@ class YOLOHandler:
 
 if __name__ == "__main__":
     # read the images from camera of the computer and display the bounding boxes using the YOLOHandler class inside some loop
-    global CAMERA_INDEX, timestep, laser_targets
-    import fit
+    global CAMERA_INDEX_0, timestep, laser_targets
+    # import fit
     from cameraIO import detectCameras
     from cameraIO import Camera
     from mouseCamera import MouseCameraHandler
-    from main import CAMERA_INDEX
+    from constants import CAMERA_INDEX_0
 
     detectCameras()
-    cam = Camera(CAMERA_INDEX)
+    cam = Camera(CAMERA_INDEX_0)
     handler = MouseCameraHandler()
     yoloHandler = YOLOHandler()
     # laser = threading.Thread(target=laser_thread)
@@ -226,3 +228,7 @@ if __name__ == "__main__":
         if cv2.waitKey(1) == 27:
             break
     cv2.destroyAllWindows()
+
+
+
+

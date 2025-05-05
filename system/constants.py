@@ -35,7 +35,7 @@ SERVO_PIN = 9  # pin for the servo motor
 # constatns for the camera homography
 LENGTH_OF_TABLE = 152
 # first camera, on blue stand
-CAMERA_INDEX_0 = 1
+CAMERA_INDEX_0 = 0
 CAMERA_LOCATION_0 = (0, 0)  # Coordinates of the camera in real world
 DEST_POINTS_0 = [[0.0, 0.0], [29.0, 0.0], [83.0, 0.0], [136.0, 0.0], [152.0, 0.0], [49.0, 31.0], [104.0, 31.0], [30.0, 48.0], [77.0, 57.0]]
 DEST_ARRAY_0 = np.array(DEST_POINTS_0, dtype=np.float32)

@@ -23,9 +23,6 @@ class Brain():
             self.eyes.append(new_eye)
         self.targets = []
         self.timestep = 0
-        
-
-
 
 
     def get_targets(self):
@@ -123,11 +120,6 @@ class Brain():
                 break
         cv2.destroyAllWindows()
 
-if __name__ == "__main__":
-    gun_locations = []  # example
-    # cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0]), (CAMERA_INDEX_1, CAMERA_LOCATION_1, homography_matrices[1])]  # (cam_index, CAMERA_LOCATION_0, homography_matrix)
-    cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0])]  # (cam_index, CAMERA_LOCATION_0, homography_matrix)
-    Brain(gun_locations, cam_info).game_loop()
 
 
 # class Brain:
@@ -141,6 +133,25 @@ if __name__ == "__main__":
 #         self.targets = []
 #         self.timestep = 0
 #         self.running = True
+
+
+#     def add_to_target_list(
+#         self, new_targets: list, camera: Eye, distance: float = MIN_DISTANCE
+#     ):
+#         if new_targets is None:
+#             return
+#         for target in new_targets:
+#             # real_coords = self.calculate_real_coords(target, camera)
+#             if not self.too_close(target, distance):
+#                 self.add_smart(target, camera)
+
+#     def add_smart(self, target, cam):
+#         # this is temporary:
+#         self.targets.append(target)
+
+#     def calculate_real_coords(self, target, camera):
+#         # for now, we are assuming that the homography matrix is built such that the real coordinates are returned originally.
+#         return target
 
 #     def add(self):
 #         to_init = (self.timestep == 5)
@@ -174,63 +185,64 @@ if __name__ == "__main__":
 
 #     def game_loop(self):
 #         print("running main")
-#         # start producer threads for each camera
-#         for idx, eye in enumerate(self.eyes):
-#             t = threading.Thread(target=self._frame_producer, args=(idx,), daemon=True)
-#             t.start()
-#         # display threads
-#         for idx, eye in enumerate(self.eyes):
-#             t = threading.Thread(target=self._show_display, args=(idx,), daemon=True)
-#             t.start()
-#         # gun thread(s)
-#         # gun_t = threading.Thread(target=self._run_gun, daemon=True)
-#         # gun_t.start()
+#         SAMPLE_RATE = 5
+#         self.running = True
 
-#         # main loop: target processing
-#         try:
+#         def show_display(camera_index: int):
+#             print("display thread started")
+#             eye = self.eyes[camera_index]
 #             while self.running:
-#                 self.timestep += 1
-#                 self.add()
-#                 time.sleep(0.02)
-#         except KeyboardInterrupt:
-#             self.running = False
-#             cv2.destroyAllWindows()
+#                 frame = eye.get_frame()
+#                 if frame is not None:
+#                     eye.raw_handler.add(frame)
+#                     eye.raw_handler.display()
 
-#     def _frame_producer(self, cam_idx):
-#         print(f"frame producer {cam_idx} started")
-#         eye = self.eyes[cam_idx]
-#         while self.running:
-#             frame = eye.camera.read()
-#             with eye.frame_lock:
-#                 eye.latest_frame = frame.copy()
-#             time.sleep(0.001)
+#         def run_gun():
+#             gun = self.guns[0]
+#             print(f"Gun {gun.gun_location} is ready to shoot")
+#             while self.running:
+#                 if self.targets:
+#                     target = self.targets.pop(0)
+#                     print(f"Gun {gun.gun_location} is aiming at target {target}")
+#                     angle = self.calculate_angle(target)
+#                     print("angle to shoot:", angle)
+#                     gun.rotate(angle * -1)
+#                     gun.shoot()
+#                     time.sleep(0.5)
 
-#     def _show_display(self, cam_idx):
-#         print(f"display {cam_idx} started")
-#         eye = self.eyes[cam_idx]
-#         while self.running:
-#             with eye.frame_lock:
-#                 if eye.latest_frame is None:
-#                     continue
-#                 frame = eye.latest_frame.copy()
-#             eye.raw_handler.add(frame)
-#             eye.raw_handler.display()
+#         # Start threads
+#         display_1 = threading.Thread(target=show_display, args=(0,), daemon=True)
+#         display_1.start()
+
+#         # gun_thread = threading.Thread(target=run_gun, daemon=True)
+#         # gun_thread.start()
+
+#         while True:
+#             self.timestep += 1
+
+#             to_check = self.timestep % 15 == 14
+#             to_init = self.timestep == 5
+
+#             if self.timestep % SAMPLE_RATE == 0:
+#                 for eye in self.eyes:
+#                     frame = eye.get_frame()
+#                     if frame is not None:
+#                         targets = eye.add(frame, to_check, to_init)
+#                         self.add_to_target_list(targets, eye, MIN_DISTANCE)
+
+#             if to_check or to_init:
+#                 print("targets in brain:", self.targets)
+
 #             if cv2.waitKey(1) == 27:
 #                 self.running = False
 #                 break
 
-#     def _run_gun(self):
-#         gun = self.guns[0]
-#         print(f"Gun {gun.gun_location} is ready to shoot")
-#         while self.running:
-#             if self.targets:
-#                 tgt = self.targets.pop(0)
-#                 angle = self.calculate_angle(tgt)
-#                 gun.rotate(-angle)
-#                 gun.shoot()
-#                 time.sleep(0.5)
-
-
-
+#         cv2.destroyAllWindows()
+    
+if __name__ == "__main__":
+    gun_locations = []  # example
+    # cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0]), (CAMERA_INDEX_1, CAMERA_LOCATION_1, homography_matrices[1])]  # (cam_index, CAMERA_LOCATION_0, homography_matrix)
+    cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0])]  # (cam_index, CAMERA_LOCATION_0, homography_matrix)
+    Brain(gun_locations, cam_info).game_loop()
 
 

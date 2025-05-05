@@ -89,6 +89,7 @@ class RawHandler(Handler):
         if self.text is not None:
             textcolor = (130, 255, 0)
             cv2.putText(self.img, self.text, (7, 17), cv2.FONT_HERSHEY_SIMPLEX, 0.5, textcolor, 1)
+        print(self.img)
         cv2.imshow(RawHandler.TITLE+str(index), self.img)
 
     def clear(self):
