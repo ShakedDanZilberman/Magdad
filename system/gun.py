@@ -31,10 +31,10 @@ class Gun:
         self.target_stack = []
         self.ser = self._connect_to_serial(COM)
         time.sleep(2)  # Give Arduino time to reset; setup delay sleep for 2 seconds
+        self.print_flag = print_flag
 
-        if print_flag:
+        if self.print_flag:
             print(f"Gun initialized and connected at {COM}.")
-        print("Gun initialized and connected.")
 
     def set_next_target(self, target):
         self.next_target = target
@@ -65,9 +65,10 @@ class Gun:
                 sys.exit()
 
     def shoot(self):
-        print(f"Shooting!!! at {self.current_angle} degrees")
+        # print(f"Shooting!!! at {self.current_angle} degrees")
         self.ser.write(b"SHOOT\n")
-        print(f">>> SHOOT")
+        if self.print_flag:
+            print(f">>> SHOOT")
         self._wait_for_done()
 
     def rotate(self, angle):
@@ -82,10 +83,11 @@ class Gun:
         steps = int(STEPS_IN_DEGREE * dθ)
         command = f"ROTATE:{steps}\n".encode()
         self.ser.write(command)
-        print(f">>> {command}")
+        if self.print_flag:
+            print(f">>> {command}")
         self._wait_for_done()
         self.current_angle = angle * (-1)
-        print(f"Gun rotated to {self.current_angle} degrees")
+        # print(f"Gun rotated to {self.current_angle} degrees")
 
 
     def is_free(self):
@@ -106,7 +108,8 @@ class Gun:
         count = 0
         while True:
             response = self.ser.readline().decode().strip()
-            print("<<<", response)
+            if self.print_flag:
+                print("<<<", response)
             count += 1
             if response == "Done":
                 break
@@ -114,9 +117,6 @@ class Gun:
                 raise TimeoutError("Timeout waiting for Arduino response \"Done\" in Gun class.")
 
     def exit(self):
-        pass
-    
-    def aim_and_fire_target_2(self, center):
         pass
 
 class DummyGun:
@@ -136,7 +136,7 @@ class DummyGun:
 
 
 if __name__ == "__main__":
-    gun = Gun((3,4), print_flag=True)
+    gun = Gun((3,4), 0, print_flag=True)
     #angle_program = [0, 360, 0, 180, 0, 90, 0, -90, 0, 180, 0, 360, 0, -180, 0, 90, 0, -90, 0, 180, 0, 360, 0, -180, 0, 90, 0, -90, 0, 180, 0, 360, 0, -180, 0, 90, 0, -90, 0, 180, 0, 360]
     angle_program = [0,10,-15,25,-20]
     #angle_program *= 5
