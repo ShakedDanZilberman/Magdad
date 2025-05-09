@@ -91,8 +91,8 @@ class Brain():
 
     def game_loop(self):
         print("running main")
-        def run_gun():
-            gun = self.guns[0]
+        def run_gun(index):
+            gun = self.guns[index]
             # This function will run in a separate thread for each gun
             print(f"Gun {gun.gun_location} is ready to shoot")
             while True:
@@ -103,13 +103,15 @@ class Brain():
                     # Calculate the angle to rotate to
                     angle = self.calculate_angle(target)
                     print("angle to shoot: ", angle)
-                    gun.rotate(angle*(-1))
-                    gun.shoot()
+                    # gun.rotate(angle*(-1))
+                    # gun.shoot()
                     time.sleep(0.5)
 
-        # gun1 = threading.Thread(target=run_gun)
-        # gun1.start()
-        print("Gun 1 is ready to shoot")
+        for i in range(len(self.guns)):
+            # Start a thread for each gun   
+            gun1 = threading.Thread(target=run_gun, args=(i,))
+            gun1.start()
+            print(f"Gun {i} is ready to shoot")
         
         while True:
             self.timestep += 1
@@ -157,10 +159,10 @@ class Brain():
 
 
 if __name__ == "__main__":
-    gun_locations = []  # example
+    gun_locations = [(0,0)]  # example
     # cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0]), (CAMERA_INDEX_1, CAMERA_LOCATION_1, homography_matrices[1])]  # (cam_index, CAMERA_LOCATION_0, homography_matrix)
     cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0])]  # (cam_index, CAMERA_LOCATION_0, homography_matrix)
-    Brain(gun_locations, cam_info).game_loop_independent()
+    Brain(gun_locations, cam_info).game_loop()
 
 
 # class Brain:

@@ -7,7 +7,6 @@ const int enablePin = 5;
 const int speed = 1000;
 const int SHOOT_COOLDOWN = 200;  // ms
 Servo myServo;
-int currentAngle = 0;
 
 void setup() {
   Serial.begin(9600);  
