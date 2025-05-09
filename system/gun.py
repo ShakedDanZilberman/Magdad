@@ -79,6 +79,7 @@ class Gun:
         Args:
             angle (int): The angle to rotate to, in degrees.
         """
+        print(f"Rotating to {angle} degrees")
         dθ = angle - self.current_angle
         steps = int(STEPS_IN_DEGREE * dθ)
         command = f"ROTATE:{steps}\n".encode()
@@ -86,7 +87,7 @@ class Gun:
         if self.print_flag:
             print(f">>> {command}")
         self._wait_for_done()
-        self.current_angle = angle * (-1)
+        self.current_angle = angle 
         # print(f"Gun rotated to {self.current_angle} degrees")
 
 
