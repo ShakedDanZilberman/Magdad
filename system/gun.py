@@ -27,13 +27,24 @@ class Gun:
         """
         self.current_angle = 0
         self.gun_location = gun_location
-
+        self.target_stack = []
         self.ser = self._connect_to_serial(COM)
         time.sleep(2)  # Give Arduino time to reset; setup delay sleep for 2 seconds
 
         if print_flag:
             print(f"Gun initialized and connected at {COM}.")
         print("Gun initialized and connected.")
+
+    def set_next_target(self, target):
+        self.next_target = target
+
+    def get_gun_location(self):
+        """Get the location of the gun.
+
+        Returns:
+            tuple: The location of the gun as (x, y) coordinates.
+        """
+        return self.gun_location
 
     def _connect_to_serial(self, port):
         try:
@@ -78,6 +89,10 @@ class Gun:
         self.current_angle = angle * (-1)
         print(f"Gun rotated to {self.current_angle} degrees")
 
+
+    def is_free(self):
+        return not self.target_stack[1]
+    
     def get_angle(self):
         """Get the current angle of the gun.
 
@@ -123,7 +138,7 @@ class DummyGun:
 if __name__ == "__main__":
     gun = Gun((3,4), print_flag=True)
     #angle_program = [0, 360, 0, 180, 0, 90, 0, -90, 0, 180, 0, 360, 0, -180, 0, 90, 0, -90, 0, 180, 0, 360, 0, -180, 0, 90, 0, -90, 0, 180, 0, 360, 0, -180, 0, 90, 0, -90, 0, 180, 0, 360]
-    angle_program = [-50,-65,-85]
+    angle_program = [0,10,-15,25,-20]
     #angle_program *= 5
     while True:
         for angle in angle_program:

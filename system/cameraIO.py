@@ -105,12 +105,13 @@ class Camera:
         self.img = ImageParse.resize_proportionally(self.img, 0.5)
         self.img = ImageParse.toGrayscale(self.img)
         self.img = undistortion.undistort(self.img)
+        self.img = cv2.rotate(self.img, cv2.ROTATE_180)
         return self.img
     
 
 if __name__ == "__main__":
     # display image from camera index 1
-    cam = Camera(1)
+    cam = Camera(2)
     while True:
         img = cam.read()
         cv2.imshow("Camera", img)

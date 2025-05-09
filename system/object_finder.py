@@ -30,7 +30,7 @@ class Targets:
     def __init__(self):
         self.contours_handler = ContoursHandler()
         self.changes_handler = ChangesHandler()
-        self.yolo_handler = YOLOHandler() 
+        # self.yolo_handler = YOLOHandler() 
         self.img_changes = None
         self.yolo_centers = None
         self.contours_centers = None
@@ -97,7 +97,7 @@ class Targets:
             # show the product of detected and img, so we can see the detected objects
             cv2.imshow("yolo image", detected * img)
 
-            
+
                
     def add_only_from_yolo(self, img):
             self.add_initial_targets_using_yolo(img)
@@ -162,6 +162,7 @@ class Targets:
     def clear(self):
         print("clearing changes")
         self.changes_handler.clear() 
+
 
 
 

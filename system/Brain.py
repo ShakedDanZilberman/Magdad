@@ -20,8 +20,9 @@ class Brain():
         self.eyes = []
         for cam in cam_info:
             new_eye = Eye(cam[0], cam[1], cam[2])
+            print("eye camera index: ", cam[0])
             self.eyes.append(new_eye)
-        self.targets = []
+        self.targets = {}
         self.timestep = 0
 
 
@@ -34,45 +35,76 @@ class Brain():
     def get_guns(self):
         return self.guns
     
+    def too_close(self, target, min_dist):
+        """
+        Check if `target` (x, y) is within `min_dist` of any existing target.
+        Returns True if too close to an existing target.
+        """
+        tx, ty = target
+        for (ox, oy) in self.targets.keys():
+            if np.linalg.norm((tx - ox, ty - oy)) <= min_dist:
+                return True
+        return False
+
+    def add_to_target_list(self, new_targets, distance: float = MIN_DISTANCE):
+        if not new_targets:
+            return
+        for targ in new_targets:
+            if not self.too_close(targ, distance):
+                self.add_smart(targ)
+
+    def find_priority(self, target_location):
+        # for now the priority is set to be a factor of the distance to the target
+        x, y = target_location
+        # Scale y (0-50) to priority (1-10)
+        prio = int(np.clip((y / 50) * 10, 1, 10)) 
+
+    def add_smart(self, target_location):
+        """
+        Compute priority based on y-value of target and add to dict.
+        Priority ranges 1 (lowest) to 10 (highest); y goes 0..50.
+        """
+        priority = self.find_priority(target_location)
+        self.targets[target_location] = priority
+
+        
     def add(self):
         to_init = self.timestep == 5
         if self.timestep % 15 == 14:
             to_check = True
         else:
             to_check = False
-        
-        # eye1 = self.eyes[0]
-        # targets = eye1.add(to_check, to_init)
-        # self.add_to_target_list(targets, eye1, MIN_DISTANCE)
-        # if to_check or to_init:
-        #     print("targets in brain:", self.targets)
         for eye in self.eyes:
-            targets = eye.add(to_check, to_init)
-            self.add_to_target_list(targets, eye, MIN_DISTANCE)
+            eye.add(to_check, to_init)
+            targets = eye.get_real_coords_targets()
+            self.add_to_target_list(targets, MIN_DISTANCE)
         if to_check or to_init:
             print("targets in brain:", self.targets)
 
-    def too_close(self, target, distance):
-        if all(
-            np.linalg.norm(np.array(target) - np.array(old_target)) > distance
-            for old_target in self.targets
-        ):
-            return False
-        return True
 
-    def add_to_target_list(
-        self, new_targets: list, camera: Eye, distance: float = MIN_DISTANCE
-    ):
-        if new_targets is None:
-            return
-        for target in new_targets:
-            # real_coords = self.calculate_real_coords(target, camera)
-            if not self.too_close(target, distance):
-                self.add_smart(target, camera)
 
-    def add_smart(self, target, cam):
-        # this is temporary:
-        self.targets.append(target)
+
+    # def too_close(self, target, distance):
+    #     if all(
+    #         np.linalg.norm(np.array(target) - np.array(old_target)) > distance
+    #         for old_target in self.targets
+    #     ):
+    #         return False
+    #     return True
+
+    # def add_to_target_list(
+    #     self, new_targets: list, camera: Eye, distance: float = MIN_DISTANCE
+    # ):
+    #     if new_targets is None:
+    #         return
+    #     for target in new_targets:
+    #         # real_coords = self.calculate_real_coords(target, camera)
+    #         if not self.too_close(target, distance):
+    #             self.add_smart(target, camera)
+
+    # def add_smart(self, target, cam):
+    #     # this is temporary:
+    #     self.targets.append(target)
 
     def calculate_real_coords(self, target, camera):
         # for now, we are assuming that the homography matrix is built such that the real coordinates are returned originally.
@@ -103,8 +135,8 @@ class Brain():
                     # Calculate the angle to rotate to
                     angle = self.calculate_angle(target)
                     print("angle to shoot: ", angle)
-                    # gun.rotate(angle*(-1))
-                    # gun.shoot()
+                    gun.rotate(angle*(-1))
+                    gun.shoot()
                     time.sleep(0.5)
 
         for i in range(len(self.guns)):
@@ -122,35 +154,119 @@ class Brain():
                 break
         cv2.destroyAllWindows()
 
+    def add_independent(self):
+        """
+        this function deals with frame adding without using yolo
+        it allows the user to add targets to the list of targets by clicking them on the screen.
+        after clicking, the target is added to the list of targets and the gun shoots at it.
+        """
+        for eye in self.eyes:
+            eye.add_independent()
+            targets = eye.get_real_coords_targets()
+            self.add_to_target_list(targets, MIN_DISTANCE)
+
+    def check_emergency_targets(self):
+        emergency_targets = []
+        for location, priority in self.targets:
+            if priority >= 9:
+                emergency_targets.append(target)
+        for gun, i in enumerate(self.guns):
+            if emergency_targets[i] is not None:
+                # if there is an emergency target, assign it to the first gun
+                gun = self.guns[i]
+                target = emergency_targets[i]
+                old_next = target.next
+                if old_next[1] < target[1]:
+                    old_next = gun.target_stack.pop(1)
+                    self.add_to_target_list([old_next])
+                    gun.target_stack.append(target)
+                
+    def pop_optimized(self, gun):
+        min_anglular_distance = float("inf")
+        closest_target = None
+        for location, priority in self.targets:
+            angular_dist = self.angle_diff(gun.gun_location, location)
+            if angular_dist < min_anglular_distance:
+                min_anglular_distance = angular_dist
+                closest_target = location, priority
+        if closest_target is not None:
+            self.targets.pop(closest_target)
+            gun.target_stack.append(closest_target)
+
+
+    def angle_diff(self, location_1: tuple, location_2: tuple):
+        """
+        This function calculates the difference between two angles.
+        It returns the difference in degrees.
+        """
+        angle1 = self.calculate_angle(location_1)
+        angle2 = self.calculate_angle(location_2)
+        diff = angle1 - angle2
+        if diff > 180:
+            diff -= 360
+        elif diff < -180:
+            diff += 360
+        return diff
+
+    # def pop_optimized(self, gun_location):
+    #     """
+    #     This function pops the target from the list of targets that is closest to the gun location.
+    #     It returns the target and removes it from the list of targets.
+    #     If there are no targets, it returns None.
+    #     gun_location is a tuple (x, y) of the gun location.
+    #     """
+    #     if len(self.targets) == 0:
+    #         return None
+    #     closest_target = None
+    #     closest_distance = float("inf")
+    #     for location, priority in self.targets:
+    #         distance = np.linalg.norm(np.array(location) - np.array(gun_location))
+    #         if distance < closest_distance:
+    #             closest_distance = distance
+    #             closest_target = location
+    #     self.targets.pop(closest_target)
+    #     return closest_target
+
+
     def game_loop_independent(self):
         """
         This function is the main loop of the program. It runs independently of image procesing.
         the user spots the targets and the gun shoots at them.
         """
         print("running main")
-        def run_gun():
-            gun = self.guns[0]
+        def run_gun(gun_index):
+            gun = self.guns[gun_index]
             # This function will run in a separate thread for each gun
             print(f"Gun {gun.gun_location} is ready to shoot")
             while True:
-                if self.targets is not None and len(self.targets)>0:
+                if gun.target_stack is not None and len(gun.target_stack)>0:
                     # Get the target coordinates from the last camera
-                    target = self.targets.pop(0)              
+                    target = gun.target_stack.pop(0)             
                     print(f"Gun {gun.gun_location} is aiming at target {target}")
                     # Calculate the angle to rotate to
                     angle = self.calculate_angle(target)
                     print("angle to shoot: ", angle)
                     gun.rotate(angle*(-1))
                     gun.shoot()
-                    time.sleep(0.5)
+                    time.sleep(0.1)
 
-        # gun1 = threading.Thread(target=run_gun)
-        # gun1.start()
-        print("Gun 1 is ready to shoot")
+
+            # check which gun is free and assign it to the target
+            # if there is a target in the list of targets that has priority 8 or higher, assign it to the first gun immediately
         
+        for gun, i in enumerate(self.guns):
+            gun_thread = threading.Thread(target=run_gun, args=(i,))
+            gun_thread.start() 
+            print(f"Gun {i} is ready to shoot")
+
         while True:
             self.timestep += 1
-            self.add()
+            self.add_independent()
+            self.check_emergency_targets()
+            for gun in self.guns:
+                if gun.is_free():
+                    # assign the target to the gun
+                    self.pop_optimized(gun)
             # print("timestep: ", self.timestep)
             # Press Escape to exit
             if cv2.waitKey(1) == 27:
@@ -159,10 +275,11 @@ class Brain():
 
 
 if __name__ == "__main__":
-    gun_locations = [(0,0)]  # example
+    gun_locations = [(30,48)]  # example
     # cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0]), (CAMERA_INDEX_1, CAMERA_LOCATION_1, homography_matrices[1])]  # (cam_index, CAMERA_LOCATION_0, homography_matrix)
-    cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0])]  # (cam_index, CAMERA_LOCATION_0, homography_matrix)
-    Brain(gun_locations, cam_info).game_loop()
+    cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0]), (CAMERA_INDEX_1, CAMERA_LOCATION_1, homography_matrices[1])]  # (cam_index, CAMERA_LOCATION_0, homography_matrix)
+    Brain(gun_locations, cam_info).game_loop_independent()
+
 
 
 # class Brain:
@@ -282,10 +399,6 @@ if __name__ == "__main__":
 
 #         cv2.destroyAllWindows()
     
-if __name__ == "__main__":
-    gun_locations = []  # example
-    # cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0]), (CAMERA_INDEX_1, CAMERA_LOCATION_1, homography_matrices[1])]  # (cam_index, CAMERA_LOCATION_0, homography_matrix)
-    cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0])]  # (cam_index, CAMERA_LOCATION_0, homography_matrix)
-    Brain(gun_locations, cam_info).game_loop()
+
 
 

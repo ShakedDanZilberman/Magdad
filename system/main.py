@@ -151,7 +151,7 @@ def homography_calibration_main():
         img = cam.read()
 
         handler.add(img)
-        handler.display()
+        handler.display(CAMERA_INDEX_0)
         if handler.has_new_click(): 
             click_pos = handler.get_last_click()
             print(click_pos)
