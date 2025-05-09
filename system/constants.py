@@ -2,7 +2,7 @@ import numpy as np
 
 IMG_WIDTH = 960
 IMG_HEIGHT = 540
-COM = "COM7"
+COM = "COM5"
 GUN = (0, 0)  # Coordinates of the gun in pixels
 # Constants for the homography transformation
 H1 = None
