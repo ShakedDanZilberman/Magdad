@@ -13,7 +13,7 @@ STEPS_IN_DEGREE = 2/1.8
 
 
 class Gun:
-    def __init__(self, gun_location, print_flag=False):
+    def __init__(self, gun_location, index: int, print_flag=False):
         """Initialize the Gun class, connect to the Arduino, and set the initial angle.
         The class communicates with the Arduino via a serial connection.
         The protocol:
@@ -25,6 +25,7 @@ class Gun:
         Args:
             print_flag (bool, optional): If True, print debug information. Defaults to False.
         """
+        self.gun_index = index
         self.current_angle = 0
         self.gun_location = gun_location
         self.target_stack = []
@@ -91,7 +92,9 @@ class Gun:
 
 
     def is_free(self):
-        return not self.target_stack[1]
+        if len(self.target_stack) <2:
+            return True
+        return False
     
     def get_angle(self):
         """Get the current angle of the gun.

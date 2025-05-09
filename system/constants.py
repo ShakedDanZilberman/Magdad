@@ -84,7 +84,9 @@ DEST_ARRAY_1 = np.array(DEST_POINTS_1, dtype=np.float32)
 SRC_POINTS_1 = []
 SRC_ARRAY_1 = np.array(SRC_POINTS_1, dtype=np.float32)
 
-homography_matrix_1 =  np.array([], dtype=np.float64)
+homography_matrix_1 =  np.array([[1.60566286e-01,  1.02417265e+00, -7.26217617e+01],
+ [-1.38778595e-01,  6.18565415e-01, -2.66880965e+01],
+ [1.32018961e-04,  7.61377421e-03,  1.00000000e+00]], dtype=np.float64)
 
 homography_matrices = [homography_matrix, homography_matrix_1]
 
