@@ -15,7 +15,7 @@ class Brain():
         """
         self.guns = []
         for gun in gun_info:
-            new_gun = Gun(gun[0], gun[1], True)
+            new_gun = Gun(gun[0], gun[1], False)
             self.guns.append(new_gun)
         self.eyes = []
         for cam in cam_info:
@@ -51,7 +51,7 @@ class Brain():
         if len(new_targets) == 0:
             return
         for targ in new_targets:
-            print("targ: ", targ, "distance: ", distance)
+            # print("targ: ", targ, "distance: ", distance)
             if not self.too_close(targ, distance):
                 self.add_smart(targ)
 
@@ -68,9 +68,9 @@ class Brain():
         Priority ranges 1 (lowest) to 10 (highest); y goes 0..50.
         """
         priority = self.find_priority(target_location)
-        print("adding target: ", target_location, "priority: ", priority)
+        # print("adding target: ", target_location, "priority: ", priority)
         self.targets[target_location] = priority
-        print("targets: ", self.targets)
+        # print("targets: ", self.targets)
 
         
     def add(self):
@@ -111,19 +111,16 @@ class Brain():
     #     # this is temporary:
     #     self.targets.append(target)
 
-    def calculate_real_coords(self, target, camera):
-        # for now, we are assuming that the homography matrix is built such that the real coordinates are returned originally.
-        return target
 
     def calculate_angle_from_gun(self, target, gun_index=0):
         gun = self.guns[gun_index]
-        print(f"gun location: {gun.gun_location}, target: {target}")
+        # print(f"gun location: {gun.gun_location}, target: {target}")
         if target[0] < gun.gun_location[0]:
             slope = (gun.gun_location[0]- target[0]) / (gun.gun_location[1] - target[1])
             angle = np.arctan(slope) * 180 / np.pi
             angle = angle * (-1)
         else:
-            print("in calculate angle: gun location: ", gun.gun_location, "target: ", target)
+            # print("in calculate angle: gun location: ", gun.gun_location, "target: ", target)
             slope = (gun.gun_location[1]- target[1]) / (target[0] - gun.gun_location[0])
             angle = 90 - np.arctan(slope) * 180 / np.pi
         return angle
@@ -154,9 +151,8 @@ class Brain():
                     target = self.targets.pop(0)              
                     print(f"Gun {gun.gun_location} is aiming at target {target}")
                     # Calculate the angle to rotate to
-                    angle = self.calculate_angle_from_gun(target)
-                    print("angle to shoot: ", angle)
-                    gun.rotate(angle*(-1))
+                    angle = self.calculate_angle_from_gun(target[0], index)
+                    gun.rotate(angle)
                     gun.shoot()
                     time.sleep(0.5)
 
@@ -181,40 +177,50 @@ class Brain():
         it allows the user to add targets to the list of targets by clicking them on the screen.
         after clicking, the target is added to the list of targets and the gun shoots at it.
         """
+        
         for eye in self.eyes:
-            eye.add_independent()
-            targets = eye.get_real_coords_targets()
-            self.add_to_target_list(targets, MIN_DISTANCE)
+            targets  = eye.add_independent()
+            if len(targets) > 0:
+                self.add_to_target_list(targets, MIN_DISTANCE)
 
     def check_emergency_targets(self):
         emergency_targets = []
         for location, priority in self.targets.items():
             if priority >= 9:
-                emergency_targets.append(location)
+                emergency_targets.append((location, priority))
         for i, gun in enumerate(self.guns):
             if len(emergency_targets) > 0:
                 target = emergency_targets[i]
                 # if there is an emergency target, assign it to the first gun
                 if len(gun.target_stack) > 1:
-                    if old_next[1] < target[1]:
+                    if gun.target_stack[1][1] < target[1]:
                         old_next = gun.target_stack.pop(1)
                         self.add_to_target_list([old_next])
                 gun.target_stack.append(target)
                 
+
     def pop_optimized(self, gun):
         min_anglular_distance = float("inf")
         closest_target = None
+        if len(self.targets) == 0:
+            return 
+        elif len(gun.target_stack) == 0:
+            gun.target_stack.append(self.targets.popitem())
+            return
         for location, priority in self.targets.items():
-            print(f"from pop optimized: target stack: {gun.target_stack}, target: {location}, priority: {priority}")
             if gun.target_stack is not None and len(gun.target_stack) > 0:
-                angular_dist = self.angle_diff(gun.target_stack[0], location, gun.gun_index)
+                angular_dist = self.angle_diff(gun.target_stack[0][0], location, gun.gun_index)
                 if angular_dist < min_anglular_distance:
                     min_anglular_distance = angular_dist
                     closest_target = (location, priority)
-                    print(f"pop_optimized: gun location: {gun.gun_location}, target: {location}, angular distance: {angular_dist}")
+                    # print(f"pop_optimized: closest target: {closest_target}, angular distance: {angular_dist}")
+                    # print(f"pop_optimized: gun location: {gun.gun_location}, target: {location}, angular distance: {angular_dist}")
         if closest_target is not None:
-            self.targets.pop(closest_target[0])
-            gun.target_stack.append(closest_target)
+            # print("closest target: ", closest_target)
+            priority = self.targets.pop(closest_target[0])
+            print(f"targets in brain after pop: {self.targets}")
+            gun.target_stack.append((closest_target[0], priority))
+           
 
 
     def angle_diff(self, location_1: tuple, location_2: tuple, gun_index=0):
@@ -222,7 +228,7 @@ class Brain():
         This function calculates the difference between two angles.
         It returns the difference in degrees.
         """
-        print("location 1: ", location_1, "location 2: ", location_2)
+        # print("location 1: ", location_1, "location 2: ", location_2)
         angle1 = self.calculate_angle_from_gun(location_1, gun_index)
         angle2 = self.calculate_angle_from_gun(location_2, gun_index)
         diff = angle1 - angle2
@@ -264,15 +270,19 @@ class Brain():
             print(f"Gun {gun.gun_location} is ready to shoot")
             while True:
                 if gun.target_stack is not None and len(gun.target_stack)>0:
+                    # print("gun target stack: ", gun.target_stack)
                     # Get the target coordinates from the last camera
-                    target = gun.target_stack.pop(0)             
-                    print(f"Gun {gun.gun_location} is aiming at target {target}")
+                    target = gun.target_stack[0]            
+                    # print(f"Gun {gun.gun_location} is aiming at target {target}")
                     # Calculate the angle to rotate to
-                    print(f"in gun thread: gun location: {gun.gun_location}, target: {target}")
+                    print(f"target stack: {gun.target_stack}")
                     angle = self.calculate_angle_from_gun(target[0], gun_index)
-                    print("angle to shoot: ", angle)
-                    gun.rotate(angle*(-1))
+                    # print("angle to shoot: ", angle)
+                    gun.rotate(angle)
                     gun.shoot()
+                    print("shot fired")
+                    gun.target_stack.pop(0)
+                    print("gun target stack after pop: ", gun.target_stack)
                     time.sleep(0.1)
 
 
@@ -280,18 +290,23 @@ class Brain():
             # if there is a target in the list of targets that has priority 8 or higher, assign it to the first gun immediately
         
         for i, gun in enumerate(self.guns):
+            print(f"starting gun thread for gun {i}")
             gun_thread = threading.Thread(target=run_gun, args=(i,))
             gun_thread.start() 
             print(f"Gun {i} is ready to shoot")
 
         while True:
             self.timestep += 1
+            # print("timestep: ", self.timestep)
             self.add_independent()
             self.check_emergency_targets()
+            # print(f"targets in brain: {self.targets}")
             for gun in self.guns:
+                
                 if gun.is_free():
                     # assign the target to the gun
                     self.pop_optimized(gun)
+                    # print(f"gun {gun.gun_index} target stack: ", gun.target_stack)
             # print("timestep: ", self.timestep)
             # Press Escape to exit
             if cv2.waitKey(1) == 27:
@@ -303,7 +318,13 @@ if __name__ == "__main__":
     gun_info = [((30,48), 0)]  # example
     # cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0]), (CAMERA_INDEX_1, CAMERA_LOCATION_1, homography_matrices[1])]  # (cam_index, CAMERA_LOCATION_0, homography_matrix)
     cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0]), (CAMERA_INDEX_1, CAMERA_LOCATION_1, homography_matrices[1])]  # (cam_index, CAMERA_LOCATION_0, homography_matrix)
-    Brain(gun_info, cam_info).game_loop_independent()
+    try:
+        Brain(gun_info, cam_info).game_loop_independent()
+    except KeyboardInterrupt:
+        for thread in threading.enumerate():
+            print(f"Thread {thread.name} is alive: {thread.is_alive()}")
+        print("Exiting...")
+        exit(0)
 
 
 

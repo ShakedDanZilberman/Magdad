@@ -58,16 +58,19 @@ class Eye():
         
         """
         frame = self.camera.read()
+        # print("got frame")
         self.mouse_camera_handler.add(frame)
         self.mouse_camera_handler.display(self.camera_index)
-        if self.mouse_camera_handler.has_new_click():
-            click_pos = self.mouse_camera_handler.get_last_click()
-            print(f"camera {self.camera_index}: Clicked position in pixels:", click_pos)
-            pixel_coords = np.array([click_pos], dtype='float32').reshape(-1, 1, 2)
-            print(f"coords in pixels {pixel_coords}, type: {type(pixel_coords)}, homography {self.homography}, type: {type(self.homography)}")
+        if self.mouse_camera_handler.has_new_clicks():
+            click_positions = self.mouse_camera_handler.get_clicks()
+            # print(f"camera {self.camera_index}: Clicked position in pixels:", click_positions)
+            pixel_coords = np.array(click_positions, dtype='float32').reshape(-1, 1, 2)
             real_coords_array = cv2.perspectiveTransform(pixel_coords, self.homography)
-            self.real_coords_targets = [tuple(pt[0]) for pt in real_coords_array]
-            print(f"added real coords: {self.real_coords_targets}")
+            return [tuple(pt[0]) for pt in real_coords_array]
+        return []
+        # print(f"coords in reality: {self.real_coords_targets}")
+
+            # print(f"added real coords: {self.real_coords_targets}")
 
     
 # import threading
