@@ -10,7 +10,7 @@ class MouseCameraHandler(Handler):
         self.mouseX = 0
         self.mouseY = 0
         self.img = None
-        self._last_click = None
+        self.clicks = []
         self._new_click = False
 
     def add(self, img):
@@ -20,11 +20,11 @@ class MouseCameraHandler(Handler):
     def get(self):
         return self.img
 
-    def display(self):
+    def display(self, index=0):
         if self.img is None:
             return
 
-        cv2.imshow(MouseCameraHandler.TITLE, self.img)
+        cv2.imshow("camera " + str(index) + " view", self.img)
 
     def mouse_callback_2(self, event, x, y, flags, param):
         if event == cv2.EVENT_LBUTTONDOWN:
@@ -52,12 +52,15 @@ class MouseCameraHandler(Handler):
 
     def mouse_callback(self, event, x, y, flags, param):
         if event == cv2.EVENT_LBUTTONDOWN:
-            self._last_click = (x, y)
-            self._new_click = True
+            print(f"Clicked position in pixels: ({x}, {y})")
+            self.clicks.append((x, y))
 
-    def has_new_click(self):
-        return self._new_click
+    def has_new_clicks(self):
+        return len(self.clicks) > 0
 
-    def get_last_click(self):
-        self._new_click = False
-        return self._last_click
+    def get_clicks(self):
+        clicks = self.clicks.copy()
+        self.clicks.clear()
+        print("clicks", clicks)
+        return clicks
+    

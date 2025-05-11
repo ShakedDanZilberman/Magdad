@@ -13,7 +13,7 @@ STEPS_IN_DEGREE = 2/1.8
 
 
 class Gun:
-    def __init__(self, gun_location, print_flag=False):
+    def __init__(self, gun_location, index: int, print_flag=False):
         """Initialize the Gun class, connect to the Arduino, and set the initial angle.
         The class communicates with the Arduino via a serial connection.
         The protocol:
@@ -25,15 +25,27 @@ class Gun:
         Args:
             print_flag (bool, optional): If True, print debug information. Defaults to False.
         """
+        self.gun_index = index
         self.current_angle = 0
         self.gun_location = gun_location
-
+        self.target_stack = []
         self.ser = self._connect_to_serial(COM)
         time.sleep(2)  # Give Arduino time to reset; setup delay sleep for 2 seconds
+        self.print_flag = print_flag
 
-        if print_flag:
+        if self.print_flag:
             print(f"Gun initialized and connected at {COM}.")
-        print("Gun initialized and connected.")
+
+    def set_next_target(self, target):
+        self.next_target = target
+
+    def get_gun_location(self):
+        """Get the location of the gun.
+
+        Returns:
+            tuple: The location of the gun as (x, y) coordinates.
+        """
+        return self.gun_location
 
     def _connect_to_serial(self, port):
         try:
@@ -53,9 +65,10 @@ class Gun:
                 sys.exit()
 
     def shoot(self):
-        print(f"Shooting!!! at {self.current_angle} degrees")
+        # print(f"Shooting!!! at {self.current_angle} degrees")
         self.ser.write(b"SHOOT\n")
-        print(f">>> SHOOT")
+        if self.print_flag:
+            print(f">>> SHOOT")
         self._wait_for_done()
 
     def rotate(self, angle):
@@ -66,18 +79,23 @@ class Gun:
         Args:
             angle (int): The angle to rotate to, in degrees.
         """
-        angle = angle * (-1)
+        print(f"Rotating to {angle} degrees")
         dθ = angle - self.current_angle
         steps = int(STEPS_IN_DEGREE * dθ)
         command = f"ROTATE:{steps}\n".encode()
         self.ser.write(command)
-        print("rotating")
-
-        print(f">>> {command}")
+        if self.print_flag:
+            print(f">>> {command}")
         self._wait_for_done()
-        self.current_angle = angle * (-1)
-        print(f"Gun rotated to {self.current_angle} degrees")
+        self.current_angle = angle 
+        # print(f"Gun rotated to {self.current_angle} degrees")
 
+
+    def is_free(self):
+        if len(self.target_stack) <2:
+            return True
+        return False
+    
     def get_angle(self):
         """Get the current angle of the gun.
 
@@ -91,7 +109,8 @@ class Gun:
         count = 0
         while True:
             response = self.ser.readline().decode().strip()
-            print("<<<", response)
+            if self.print_flag:
+                print("<<<", response)
             count += 1
             if response == "Done":
                 break
@@ -99,9 +118,6 @@ class Gun:
                 raise TimeoutError("Timeout waiting for Arduino response \"Done\" in Gun class.")
 
     def exit(self):
-        pass
-    
-    def aim_and_fire_target_2(self, center):
         pass
 
 class DummyGun:
@@ -121,13 +137,13 @@ class DummyGun:
 
 
 if __name__ == "__main__":
-    gun = Gun((3,4), print_flag=True)
+    gun = Gun((3,4), 0, print_flag=True)
     #angle_program = [0, 360, 0, 180, 0, 90, 0, -90, 0, 180, 0, 360, 0, -180, 0, 90, 0, -90, 0, 180, 0, 360, 0, -180, 0, 90, 0, -90, 0, 180, 0, 360, 0, -180, 0, 90, 0, -90, 0, 180, 0, 360]
-    angle_program = [-50,-65,-85]
+    angle_program = [0,10,-15,25,-20]
     #angle_program *= 5
     while True:
         for angle in angle_program:
             gun.rotate(angle)
-            sleep(1)
+            sleep(0.5)
             gun.shoot()
-            sleep(1)
+            sleep(0.5)

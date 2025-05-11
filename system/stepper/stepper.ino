@@ -2,13 +2,18 @@
 
 const int gunPin = 4;
 const int dirPin = 2;
-const int stepPin = 5;
+const int stepPin = 3;
+const int enablePin = 5;
 const int speed = 1000;
 const int SHOOT_COOLDOWN = 200;  // ms
 Servo myServo;
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(9600);  
+  
+  pinMode(enablePin, OUTPUT);
+  digitalWrite(enablePin, LOW);  // Enable the driver
+
   pinMode(gunPin, OUTPUT);
   pinMode(dirPin, OUTPUT);
   pinMode(stepPin, OUTPUT);
@@ -27,8 +32,13 @@ void loop() {
       digitalWrite(gunPin, LOW);
       Serial.println("Done");
     }
-
+    else if (command == "FLIP") {
+      digitalWrite(enablePin, !digitalRead(enablePin));
+      Serial.println("Flipped, now the enable pin is: ");
+      Serial.print(digitalRead(enablePin));
+    }
     else if (command.startsWith("ROTATE:")) {
+      digitalWrite(enablePin, LOW);  // Enable the driver
       long steps = command.substring(7).toInt(); // Read number of steps
       Serial.print("Number of steps: ");
       Serial.println(steps);
@@ -45,6 +55,7 @@ void loop() {
           delayMicroseconds(speed);
         }
       }
+      digitalWrite(enablePin, HIGH);  // Disable the driver
       Serial.println("Done");
     }
   }

@@ -143,19 +143,19 @@ def homography_calibration_main():
     # laser = threading.Thread(target=laser_thread)
     # laser.start()  # comment this line to disable the laser pointer
 
-    cv2.namedWindow(handler.TITLE)
-    cv2.setMouseCallback(handler.TITLE, handler.mouse_callback)
+    cv2.namedWindow("camera " + str(CAMERA_INDEX_0) + " view")
+    cv2.setMouseCallback("camera " + str(CAMERA_INDEX_0) + " view", handler.mouse_callback)
     source_points = []
     frame_num = 0
     while True:
         img = cam.read()
 
         handler.add(img)
-        handler.display()
-        if handler.has_new_click(): 
-            click_pos = handler.get_last_click()
+        handler.display(CAMERA_INDEX_0)
+        if handler.has_new_clicks(): 
+            click_pos = handler.get_clicks()
             print(click_pos)
-            source_points.append([float(click_pos[0]), float(click_pos[1])])
+            source_points.append([float(click_pos[0][0]), float(click_pos[0][1])])
             
         frame_num+=1
         # Press Escape to exit
@@ -738,8 +738,8 @@ if __name__ == "__main__":
     # hit_cursor_main()
     # just_changes_main()
     # main_using_targets_4()
-    # homography_calibration_main()
-    test_homography()
+    homography_calibration_main()
+    # test_homography()
     # test_camera()
     # homography_targets()1
     

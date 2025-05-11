@@ -2,7 +2,7 @@ import numpy as np
 
 IMG_WIDTH = 960
 IMG_HEIGHT = 540
-COM = "COM5"
+COM = "COM6"
 GUN = (0, 0)  # Coordinates of the gun in pixels
 # Constants for the homography transformation
 H1 = None
@@ -66,17 +66,17 @@ SERVO_PIN = 9  # pin for the servo motor
 # first camera, on big stand, next to the door
 CAMERA_INDEX_0 = 1
 CAMERA_LOCATION_0 = (0, 0)  # Coordinates of the camera in real world
-DEST_POINTS_0 = [[0.0, 0.0], [20.0, 0.0], [40.0, 0.0], [60.0, 0.0], [20.0, 15.0], [40.0, 15.0], [60.0, 15.0], [80.0, 20.0], [90.0, 30.0]]
+DEST_POINTS_0 = [[49.0, 31.0], [104.0, 31.0], [122.0, 48.0], [77.0, 57.0]]
 DEST_ARRAY_0 = np.array(DEST_POINTS_0, dtype=np.float32)
-SRC_POINTS_0 = [[73.0, 59.0], [156.0, 79.0], [257.0, 100.0], [387.0, 131.0], [50.0, 98.0], [150.0, 123.0], [276.0, 159.0], [401.0, 221.0], [417.0, 299.0]]
+SRC_POINTS_0 = [[114.0, 123.0], [566.0, 21.0], [780.0, 23.0], [593.0, 138.0]]
 SRC_ARRAY_0 = np.array(SRC_POINTS_0, dtype=np.float32)
 
-homography_matrix = np.array([[1.60566286e-01,  1.02417265e+00, -7.26217617e+01],
- [-1.38778595e-01,  6.18565415e-01, -2.66880965e+01],
- [1.32018961e-04,  7.61377421e-03,  1.00000000e+00]], dtype=np.float64)
+homography_matrix = np.array([[1.38118726e-01,  2.38750856e-01,  4.88761376e+01],
+ [1.07767901e-01,  6.74581812e-01, -3.57972902e+01],
+ [2.06946921e-04,  7.27261028e-03,  1.00000000e+00]], dtype=np.float64)
 
 
-# on lower stand, far from the door
+# on lower stand, far from the door, next to the window
 CAMERA_INDEX_1 = 2
 CAMERA_LOCATION_1 = (0, 0)  # Coordinates of the camera in real world
 DEST_POINTS_1 = [[0.0, 0.0], [20.0, 0.0], [40.0, 0.0], [60.0, 0.0]]
@@ -84,7 +84,9 @@ DEST_ARRAY_1 = np.array(DEST_POINTS_1, dtype=np.float32)
 SRC_POINTS_1 = []
 SRC_ARRAY_1 = np.array(SRC_POINTS_1, dtype=np.float32)
 
-homography_matrix_1 =  np.array([], dtype=np.float64)
+homography_matrix_1 =  np.array([[1.60566286e-01,  1.02417265e+00, -7.26217617e+01],
+ [-1.38778595e-01,  6.18565415e-01, -2.66880965e+01],
+ [1.32018961e-04,  7.61377421e-03,  1.00000000e+00]], dtype=np.float64)
 
 homography_matrices = [homography_matrix, homography_matrix_1]
 

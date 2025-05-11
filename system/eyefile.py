@@ -5,6 +5,7 @@ from object_finder import Targets
 import cv2
 import numpy as np  
 import threading
+from mouseCamera import MouseCameraHandler
 
 class Eye():
     def __init__(self, camera_index, camera_location, homography_matrix):
@@ -16,6 +17,18 @@ class Eye():
         self.homography = homography_matrix
         self.camera_location = 0
         self.real_coords_targets = []
+        self.mouse_camera_handler = MouseCameraHandler()
+        cv2.namedWindow("camera " + str(self.camera_index) + " view")
+        cv2.setMouseCallback("camera " + str(self.camera_index) + " view", self.mouse_camera_handler.mouse_callback)
+
+    def get_real_coords_targets(self):
+        """
+        Get the real world coordinates of the targets.
+        This function is called by the main loop to get the real world coordinates of the targets.
+        Returns:
+            real world coordinates of the targets
+        """
+        return self.real_coords_targets
 
     def add(self, to_check, to_init):
         """
@@ -33,18 +46,32 @@ class Eye():
         self.target_manager.add(frame, to_check=to_check, to_init=to_init)
         if to_check or to_init:
             pixel_coords = np.array(self.target_manager.new_targets, dtype='float32').reshape(-1, 1, 2)
-            self.real_coords_targets = cv2.perspectiveTransform(pixel_coords, self.homography)
-
+            real_coords_array = cv2.perspectiveTransform(pixel_coords, self.homography)
+            self.real_coords_targets = [tuple(pt[0]) for pt in real_coords_array]
             
 #         return
     
 
-    def independent_add(self, frame, to_check, to_init):
+    def add_independent(self):
         """
         Add the image to Raw_Handler but not to Targets.
         
         """
-        pass
+        frame = self.camera.read()
+        # print("got frame")
+        self.mouse_camera_handler.add(frame)
+        self.mouse_camera_handler.display(self.camera_index)
+        if self.mouse_camera_handler.has_new_clicks():
+            click_positions = self.mouse_camera_handler.get_clicks()
+            # print(f"camera {self.camera_index}: Clicked position in pixels:", click_positions)
+            pixel_coords = np.array(click_positions, dtype='float32').reshape(-1, 1, 2)
+            real_coords_array = cv2.perspectiveTransform(pixel_coords, self.homography)
+            return [tuple(pt[0]) for pt in real_coords_array]
+        return []
+        # print(f"coords in reality: {self.real_coords_targets}")
+
+            # print(f"added real coords: {self.real_coords_targets}")
+
     
 # import threading
 
