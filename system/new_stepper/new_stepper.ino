@@ -56,7 +56,7 @@ void loop() {
       }
 
       digitalWrite(enablePin, HIGH);  // Disable driver after move
-      Serial.println("Done");
+      Serial.println("Done"); // Critical for communication with Python
     }
   }
 }
