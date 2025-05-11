@@ -1,7 +1,8 @@
 #include <AccelStepper.h>
 
 // Pins
-const int gunPin = 10;
+const int gunPin_I = 10;
+const int gunPin_II = 9;
 const int dirPin_A = 4;
 const int stepPin_A = 7;
 const int dirPin_B = 2;
@@ -18,7 +19,8 @@ AccelStepper stepper_B(AccelStepper::DRIVER, stepPin_B, dirPin_B);
 void setup() {
   Serial.begin(9600);
 
-  pinMode(gunPin, OUTPUT);
+  pinMode(gunPin_I, OUTPUT);
+  pinMode(gunPin_II, OUTPUT);
   pinMode(enablePin, OUTPUT);
   digitalWrite(enablePin, HIGH);  // Disable driver
 
@@ -37,8 +39,10 @@ void loop() {
     String command = Serial.readStringUntil('\n');
     command.trim();
 
-    if (command == "SHOOT") {
-      shoot();
+    if (command == "SHOOT1") {
+      shoot(gunPin_I);
+    else if (command == "SHOOT2") {
+      shoot(gunPin_II);
     } else if (command.startsWith("ROTATEA:")) {
       long steps = command.substring(8).toInt();
       rotate(stepper_A, enablePin, steps);
@@ -49,12 +53,12 @@ void loop() {
   }
 }
 
-void shoot() {
+void shoot(int gunPin) {
   digitalWrite(gunPin, HIGH);
   Serial.println("Shooting.");
   delay(SHOOT_COOLDOWN);
   digitalWrite(gunPin, LOW);
-  Serial.println("Done");
+  Serial.println("Done"); // Critical for communication with Python
 }
 
 void rotate(AccelStepper stepper, int enablePin, long steps) {
