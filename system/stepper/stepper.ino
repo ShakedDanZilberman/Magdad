@@ -31,13 +31,7 @@ void loop() {
       delay(SHOOT_COOLDOWN);
       digitalWrite(gunPin, LOW);
       Serial.println("Done");
-    }
-    else if (command == "FLIP") {
-      digitalWrite(enablePin, !digitalRead(enablePin));
-      Serial.println("Flipped, now the enable pin is: ");
-      Serial.print(digitalRead(enablePin));
-    }
-    else if (command.startsWith("ROTATE:")) {
+    } else if (command.startsWith("ROTATE:")) {
       digitalWrite(enablePin, LOW);  // Enable the driver
       long steps = command.substring(7).toInt(); // Read number of steps
       Serial.print("Number of steps: ");
