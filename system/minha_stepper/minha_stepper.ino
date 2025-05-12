@@ -27,10 +27,10 @@ void setup() {
 
   // Stepper setup
   stepper_A.setMaxSpeed(MAX_SPEED);        
-  stepper_A.setAcceleration(ACCELERATION);     
+  stepper_A.setAcceleration(1000);     
   stepper_A.setCurrentPosition(0);    // reset position
   stepper_B.setMaxSpeed(MAX_SPEED);
-  stepper_B.setAcceleration(ACCELERATION);
+  stepper_B.setAcceleration(1000);
   stepper_B.setCurrentPosition(0);    // reset position
 }
 
