@@ -9,7 +9,7 @@ const int dirPin_B = 2;
 const int stepPin_B = 5;
 const int enablePin = 8;
 const int SHOOT_COOLDOWN = 2;  // ms
-const int MAX_SPEED = 2000;  // steps per second
+const int MAX_SPEED = 3000;  // steps per second
 const int ACCELERATION = 1000;  // steps per second^2
 
 // Stepper setup: DRIVER interface type = 1

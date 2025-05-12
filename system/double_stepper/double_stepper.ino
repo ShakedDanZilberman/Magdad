@@ -1,8 +1,6 @@
-#include <Servo.h>
-
 // Pins
-const int gunPin_I = 12;
-const int gunPin_II = 11;
+const int gunPin_I = 10;
+const int gunPin_II = 9;
 const int dirPin_A = 4;
 const int stepPin_A = 7;
 const int dirPin_B = 2;
