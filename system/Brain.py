@@ -189,13 +189,13 @@ class Brain():
         it allows the user to add targets to the list of targets by clicking them on the screen.
         after clicking, the target is added to the list of targets and the gun shoots at it.
         """
-        to_init = self.timestep == 5
-        if self.timestep % 15 == 14:
-            to_check = True
-        else:
-            to_check = False
+        # to_init = self.timestep == 5
+        # if self.timestep % 15 == 14:
+        #     to_check = True
+        # else:
+        #     to_check = False
         for eye in self.eyes:
-            targets  = eye.add_yolo(to_check, to_init)
+            targets  = eye.add_yolo(True, True)
             if len(targets) > 0:
                 self.add_to_target_list(targets, MIN_DISTANCE)
 
@@ -337,6 +337,7 @@ class Brain():
         the user spots the targets and the gun shoots at them.
         """
         print("running main")
+        cv2.startWindowThread()
         def run_gun(gun_index):
             gun = self.guns[gun_index]
             # This function will run in a separate thread for each gun

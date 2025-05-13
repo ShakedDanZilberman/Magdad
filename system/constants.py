@@ -2,7 +2,7 @@ import numpy as np
 
 IMG_WIDTH = 960
 IMG_HEIGHT = 540
-COM = "COM6"
+COM = "COM17"
 GUN = (0, 0)  # Coordinates of the gun in pixels
 # Constants for the homography transformation
 H1 = None
@@ -64,7 +64,7 @@ SERVO_PIN = 9  # pin for the servo motor
 
 # constatns for the camera homography
 # first camera, on big stand, next to the door
-CAMERA_INDEX_0 = 1
+CAMERA_INDEX_0 = 0
 CAMERA_LOCATION_0 = (0, 0)  # Coordinates of the camera in real world
 DEST_POINTS_0 = [[49.0, 31.0], [104.0, 31.0], [122.0, 48.0], [77.0, 57.0]]
 DEST_ARRAY_0 = np.array(DEST_POINTS_0, dtype=np.float32)
@@ -77,7 +77,7 @@ homography_matrix = np.array([[1.38118726e-01,  2.38750856e-01,  4.88761376e+01]
 
 
 # on lower stand, far from the door, next to the window
-CAMERA_INDEX_1 = 2
+CAMERA_INDEX_1 = 0
 CAMERA_LOCATION_1 = (0, 0)  # Coordinates of the camera in real world
 DEST_POINTS_1 = [[0.0, 0.0], [20.0, 0.0], [40.0, 0.0], [60.0, 0.0]]
 DEST_ARRAY_1 = np.array(DEST_POINTS_1, dtype=np.float32)

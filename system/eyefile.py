@@ -84,16 +84,17 @@ class Eye():
             real world coordinates of the target
         """
         frame = self.camera.read()
-        self.raw_handler.add(frame)
-        self.raw_handler.display(self.camera_index)
-        
-        
+        # self.raw_handler.add(frame)
+        # self.raw_handler.display(self.camera_index)
+        self.yolo_handler.add(frame)
+        self.yolo_handler.display()
         if to_check or to_init:
-            self.yolo_handler.add(frame)
+            
             pixel_coords = np.array(self.yolo_handler.get_centers(), dtype='float32').reshape(-1, 1, 2)
             real_coords_array = cv2.perspectiveTransform(pixel_coords, self.homography)
-            real_coords_targets = [tuple(pt[0]) for pt in real_coords_array]
-            return real_coords_targets
+            if real_coords_array is not None:
+                real_coords_targets = [tuple(pt[0]) for pt in real_coords_array]
+                return real_coords_targets
         return []
 
 # import threading
