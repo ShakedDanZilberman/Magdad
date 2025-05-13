@@ -41,7 +41,10 @@ class Brain():
         Returns True if too close to an existing target.
         """
         tx, ty = target
+        print("tx, ty:", (tx, ty))
         for (ox, oy) in self.targets.keys():
+            print("ox, oy:", (ox, oy))
+
             if np.linalg.norm((tx - ox, ty - oy)) <= min_dist:
                 return True
         return False
@@ -369,12 +372,16 @@ class Brain():
             gun_thread.start() 
             print(f"Gun {i} is ready to shoot")
 
+
         while True:
             self.timestep += 1
             # print("timestep: ", self.timestep)
             self.add_yolo()
             self.check_emergency_targets()
             # print(f"targets in brain: {self.targets}")
+            for eye in self.eyes:
+                eye.display()
+            
             for gun in self.guns:
                 
                 if gun.is_free():
@@ -391,9 +398,10 @@ class Brain():
 if __name__ == "__main__":
     gun_info = [((30,48), 0)]  # example
     # cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0]), (CAMERA_INDEX_1, CAMERA_LOCATION_1, homography_matrices[1])]  # (cam_index, CAMERA_LOCATION_0, homography_matrix)
-    cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0]), (CAMERA_INDEX_1, CAMERA_LOCATION_1, homography_matrices[1])]  # (cam_index, CAMERA_LOCATION_0, homography_matrix)
+    cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0]), (CAMERA_INDEX_1, CAMERA_LOCATION_1, homography_matrices[1]), (CAMERA_INDEX_2, CAMERA_LOCATION_2, homography_matrices[2])]  # (cam_index, CAMERA_LOCATION_0, homography_matrix)
     try:
-        Brain(gun_info, cam_info).game_loop_yolo()
+        # Brain(gun_info, cam_info).game_loop_yolo()
+        Brain(gun_info, cam_info).game_loop_independent()
     except KeyboardInterrupt:
         for thread in threading.enumerate():
             print(f"Thread {thread.name} is alive: {thread.is_alive()}")

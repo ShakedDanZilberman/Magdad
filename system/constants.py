@@ -2,7 +2,7 @@ import numpy as np
 
 IMG_WIDTH = 960
 IMG_HEIGHT = 540
-COM = "COM17"
+COM = "COM14"
 GUN = (0, 0)  # Coordinates of the gun in pixels
 # Constants for the homography transformation
 H1 = None
@@ -77,8 +77,8 @@ homography_matrix = np.array([[1.38118726e-01,  2.38750856e-01,  4.88761376e+01]
 
 
 # on lower stand, far from the door, next to the window
-CAMERA_INDEX_1 = 0
-CAMERA_LOCATION_1 = (0, 0)  # Coordinates of the camera in real world
+CAMERA_INDEX_1 = 2
+CAMERA_LOCATION_1 = (100, 0)  # Coordinates of the camera in real world
 DEST_POINTS_1 = [[0.0, 0.0], [20.0, 0.0], [40.0, 0.0], [60.0, 0.0]]
 DEST_ARRAY_1 = np.array(DEST_POINTS_1, dtype=np.float32)
 SRC_POINTS_1 = []
@@ -90,3 +90,11 @@ homography_matrix_1 =  np.array([[1.60566286e-01,  1.02417265e+00, -7.26217617e+
 
 homography_matrices = [homography_matrix, homography_matrix_1]
 
+# # 3 is the closest to the window
+CAMERA_INDEX_2 = 3
+CAMERA_LOCATION_2 = (200, 0)  # Coordinates of the camera in real world
+homography_matrix_2 =  np.array([[1.60566286e-01,  1.02417265e+00, -7.26217617e+01],
+ [-1.38778595e-01,  6.18565415e-01, -2.66880965e+01],
+ [1.32018961e-04,  7.61377421e-03,  1.00000000e+00]], dtype=np.float64)
+
+homography_matrices.append(homography_matrix_2)

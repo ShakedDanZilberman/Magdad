@@ -83,7 +83,8 @@ class Camera:
     def __init__(self, index):
         self.index = index
         print("index is", self.index)
-        self.cam = cv2.VideoCapture(self.index, cv2.CAP_MSMF)
+        # self.cam = cv2.VideoCapture(self.index, cv2.CAP_MSMF)
+        self.cam = cv2.VideoCapture(self.index, cv2.CAP_DSHOW)  # this is supposed to be a better mode
         self.cam.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
         self.cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
         # self.cam.set(cv2.CAP_PROP_FPS, 10)
@@ -93,7 +94,7 @@ class Camera:
         self.img = ImageParse.resize_proportionally(self.img, 0.5)
         if not ret_val:
             print(f"Camera @ index {self.index} not connected")
-            self.index = int(input("Enter the index of the camera you want to connect to: "))
+            self.index = int(input("RECONNECT THE USB HUB! Or, enter the index of the camera you want to connect to: "))
             self.cam = cv2.VideoCapture(self.index)
             img = self.cam.read()
             if not ret_val:
@@ -114,6 +115,8 @@ class Camera:
 
 if __name__ == "__main__":
     # display image from camera index 1
+    # detectCameras()
+    showAllCameras()
     cam = Camera(0)
     while True:
         img = cam.read()
