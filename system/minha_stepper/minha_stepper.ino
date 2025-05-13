@@ -9,7 +9,7 @@ const int dirPin_B = 2;
 const int stepPin_B = 5;
 const int enablePin = 8;
 const int SHOOT_COOLDOWN = 2;  // ms
-const int MAX_SPEED = 3000;  // steps per second
+const int MAX_SPEED = 2000;  // steps per second
 const int ACCELERATION = 1000;  // steps per second^2
 
 // Stepper setup: DRIVER interface type = 1
@@ -27,10 +27,10 @@ void setup() {
 
   // Stepper setup
   stepper_A.setMaxSpeed(MAX_SPEED);        
-  stepper_A.setAcceleration(ACCELERATION);     
+  stepper_A.setAcceleration(1000);     
   stepper_A.setCurrentPosition(0);    // reset position
   stepper_B.setMaxSpeed(MAX_SPEED);
-  stepper_B.setAcceleration(ACCELERATION);
+  stepper_B.setAcceleration(1000);
   stepper_B.setCurrentPosition(0);    // reset position
 }
 

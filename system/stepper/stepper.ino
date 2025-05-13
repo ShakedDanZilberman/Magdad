@@ -9,10 +9,10 @@ const int SHOOT_COOLDOWN = 200;  // ms
 Servo myServo;
 
 void setup() {
-  Serial.begin(9600);  
-  
+  Serial.begin(9600);
+
   pinMode(enablePin, OUTPUT);
-  digitalWrite(enablePin, LOW);  // Enable the driver
+  digitalWrite(enablePin, HIGH);  // Disable the driver
 
   pinMode(gunPin, OUTPUT);
   pinMode(dirPin, OUTPUT);
