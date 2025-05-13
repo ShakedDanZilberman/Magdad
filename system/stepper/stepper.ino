@@ -1,10 +1,10 @@
 #include <Servo.h>
 
-const int gunPin = 4;
-const int dirPin = 2;
-const int stepPin = 3;
-const int enablePin = 5;
-const int speed = 1000;
+const int gunPin = 11;
+const int dirPin = 4;
+const int stepPin = 7;
+const int enablePin = 8;
+const int speed = 1000; // less is faster
 const int SHOOT_COOLDOWN = 200;  // ms
 Servo myServo;
 
@@ -27,7 +27,7 @@ void loop() {
 
     if (command == "SHOOT") {
       digitalWrite(gunPin, HIGH);
-      Serial.println("Shooting.");
+      Serial.println("Pew Pew.");
       delay(SHOOT_COOLDOWN);
       digitalWrite(gunPin, LOW);
       Serial.println("Done");
