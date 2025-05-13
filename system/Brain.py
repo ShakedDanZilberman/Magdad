@@ -183,6 +183,23 @@ class Brain():
             if len(targets) > 0:
                 self.add_to_target_list(targets, MIN_DISTANCE)
 
+    def add_yolo(self):
+        """
+        this function deals with frame adding without using yolo
+        it allows the user to add targets to the list of targets by clicking them on the screen.
+        after clicking, the target is added to the list of targets and the gun shoots at it.
+        """
+        to_init = self.timestep == 5
+        if self.timestep % 15 == 14:
+            to_check = True
+        else:
+            to_check = False
+        for eye in self.eyes:
+            targets  = eye.add_yolo(to_check, to_init)
+            if len(targets) > 0:
+                self.add_to_target_list(targets, MIN_DISTANCE)
+
+
     def check_emergency_targets(self):
         emergency_targets = []
         for location, priority in self.targets.items():
@@ -314,12 +331,68 @@ class Brain():
         cv2.destroyAllWindows()
 
 
+    def game_loop_yolo(self):
+        """
+        This function is the main loop of the program. It runs independently of image procesing.
+        the user spots the targets and the gun shoots at them.
+        """
+        print("running main")
+        def run_gun(gun_index):
+            gun = self.guns[gun_index]
+            # This function will run in a separate thread for each gun
+            print(f"Gun {gun.gun_location} is ready to shoot")
+            while True:
+                if gun.target_stack is not None and len(gun.target_stack)>0:
+                    # print("gun target stack: ", gun.target_stack)
+                    # Get the target coordinates from the last camera
+                    target = gun.target_stack[0]            
+                    # print(f"Gun {gun.gun_location} is aiming at target {target}")
+                    # Calculate the angle to rotate to
+                    print(f"target stack: {gun.target_stack}")
+                    angle = self.calculate_angle_from_gun(target[0], gun_index)
+                    # print("angle to shoot: ", angle)
+                    gun.rotate(angle)
+                    gun.shoot()
+                    print("shot fired")
+                    gun.target_stack.pop(0)
+                    print("gun target stack after pop: ", gun.target_stack)
+                    time.sleep(0.1)
+
+
+            # check which gun is free and assign it to the target
+            # if there is a target in the list of targets that has priority 8 or higher, assign it to the first gun immediately
+        
+        for i, gun in enumerate(self.guns):
+            print(f"starting gun thread for gun {i}")
+            gun_thread = threading.Thread(target=run_gun, args=(i,))
+            gun_thread.start() 
+            print(f"Gun {i} is ready to shoot")
+
+        while True:
+            self.timestep += 1
+            # print("timestep: ", self.timestep)
+            self.add_yolo()
+            self.check_emergency_targets()
+            # print(f"targets in brain: {self.targets}")
+            for gun in self.guns:
+                
+                if gun.is_free():
+                    # assign the target to the gun
+                    self.pop_optimized(gun)
+                    # print(f"gun {gun.gun_index} target stack: ", gun.target_stack)
+            # print("timestep: ", self.timestep)
+            # Press Escape to exit
+            if cv2.waitKey(1) == 27:
+                break
+        cv2.destroyAllWindows()
+
+
 if __name__ == "__main__":
     gun_info = [((30,48), 0)]  # example
     # cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0]), (CAMERA_INDEX_1, CAMERA_LOCATION_1, homography_matrices[1])]  # (cam_index, CAMERA_LOCATION_0, homography_matrix)
     cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0]), (CAMERA_INDEX_1, CAMERA_LOCATION_1, homography_matrices[1])]  # (cam_index, CAMERA_LOCATION_0, homography_matrix)
     try:
-        Brain(gun_info, cam_info).game_loop_independent()
+        Brain(gun_info, cam_info).game_loop_yolo()
     except KeyboardInterrupt:
         for thread in threading.enumerate():
             print(f"Thread {thread.name} is alive: {thread.is_alive()}")

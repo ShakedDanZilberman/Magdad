@@ -6,6 +6,7 @@ import cv2
 import numpy as np  
 import threading
 from mouseCamera import MouseCameraHandler
+from yolo import YOLOHandler
 
 class Eye():
     def __init__(self, camera_index, camera_location, homography_matrix):
@@ -14,6 +15,7 @@ class Eye():
         self.camera = Camera(self.camera_index) 
         self.raw_handler = RawHandler()
         self.target_manager = Targets()
+        self.yolo_handler = YOLOHandler()
         self.homography = homography_matrix
         self.camera_location = 0
         self.real_coords_targets = []
@@ -72,7 +74,28 @@ class Eye():
 
             # print(f"added real coords: {self.real_coords_targets}")
 
-    
+    def add_yolo(self, to_check, to_init):
+        """
+        Add the image to Raw_Handler and Targets.
+        This function is called by the main loop to add the image to the handler.
+        after adding to the target_manager it calculates the real world coordinates using homography matrix
+
+        Returns:
+            real world coordinates of the target
+        """
+        frame = self.camera.read()
+        self.raw_handler.add(frame)
+        self.raw_handler.display(self.camera_index)
+        
+        
+        if to_check or to_init:
+            self.yolo_handler.add(frame)
+            pixel_coords = np.array(self.yolo_handler.get_centers(), dtype='float32').reshape(-1, 1, 2)
+            real_coords_array = cv2.perspectiveTransform(pixel_coords, self.homography)
+            real_coords_targets = [tuple(pt[0]) for pt in real_coords_array]
+            return real_coords_targets
+        return []
+
 # import threading
 
 # class Eye():

@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from image_processing import ImageParse
 import undistortion
-from constants import FPS
+from constants import *
 
 MAX_CAMERAS = 10
 
@@ -102,6 +102,9 @@ class Camera:
 
     def read(self):
         ret_val, self.img = self.cam.read()
+        if ret_val == False:
+            print("Failed to read from camera")
+            self.img = np.zeros((IMG_HEIGHT, IMG_WIDTH), np.uint8)
         self.img = ImageParse.resize_proportionally(self.img, 0.5)
         self.img = ImageParse.toGrayscale(self.img)
         self.img = undistortion.undistort(self.img)
@@ -111,7 +114,7 @@ class Camera:
 
 if __name__ == "__main__":
     # display image from camera index 1
-    cam = Camera(2)
+    cam = Camera(0)
     while True:
         img = cam.read()
         cv2.imshow("Camera", img)
