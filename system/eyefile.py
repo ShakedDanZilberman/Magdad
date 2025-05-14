@@ -21,8 +21,8 @@ class Eye():
         self.real_coords_targets = []
         self.mouse_camera_handler = MouseCameraHandler()
         # uncomment the following lines to add mouse callback to the camera view
-        cv2.namedWindow("camera " + str(self.camera_index) + " View")
-        cv2.setMouseCallback("camera " + str(self.camera_index) + " View", self.mouse_camera_handler.mouse_callback)
+        # cv2.namedWindow("camera " + str(self.camera_index) + " View")
+        # cv2.setMouseCallback("camera " + str(self.camera_index) + " View", self.mouse_camera_handler.mouse_callback)
 
     def get_real_coords_targets(self):
         """
@@ -76,7 +76,7 @@ class Eye():
 
             # print(f"added real coords: {self.real_coords_targets}")
 
-    def add_yolo(self, to_check, to_init):
+    def add_yolo(self, frame, to_check=True):
         """
         Add the image to Raw_Handler and Targets.
         This function is called by the main loop to add the image to the handler.
@@ -85,13 +85,12 @@ class Eye():
         Returns:
             real world coordinates of the target
         """
-        frame = self.camera.read()
-        self.raw_handler.add(frame)
-        # self.raw_handler.display(self.camera_index)
+        # frame = self.camera.read()
+        # self.raw_handler.add(frame)
+        # # self.raw_handler.display(self.camera_index)
         self.yolo_handler.add(frame)
         # self.yolo_handler.display()
-        if to_check or to_init:
-            
+        if to_check:
             pixel_coords = np.array(self.yolo_handler.get_centers(), dtype='float32').reshape(-1, 1, 2)
             real_coords_array = cv2.perspectiveTransform(pixel_coords, self.homography)
             if real_coords_array is not None:
@@ -104,9 +103,9 @@ class Eye():
         Display the image stored in the handler.
         Uses cv2.imshow() to display the image.
         """
-        self.raw_handler.display(self.camera_index)
+        # self.raw_handler.display(self.camera_index)
         # self.mouse_camera_handler.display(self.camera_index)
-        # self.yolo_handler.display()
+        self.yolo_handler.display()
 
 # import threading
 

@@ -1,0 +1,65 @@
+
+import threading
+import time
+import cv2
+import queue
+
+class CameraProducer(threading.Thread):
+    def __init__(self, camera_index, eye, output_queue):
+        super().__init__(daemon=True)
+        self.cap = cv2.VideoCapture(camera_index)
+        self.eye = eye
+        self.output_queue = output_queue
+        self.win_name = f"Cam {camera_index}"
+
+    def run(self):
+        while True:
+            ret, frame = self.cap.read()
+            if not ret:
+                break
+
+            # Run your add_yolo processing (which draws on frame internally)
+            # We assume eye.add_yolo returns real-world coords but also
+            # that eye.yolo_handler.display() drew bounding boxes into eye.img
+            targets = self.eye.add_yolo(frame)  
+
+            # Grab the visualized image from the eye (after display())
+            vis = self.eye.yolo_handler.last_vis.copy()
+
+            # Put into queue (overwriting previous if queue full)
+            try:
+                self.output_queue.put((self.win_name, vis), block=False)
+            except queue.Full:
+                # drop old frame if not yet consumed
+                _ = self.output_queue.get_nowait()
+                self.output_queue.put((self.win_name, vis), block=False)
+
+            # Throttle if needed
+            time.sleep(0.01)
+
+        self.cap.release()
+
+class DisplayConsumer(threading.Thread):
+    def __init__(self, input_queue):
+        super().__init__(daemon=True)
+        self.input_queue = input_queue
+        self.latest = {}  # win_name -> frame
+
+    def run(self):
+        while True:
+            # Harvest all available frames
+            while True:
+                try:
+                    win_name, frame = self.input_queue.get(block=False)
+                    self.latest[win_name] = frame
+                except queue.Empty:
+                    break
+
+            # Display all latest
+            for win_name, frame in self.latest.items():
+                cv2.imshow(win_name, frame)
+
+            # One waitKey to refresh all windows
+            key = cv2.waitKey(1)
+            if key == 27:  # ESC
+                return

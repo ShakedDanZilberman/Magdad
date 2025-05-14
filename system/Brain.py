@@ -6,6 +6,62 @@ from constants import *
 import time
 import cv2
 import numpy as np
+import queue
+# from vis_production import CameraProducer
+
+
+class CameraProducer(threading.Thread):
+    def __init__(self, camera_index, eye, output_queue):
+        super().__init__(daemon=True)
+        # self.cap = cv2.VideoCapture(camera_index)
+        self.eye = eye
+        self.output_queue = output_queue
+        self.win_name = f"Cam {camera_index}"
+
+    def run(self):
+        while True:
+            frame = self.eye.camera.read()
+            # Run your add_yolo processing (which returns targets)
+            targets = self.eye.add_yolo(frame)  
+
+            # Grab the visualized image (after display())
+            vis = self.eye.yolo_handler.get_vis()
+            print(f"visual is {vis}")
+            # Put into queue: window name, image, AND targets
+            item = (self.win_name, vis, targets)
+            try:
+                self.output_queue.put(item, block=False)
+            except queue.Full:
+                # drop oldest if full
+                _ = self.output_queue.get_nowait()
+                self.output_queue.put(item, block=False)
+
+            time.sleep(0.01)
+
+class DisplayConsumer(threading.Thread):
+    def __init__(self, input_queue):
+        super().__init__(daemon=True)
+        self.input_queue = input_queue
+        self.latest = {}  # win_name -> frame
+
+    def run(self):
+        while True:
+            # Harvest all available frames
+            while True:
+                try:
+                    win_name, frame = self.input_queue.get(block=False)
+                    self.latest[win_name] = frame
+                except queue.Empty:
+                    break
+
+            # Display all latest
+            for win_name, frame in self.latest.items():
+                cv2.imshow(win_name, frame)
+
+            # One waitKey to refresh all windows
+            key = cv2.waitKey(1)
+            if key == 27:  # ESC
+                return
 
 class Brain():
     def __init__(self, gun_info, cam_info):
@@ -24,7 +80,8 @@ class Brain():
             self.eyes.append(new_eye)
         self.targets = {}
         self.timestep = 0
-
+        self.display_queue = queue.Queue(maxsize=len(self.eyes))
+        self.latest = {}
 
     def get_targets(self):
         return self.targets
@@ -74,7 +131,6 @@ class Brain():
         # print("adding target: ", target_location, "priority: ", priority)
         self.targets[target_location] = priority
         # print("targets: ", self.targets)
-
         
     def add(self):
         to_init = self.timestep == 5
@@ -88,9 +144,6 @@ class Brain():
             self.add_to_target_list(targets, MIN_DISTANCE)
         if to_check or to_init:
             print("targets in brain:", self.targets)
-
-
-
 
     # def too_close(self, target, distance):
     #     if all(
@@ -114,7 +167,6 @@ class Brain():
     #     # this is temporary:
     #     self.targets.append(target)
 
-
     def calculate_angle_from_gun(self, target, gun_index=0):
         gun = self.guns[gun_index]
         # print(f"gun location: {gun.gun_location}, target: {target}")
@@ -128,7 +180,6 @@ class Brain():
             angle = 90 - np.arctan(slope) * 180 / np.pi
         return angle
 
-    
     def calculate_angle(self, location_1: tuple, location_2: tuple):
         """
         This function calculates the angle between two points in degrees.
@@ -141,7 +192,6 @@ class Brain():
         angle = np.degrees(np.arctan2(dy, dx))
         return np.abs(angle)
         
-
     def game_loop(self):
         print("running main")
         def run_gun(index):
@@ -198,10 +248,9 @@ class Brain():
         # else:
         #     to_check = False
         for eye in self.eyes:
-            targets  = eye.add_yolo(True, True)
+            targets = eye.add_yolo(True, True)
             if len(targets) > 0:
                 self.add_to_target_list(targets, MIN_DISTANCE)
-
 
     def check_emergency_targets(self):
         emergency_targets = []
@@ -240,8 +289,6 @@ class Brain():
             priority = self.targets.pop(closest_target[0])
             print(f"targets in brain after pop: {self.targets}")
             gun.target_stack.append((closest_target[0], priority))
-           
-
 
     def angle_diff(self, location_1: tuple, location_2: tuple, gun_index=0):
         """
@@ -276,7 +323,6 @@ class Brain():
     #             closest_target = location
     #     self.targets.pop(closest_target)
     #     return closest_target
-
 
     def game_loop_independent(self):
         """
@@ -333,7 +379,6 @@ class Brain():
                 break
         cv2.destroyAllWindows()
 
-
     def game_loop_yolo(self):
         """
         This function is the main loop of the program. It runs independently of image procesing.
@@ -361,8 +406,6 @@ class Brain():
                     gun.target_stack.pop(0)
                     print("gun target stack after pop: ", gun.target_stack)
                     time.sleep(0.1)
-
-
             # check which gun is free and assign it to the target
             # if there is a target in the list of targets that has priority 8 or higher, assign it to the first gun immediately
         
@@ -394,14 +437,89 @@ class Brain():
                 break
         cv2.destroyAllWindows()
 
+    def game_loop_display(self):
+        """
+        This function is the main loop of the program. It runs independently of image procesing.
+        the user spots the targets and the gun shoots at them.
+        """
+        print("running main")
+        # cv2.startWindowThread()
+        def run_gun(gun_index):
+            gun = self.guns[gun_index]
+            # This function will run in a separate thread for each gun
+            print(f"Gun {gun.gun_location} is ready to shoot")
+            while True:
+                if gun.target_stack is not None and len(gun.target_stack)>0:
+                    # print("gun target stack: ", gun.target_stack)
+                    # Get the target coordinates from the last camera
+                    target = gun.target_stack[0]            
+                    # print(f"Gun {gun.gun_location} is aiming at target {target}")
+                    # Calculate the angle to rotate to
+                    # print(f"target stack: {gun.target_stack}")
+                    angle = self.calculate_angle_from_gun(target[0], gun_index)
+                    # print("angle to shoot: ", angle)
+                    gun.rotate(angle)
+                    gun.shoot()
+                    print("shot fired")
+                    gun.target_stack.pop(0)
+                    # print("gun target stack after pop: ", gun.target_stack)
+                    time.sleep(0.1)
+            # check which gun is free and assign it to the target
+            # if there is a target in the list of targets that has priority 8 or higher, assign it to the first gun immediately
+        
+        for i, gun in enumerate(self.guns):
+            print(f"starting gun thread for gun {i}")
+            gun_thread = threading.Thread(target=run_gun, args=(i,))
+            gun_thread.start() 
+            print(f"Gun {i} is ready to shoot")
+
+        # Create a queue for the display thread
+        producers = []
+        for eye in self.eyes:
+            prod = CameraProducer(eye.camera_index, eye, self.display_queue)
+            prod.start()
+            producers.append(prod)
+
+        while True:
+            self.timestep += 1
+            # 1. Add targets from cameras
+            while True:
+                try:
+                    win_name, frame, targets = self.display_queue.get(block=False)
+                    self.latest[win_name] = (frame, targets)
+                except queue.Empty:
+                    break
+
+            # 2. Display frames and process targets
+            for win_name, (frame, targets) in self.latest.items():
+                cv2.imshow(win_name, frame)
+
+                # Here’s where you can act on the targets:
+                if targets is not None and len(targets) > 0:
+                    # print(f"[{win_name}] detected targets:", targets)
+                    self.add_to_target_list(targets, MIN_DISTANCE)
+            
+            # 3. Manage gun logic
+            self.check_emergency_targets()
+            for gun in self.guns:
+                if gun.is_free():
+                    self.pop_optimized(gun)
+            if cv2.waitKey(1) == 27:
+                break
+        cv2.destroyAllWindows()
+        for thread in threading.enumerate():
+            print(f"Thread {thread.name} is alive: {thread.is_alive()}")
+        print("Exiting...")
+        exit(0)
 
 if __name__ == "__main__":
     gun_info = [((30,48), 0)]  # example
     # cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0]), (CAMERA_INDEX_1, CAMERA_LOCATION_1, homography_matrices[1])]  # (cam_index, CAMERA_LOCATION_0, homography_matrix)
-    cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0]), (CAMERA_INDEX_1, CAMERA_LOCATION_1, homography_matrices[1]), (CAMERA_INDEX_2, CAMERA_LOCATION_2, homography_matrices[2])]  # (cam_index, CAMERA_LOCATION_0, homography_matrix)
+    # cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0]), (CAMERA_INDEX_1, CAMERA_LOCATION_1, homography_matrices[1]), (CAMERA_INDEX_2, CAMERA_LOCATION_2, homography_matrices[2])]  # (cam_index, CAMERA_LOCATION_0, homography_matrix)
+    cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0]), (CAMERA_INDEX_1, CAMERA_LOCATION_1, homography_matrices[1])]
     try:
         # Brain(gun_info, cam_info).game_loop_yolo()
-        Brain(gun_info, cam_info).game_loop_independent()
+        Brain(gun_info, cam_info).game_loop_display()
     except KeyboardInterrupt:
         for thread in threading.enumerate():
             print(f"Thread {thread.name} is alive: {thread.is_alive()}")

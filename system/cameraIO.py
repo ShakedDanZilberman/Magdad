@@ -116,14 +116,15 @@ class Camera:
 if __name__ == "__main__":
     # display image from camera index 1
     # detectCameras()
-    showAllCameras()
-    cam = Camera(0)
+    # showAllCameras()
+    cam = Camera(CAMERA_INDEX_0)
     while True:
         img = cam.read()
         cv2.imshow("Camera", img)
-        if cv2.waitKey(1) & 0xFF == ord("q"):
+        if cv2.waitKey(1) == 27:
             break
     cam.cam.release()
+    cv2.destroyAllWindows()
 
 # if __name__ == "__main__":
 #     showAllCameras()
