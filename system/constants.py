@@ -64,7 +64,7 @@ SERVO_PIN = 9  # pin for the servo motor
 
 # constatns for the camera homography, positions are when looking at the door from inside the room
 # left camera
-CAMERA_INDEX_0 = 1
+CAMERA_INDEX_0 = 3
 CAMERA_LOCATION_0 = (0, 0)  # Coordinates of the camera in real world
 DEST_POINTS_0 = [[0.0, 0.0], [25.0, 0.0], [50.0, 0.0], [75.0, 0.0], [100.0, 0.0], [125.0, 0.0], 
                  [0.0, 25.0], [25.0, 25.0], [50.0, 25.0], [75.0, 25.0], [100.0, 25.0],
@@ -101,7 +101,7 @@ homography_matrix_1 =  np.array([[3.47340665e-01,  9.84985803e-01,  3.59704322e+
 
 
 # right camera
-CAMERA_INDEX_2 = 3
+CAMERA_INDEX_2 = 1
 CAMERA_LOCATION_2 = (0, 0)  # Coordinates of the camera in real world
 DEST_POINTS_2 = [[0.0, 0.0], [20.0, 0.0], [40.0, 0.0], [60.0, 0.0]]
 DEST_ARRAY_2 = np.array(DEST_POINTS_1, dtype=np.float32)
@@ -114,11 +114,4 @@ homography_matrix_2 =  np.array([[1.60566286e-01,  1.02417265e+00, -7.26217617e+
 
 homography_matrices = [homography_matrix, homography_matrix_1, homography_matrix_2]
 
-# # 3 is the closest to the window
-CAMERA_INDEX_2 = 3
-CAMERA_LOCATION_2 = (200, 0)  # Coordinates of the camera in real world
-homography_matrix_2 =  np.array([[1.60566286e-01,  1.02417265e+00, -7.26217617e+01],
- [-1.38778595e-01,  6.18565415e-01, -2.66880965e+01],
- [1.32018961e-04,  7.61377421e-03,  1.00000000e+00]], dtype=np.float64)
 
-homography_matrices.append(homography_matrix_2)
