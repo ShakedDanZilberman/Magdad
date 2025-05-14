@@ -4,10 +4,16 @@ from cameraIO import Camera
 import threading
 from constants import *
 import time
-import cv2
 import numpy as np
 import queue
 # from vis_production import CameraProducer
+
+
+from import_defence import ImportDefence
+
+with ImportDefence():
+    import openvino
+    import cv2
 
 
 class CameraProducer(threading.Thread):
@@ -25,7 +31,7 @@ class CameraProducer(threading.Thread):
             # print(f"timestep: {self.timestep} camera {self.eye.camera_index}")
             frame = self.eye.camera.read(self.timestep)
             # Run your add_yolo processing (which returns targets)
-            targets = self.eye.add_yolo(frame)  
+            targets = self.eye.add_yolo(frame)
             # Grab the visualized image (after display())
             self.eye.yolo_handler.prepare_to_show()
             vis = self.eye.yolo_handler.get_vis()
@@ -353,7 +359,7 @@ class Brain():
                     gun.shoot()
                     print("shot fired")
                     gun.target_stack.pop(0)
-                    print("gun target stack after pop: ", gun.target_stack)
+                    # print("gun target stack after pop: ", gun.target_stack)
                     time.sleep(0.1)
 
 
@@ -409,7 +415,7 @@ class Brain():
                     gun.shoot()
                     print("shot fired")
                     gun.target_stack.pop(0)
-                    print("gun target stack after pop: ", gun.target_stack)
+                    # print("gun target stack after pop: ", gun.target_stack)
                     time.sleep(0.1)
             # check which gun is free and assign it to the target
             # if there is a target in the list of targets that has priority 8 or higher, assign it to the first gun immediately
@@ -468,7 +474,7 @@ class Brain():
                     gun.shoot()
                     # print("shot fired")
                     gun.target_stack.pop(0)
-                    print("gun target stack after pop: ", gun.target_stack)
+                    # print("gun target stack after pop: ", gun.target_stack)
                     time.sleep(0.1)
             # check which gun is free and assign it to the target
             # if there is a target in the list of targets that has priority 8 or higher, assign it to the first gun immediately

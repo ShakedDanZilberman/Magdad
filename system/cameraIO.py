@@ -116,9 +116,7 @@ class Camera:
 
 if __name__ == "__main__":
     # display image from camera index 1
-    # detectCameras()
-    # showAllCameras()
-    cam = Camera(CAMERA_INDEX_0)
+    cam = Camera(1)
     while True:
         img = cam.read()
         cv2.imshow("Camera", img)
