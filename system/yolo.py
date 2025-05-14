@@ -95,7 +95,7 @@ class YOLOHandler:
             cv2.putText(vis, label, (b['x1'],b['y1']-5),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,0), 1)
         cv2.imshow("YOLOv8 Detections", vis)
-        print(self.get_centers())
+        # print(self.get_centers())
         # cv2.imshow("BBox Mask", self.get())
         # # press Escape to exit
         # if cv2.waitKey(1) == 27:
@@ -238,7 +238,7 @@ class YOLOHandler:
 
 if __name__ == "__main__":
     # read the images from camera of the computer and display the bounding boxes using the YOLOHandler class inside some loop
-    global CAMERA_INDEX_0, timestep, laser_targets
+    global timestep, laser_targets
     # import fit
     from cameraIO import detectCameras
     from cameraIO import Camera, ImageParse
