@@ -2,8 +2,8 @@
 
 // Pins
 const int gunPin = 4;
-const int dirPin = 2;
-const int stepPin = 3;
+const int dirPin = 3;
+const int stepPin = 2;
 const int enablePin = 5;
 const int SHOOT_COOLDOWN = 2;  // ms
 const int MAX_SPEED = 3000;  // steps per second
@@ -43,7 +43,7 @@ void loop() {
       Serial.println("Done"); // Critical for communication with Python
     } 
     else if (command.startsWith("ROTATE:")) {
-      long steps = command.substring(8).toInt();
+      long steps = command.substring(7).toInt();
       Serial.print("Requested steps: ");
       Serial.println(steps);
       stepper.move(steps);
