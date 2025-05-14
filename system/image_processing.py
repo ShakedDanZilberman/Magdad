@@ -208,5 +208,5 @@ class ImageParse:
 
         # Resize the image
         resized = cv2.resize(img, (new_width, new_height))
-        print(f"Resized image to {new_width}x{new_height} at timestep {timestep}")
+        # print(f"Resized image to {new_width}x{new_height} at timestep {timestep}")
         return resized

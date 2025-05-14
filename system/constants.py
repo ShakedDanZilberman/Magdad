@@ -64,7 +64,7 @@ SERVO_PIN = 9  # pin for the servo motor
 
 # constatns for the camera homography, positions are when looking at the door from inside the room
 # left camera
-CAMERA_INDEX_0 = 1
+CAMERA_INDEX_0 = 2
 CAMERA_LOCATION_0 = (0, 0)  # Coordinates of the camera in real world
 DEST_POINTS_0 = [[0.0, 0.0], [25.0, 0.0], [50.0, 0.0], [75.0, 0.0], [100.0, 0.0], [125.0, 0.0], 
                  [0.0, 25.0], [25.0, 25.0], [50.0, 25.0], [75.0, 25.0], [100.0, 25.0],
@@ -81,7 +81,7 @@ homography_matrix = np.array([[2.19286198e-01,  3.17183416e-01, -4.51513162e+01]
 
 
 # center camera
-CAMERA_INDEX_1 = 2
+CAMERA_INDEX_1 = 0
 CAMERA_LOCATION_1 = (0, 0)  # Coordinates of the camera in real world
 DEST_POINTS_1 = [[100.0, 0.0], [125.0, 0.0], [150.0, 0.0], [175.0, 0.0], [200.0, 0.0],
                  [100.0, 25.0], [125.0, 25.0], [150.0, 25.0], [175.0, 25.0], [200.0, 25.0],

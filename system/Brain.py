@@ -22,12 +22,10 @@ class CameraProducer(threading.Thread):
     def run(self):
         while True:
             self.timestep+=1
-            print(f"timestep: {self.timestep} camera {self.eye.camera_index}")
+            # print(f"timestep: {self.timestep} camera {self.eye.camera_index}")
             frame = self.eye.camera.read(self.timestep)
             # Run your add_yolo processing (which returns targets)
             targets = self.eye.add_yolo(frame)  
-            if self.timestep == 60:
-                i = input("press enter to continue")
             # Grab the visualized image (after display())
             self.eye.yolo_handler.prepare_to_show()
             vis = self.eye.yolo_handler.get_vis()
@@ -292,7 +290,7 @@ class Brain():
         if closest_target is not None:
             # print("closest target: ", closest_target)
             priority = self.targets.pop(closest_target[0])
-            print(f"targets in brain after pop: {self.targets}")
+            # print(f"targets in brain after pop: {self.targets}")
             gun.target_stack.append((closest_target[0], priority))
 
     def angle_diff(self, location_1: tuple, location_2: tuple, gun_index=0):
@@ -463,11 +461,12 @@ class Brain():
                     # print(f"target stack: {gun.target_stack}")
                     angle = self.calculate_angle_from_gun(target[0], gun_index)
                     # print("angle to shoot: ", angle)
-                    gun.rotate(angle)
+                    if angle - gun.get_angle() > 1:
+                        gun.rotate(angle)
                     gun.shoot()
                     # print("shot fired")
                     gun.target_stack.pop(0)
-                    # print("gun target stack after pop: ", gun.target_stack)
+                    print("gun target stack after pop: ", gun.target_stack)
                     time.sleep(0.1)
             # check which gun is free and assign it to the target
             # if there is a target in the list of targets that has priority 8 or higher, assign it to the first gun immediately

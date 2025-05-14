@@ -105,12 +105,12 @@ class Camera:
         if ret_val == False:
             print("Failed to read from camera")
             self.img = np.zeros((IMG_HEIGHT, IMG_WIDTH), np.uint8)
-        print(f"in read: image size is {self.img.shape}")
+        # print(f"in read: image size is {self.img.shape}")
         self.img = ImageParse.resize_proportionally(self.img, 0.5, timestep)
         self.img = ImageParse.toGrayscale(self.img)
         self.img = undistortion.undistort(self.img)
         self.img = cv2.rotate(self.img, cv2.ROTATE_180)
-        print(f"reading camera {self.index}")
+        # print(f"reading camera {self.index}")
         return self.img
     
 

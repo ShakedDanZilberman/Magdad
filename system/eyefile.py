@@ -15,7 +15,7 @@ class Eye():
         self.camera = Camera(self.camera_index) 
         self.raw_handler = RawHandler()
         self.target_manager = Targets()
-        self.yolo_handler = YOLOHandler(camera_index)
+        self.yolo_handler = YOLOHandler()
         self.homography = homography_matrix
         self.camera_location = 0
         self.real_coords_targets = []
