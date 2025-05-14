@@ -525,10 +525,10 @@ class Brain():
         exit(0)
 
 if __name__ == "__main__":
-    gun_info = [((200.0, 75.0), 0)]  # example
+    gun_info = [((75.0, 75.0), 0)]  # example
     # gun_info = []
     # cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0]), (CAMERA_INDEX_1, CAMERA_LOCATION_1, homography_matrices[1])]  # (cam_index, CAMERA_LOCATION_0, homography_matrix)
-    cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0]), (CAMERA_INDEX_1, CAMERA_LOCATION_1, homography_matrices[1])]  # (cam_index, CAMERA_LOCATION_0, homography_matrix)
+    cam_info = [(CAMERA_INDEX_2, CAMERA_LOCATION_2, homography_matrices[2]), (CAMERA_INDEX_1, CAMERA_LOCATION_1, homography_matrices[1])]  # (cam_index, CAMERA_LOCATION_0, homography_matrix)
     # cam_info = [(CAMERA_INDEX_1, CAMERA_LOCATION_0, homography_matrices[0]), (CAMERA_INDEX_0, CAMERA_LOCATION_1, homography_matrices[1])]
     try:
         # Brain(gun_info, cam_info).game_loop_yolo()

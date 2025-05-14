@@ -81,7 +81,7 @@ homography_matrix = np.array([[2.19286198e-01,  3.17183416e-01, -4.51513162e+01]
 
 
 # center camera
-CAMERA_INDEX_1 = 2
+CAMERA_INDEX_1 = 1
 CAMERA_LOCATION_1 = (0, 0)  # Coordinates of the camera in real world
 DEST_POINTS_1 = [[100.0, 0.0], [125.0, 0.0], [150.0, 0.0], [175.0, 0.0], [200.0, 0.0],
                  [100.0, 25.0], [125.0, 25.0], [150.0, 25.0], [175.0, 25.0], [200.0, 25.0],
@@ -101,7 +101,7 @@ homography_matrix_1 =  np.array([[3.47340665e-01,  9.84985803e-01,  3.59704322e+
 
 
 # right camera
-CAMERA_INDEX_2 = 1
+CAMERA_INDEX_2 = 2
 CAMERA_LOCATION_2 = (0, 0)  # Coordinates of the camera in real world
 DEST_POINTS_2 = [[175.0, 0.0], [200.0, 0.0], [225.0, 0.0], [250.0, 0.0], [275.0, 0.0],
                  [175.0, 25.0], [200.0, 25.0], [225.0, 25.0], [250.0, 25.0], [275.0, 25.0],
