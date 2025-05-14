@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from image_processing import ImageParse
 import undistortion
-from constants import FPS
+from constants import *
 
 MAX_CAMERAS = 10
 
@@ -83,7 +83,7 @@ class Camera:
     def __init__(self, index):
         self.index = index
         print("index is", self.index)
-        self.cam = cv2.VideoCapture(self.index, cv2.CAP_MSMF)
+        self.cam = cv2.VideoCapture(self.index, cv2.CAP_MSMF)  # this is supposed to be a better mode
         self.cam.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
         self.cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
         # self.cam.set(cv2.CAP_PROP_FPS, 10)
@@ -93,31 +93,39 @@ class Camera:
         self.img = ImageParse.resize_proportionally(self.img, 0.5)
         if not ret_val:
             print(f"Camera @ index {self.index} not connected")
-            self.index = int(input("Enter the index of the camera you want to connect to: "))
+            self.index = int(input("RECONNECT THE USB HUB! Or, enter the index of the camera you want to connect to: "))
             self.cam = cv2.VideoCapture(self.index)
             img = self.cam.read()
             if not ret_val:
                 print("Failed to connect to camera")
                 return
 
-    def read(self):
+    def read(self, timestep = 0):
         ret_val, self.img = self.cam.read()
-        self.img = ImageParse.resize_proportionally(self.img, 0.5)
+        if ret_val == False:
+            print("Failed to read from camera")
+            self.img = np.zeros((IMG_HEIGHT, IMG_WIDTH), np.uint8)
+        print(f"in read: image size is {self.img.shape}")
+        self.img = ImageParse.resize_proportionally(self.img, 0.5, timestep)
         self.img = ImageParse.toGrayscale(self.img)
         self.img = undistortion.undistort(self.img)
         self.img = cv2.rotate(self.img, cv2.ROTATE_180)
+        print(f"reading camera {self.index}")
         return self.img
     
 
 if __name__ == "__main__":
     # display image from camera index 1
-    cam = Camera(2)
+    # detectCameras()
+    # showAllCameras()
+    cam = Camera(CAMERA_INDEX_0)
     while True:
         img = cam.read()
         cv2.imshow("Camera", img)
-        if cv2.waitKey(1) & 0xFF == ord("q"):
+        if cv2.waitKey(1) == 27:
             break
     cam.cam.release()
+    cv2.destroyAllWindows()
 
 # if __name__ == "__main__":
 #     showAllCameras()
