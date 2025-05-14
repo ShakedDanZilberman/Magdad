@@ -29,8 +29,10 @@ class Gun:
         self.current_angle = 0
         self.gun_location = gun_location
         self.target_stack = []
+        print("about to connect to gun")
         self.ser = self._connect_to_serial(COM)
-        time.sleep(2)  # Give Arduino time to reset; setup delay sleep for 2 seconds
+        print("connected to gun")
+        # time.sleep(2)  # Give Arduino time to reset; setup delay sleep for 2 seconds
         self.print_flag = print_flag
 
         if self.print_flag:
@@ -139,11 +141,11 @@ class DummyGun:
 if __name__ == "__main__":
     gun = Gun((3,4), 0, print_flag=True)
     #angle_program = [0, 360, 0, 180, 0, 90, 0, -90, 0, 180, 0, 360, 0, -180, 0, 90, 0, -90, 0, 180, 0, 360, 0, -180, 0, 90, 0, -90, 0, 180, 0, 360, 0, -180, 0, 90, 0, -90, 0, 180, 0, 360]
-    angle_program = [0,10,-15,25,-20]
+    angle_program = [30,0,-30,0,30]
     #angle_program *= 5
     while True:
         for angle in angle_program:
             gun.rotate(angle)
-            sleep(0.5)
+            sleep(3)
             gun.shoot()
             sleep(0.5)
