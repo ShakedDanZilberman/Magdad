@@ -17,16 +17,21 @@ class CameraProducer(threading.Thread):
         self.eye = eye
         self.output_queue = output_queue
         self.win_name = f"Cam {camera_index}"
+        self.timestep = 0
 
     def run(self):
         while True:
-            frame = self.eye.camera.read()
+            self.timestep+=1
+            print(f"timestep: {self.timestep} camera {self.eye.camera_index}")
+            frame = self.eye.camera.read(self.timestep)
             # Run your add_yolo processing (which returns targets)
             targets = self.eye.add_yolo(frame)  
-
+            if self.timestep == 60:
+                i = input("press enter to continue")
             # Grab the visualized image (after display())
+            self.eye.yolo_handler.prepare_to_show()
             vis = self.eye.yolo_handler.get_vis()
-            print(f"visual is {vis}")
+            # print(f"visual is {vis}")
             # Put into queue: window name, image, AND targets
             item = (self.win_name, vis, targets)
             try:
@@ -98,9 +103,9 @@ class Brain():
         Returns True if too close to an existing target.
         """
         tx, ty = target
-        print("tx, ty:", (tx, ty))
+        # print("tx, ty:", (tx, ty))
         for (ox, oy) in self.targets.keys():
-            print("ox, oy:", (ox, oy))
+            # print("ox, oy:", (ox, oy))
 
             if np.linalg.norm((tx - ox, ty - oy)) <= min_dist:
                 return True
@@ -460,7 +465,7 @@ class Brain():
                     # print("angle to shoot: ", angle)
                     gun.rotate(angle)
                     gun.shoot()
-                    print("shot fired")
+                    # print("shot fired")
                     gun.target_stack.pop(0)
                     # print("gun target stack after pop: ", gun.target_stack)
                     time.sleep(0.1)
@@ -515,8 +520,8 @@ class Brain():
 if __name__ == "__main__":
     gun_info = [((30,48), 0)]  # example
     # cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0]), (CAMERA_INDEX_1, CAMERA_LOCATION_1, homography_matrices[1])]  # (cam_index, CAMERA_LOCATION_0, homography_matrix)
-    # cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0]), (CAMERA_INDEX_1, CAMERA_LOCATION_1, homography_matrices[1]), (CAMERA_INDEX_2, CAMERA_LOCATION_2, homography_matrices[2])]  # (cam_index, CAMERA_LOCATION_0, homography_matrix)
-    cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0]), (CAMERA_INDEX_1, CAMERA_LOCATION_1, homography_matrices[1])]
+    cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0]), (CAMERA_INDEX_1, CAMERA_LOCATION_1, homography_matrices[1]), (CAMERA_INDEX_2, CAMERA_LOCATION_2, homography_matrices[2])]  # (cam_index, CAMERA_LOCATION_0, homography_matrix)
+    # cam_info = [(CAMERA_INDEX_1, CAMERA_LOCATION_0, homography_matrices[0]), (CAMERA_INDEX_0, CAMERA_LOCATION_1, homography_matrices[1])]
     try:
         # Brain(gun_info, cam_info).game_loop_yolo()
         Brain(gun_info, cam_info).game_loop_display()

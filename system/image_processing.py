@@ -198,7 +198,7 @@ class ImageParse:
         return cv2.convertScaleAbs(img, factor, 0)
     
     @staticmethod
-    def resize_proportionally(img, factor):
+    def resize_proportionally(img, factor, timestep: int=0):
         # Get original dimensions
         if img is None:
             return
@@ -208,4 +208,5 @@ class ImageParse:
 
         # Resize the image
         resized = cv2.resize(img, (new_width, new_height))
+        print(f"Resized image to {new_width}x{new_height} at timestep {timestep}")
         return resized

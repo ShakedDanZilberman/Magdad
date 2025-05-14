@@ -83,8 +83,7 @@ class Camera:
     def __init__(self, index):
         self.index = index
         print("index is", self.index)
-        # self.cam = cv2.VideoCapture(self.index, cv2.CAP_MSMF)
-        self.cam = cv2.VideoCapture(self.index, cv2.CAP_DSHOW)  # this is supposed to be a better mode
+        self.cam = cv2.VideoCapture(self.index, cv2.CAP_MSMF)  # this is supposed to be a better mode
         self.cam.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
         self.cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
         # self.cam.set(cv2.CAP_PROP_FPS, 10)
@@ -101,15 +100,17 @@ class Camera:
                 print("Failed to connect to camera")
                 return
 
-    def read(self):
+    def read(self, timestep = 0):
         ret_val, self.img = self.cam.read()
         if ret_val == False:
             print("Failed to read from camera")
             self.img = np.zeros((IMG_HEIGHT, IMG_WIDTH), np.uint8)
-        self.img = ImageParse.resize_proportionally(self.img, 0.5)
+        print(f"in read: image size is {self.img.shape}")
+        self.img = ImageParse.resize_proportionally(self.img, 0.5, timestep)
         self.img = ImageParse.toGrayscale(self.img)
         self.img = undistortion.undistort(self.img)
         self.img = cv2.rotate(self.img, cv2.ROTATE_180)
+        print(f"reading camera {self.index}")
         return self.img
     
 
