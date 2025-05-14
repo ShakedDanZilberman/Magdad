@@ -2,7 +2,7 @@ import numpy as np
 
 IMG_WIDTH = 960
 IMG_HEIGHT = 540
-COM = "COM5"  # COM port for the Arduino
+COM = "COM3"  # COM port for the Arduino
 GUN = (0, 0)  # Coordinates of the gun in pixels
 # Constants for the homography transformation
 H1 = None
@@ -81,7 +81,7 @@ homography_matrix = np.array([[2.19286198e-01,  3.17183416e-01, -4.51513162e+01]
 
 
 # center camera
-CAMERA_INDEX_1 = 0
+CAMERA_INDEX_1 = 2
 CAMERA_LOCATION_1 = (0, 0)  # Coordinates of the camera in real world
 DEST_POINTS_1 = [[100.0, 0.0], [125.0, 0.0], [150.0, 0.0], [175.0, 0.0], [200.0, 0.0],
                  [100.0, 25.0], [125.0, 25.0], [150.0, 25.0], [175.0, 25.0], [200.0, 25.0],

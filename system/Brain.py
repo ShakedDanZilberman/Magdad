@@ -82,11 +82,13 @@ class Brain():
         for gun in gun_info:
             new_gun = Gun(gun[0], gun[1], False)
             self.guns.append(new_gun)
+        print("guns initialized")
         self.eyes = []
         for cam in cam_info:
             new_eye = Eye(cam[0], cam[1], cam[2])
             print("eye camera index: ", cam[0])
             self.eyes.append(new_eye)
+        print("eyes initialized")
         self.targets = {}
         self.timestep = 0
         self.display_queue = queue.Queue(maxsize=len(self.eyes))
@@ -187,7 +189,7 @@ class Brain():
             # print("in calculate angle: gun location: ", gun.gun_location, "target: ", target)
             slope = (gun.gun_location[1]- target[1]) / (target[0] - gun.gun_location[0])
             angle = 90 - np.arctan(slope) * 180 / np.pi
-        return angle
+        return angle*(-1)
 
     def calculate_angle(self, location_1: tuple, location_2: tuple):
         """
@@ -523,14 +525,15 @@ class Brain():
         exit(0)
 
 if __name__ == "__main__":
-    gun_info = []  # example
+    gun_info = [((200.0, 75.0), 0)]  # example
+    # gun_info = []
     # cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0]), (CAMERA_INDEX_1, CAMERA_LOCATION_1, homography_matrices[1])]  # (cam_index, CAMERA_LOCATION_0, homography_matrix)
-    cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0]), (CAMERA_INDEX_1, CAMERA_LOCATION_1, homography_matrices[1]), (CAMERA_INDEX_2, CAMERA_LOCATION_2, homography_matrices[2])]  # (cam_index, CAMERA_LOCATION_0, homography_matrix)
+    cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0]), (CAMERA_INDEX_1, CAMERA_LOCATION_1, homography_matrices[1])]  # (cam_index, CAMERA_LOCATION_0, homography_matrix)
     # cam_info = [(CAMERA_INDEX_1, CAMERA_LOCATION_0, homography_matrices[0]), (CAMERA_INDEX_0, CAMERA_LOCATION_1, homography_matrices[1])]
     try:
-        Brain(gun_info, cam_info).game_loop_yolo()
+        # Brain(gun_info, cam_info).game_loop_yolo()
         # Brain(gun_info, cam_info).game_loop_display()
-        # Brain(gun_info, cam_info).game_loop_independent()
+        Brain(gun_info, cam_info).game_loop_independent()
     except KeyboardInterrupt:
         for thread in threading.enumerate():
             print(f"Thread {thread.name} is alive: {thread.is_alive()}")
