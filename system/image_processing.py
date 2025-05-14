@@ -79,7 +79,7 @@ class RawHandler(Handler):
 
     def add(self, img):
         std = np.std(img)
-        print("RawHandler: add with std:", std)
+        # print("RawHandler: add with std:", std)
         self.img = img
 
     def get(self):
