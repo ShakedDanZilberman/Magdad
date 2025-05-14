@@ -7,7 +7,7 @@ const int stepPin = 2;
 const int enablePin = 5;
 const int SHOOT_COOLDOWN = 2;  // ms
 const int MAX_SPEED = 3000;  // steps per second
-const int ACCELERATION = 1000;  // steps per second^2
+const int ACCELERATION = 10000;  // steps per second^2
 
 // Stepper setup: DRIVER interface type = 1
 AccelStepper stepper(AccelStepper::DRIVER, stepPin, dirPin);
@@ -49,10 +49,11 @@ void loop() {
       stepper.move(steps);
     }
 
-    if (stepper.distanceToGo() != 0){
-      stepper.enableOutputs();
-      stepper.run();
+    if (stepper.distanceToGo() == 0){
       stepper.disableOutputs();
+    } else{
+      stepper.enableOutputs();
     }
+    stepper.run();
   }
 }
