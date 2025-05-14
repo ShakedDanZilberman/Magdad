@@ -48,10 +48,10 @@ void loop() {
       Serial.println(steps);
       stepper.move(steps);
     }
-
-    if (stepper.distanceToGo() != 0){
+      
+    if (stepper.run()){
       stepper.enableOutputs();
-      stepper.run();
+    } else{
       stepper.disableOutputs();
     }
   }
