@@ -13,7 +13,7 @@ class MouseCameraHandler(Handler):
         self.clicks = []
         self._new_click = False
         self.index = index
-        self.title = "camera " + str(index) + " View"
+        self.title = "camera " + str(index) + " view"
 
     def add(self, img):
         self.img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
