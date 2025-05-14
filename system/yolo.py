@@ -4,8 +4,9 @@ import sys
 import numpy as np
 import cv2
 from ultralytics import YOLO
-# from openvino.runtime import Core
+# from openvino import Core
 from ultralytics.data.augment import LetterBox
+from constants import *
 
 class YOLOHandler:
     def __init__(self, model_path: str = 'best_new_training_openvino_model', imgsz: int = 320, conf_thres: float = 0.5):
@@ -42,7 +43,7 @@ class YOLOHandler:
         rgb = cv2.cvtColor(canvas, cv2.COLOR_BGR2RGB)
 
         # Run inference
-        results = self.model(rgb, imgsz=self.imgsz, conf=self.conf_threshold)
+        results = self.model(rgb, imgsz=self.imgsz, conf=self.conf_threshold, verbose=False)
         res = results[0]
 
         self.bounding_boxes = []
@@ -94,11 +95,28 @@ class YOLOHandler:
             cv2.putText(vis, label, (b['x1'],b['y1']-5),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,0), 1)
         cv2.imshow("YOLOv8 Detections", vis)
-        print(self.get_centers())
+        # print(self.get_centers())
         # cv2.imshow("BBox Mask", self.get())
         # # press Escape to exit
         # if cv2.waitKey(1) == 27:
         #     sys.exit(0)
+
+    def prepare_to_show(self):
+        if self.img is None:
+            return
+        vis = cv2.cvtColor(self.img, cv2.COLOR_GRAY2BGR)
+        for b in self.bounding_boxes:
+            color = (0, int(b['confidence']*255), 0)
+            cv2.rectangle(vis, (b['x1'],b['y1']), (b['x2'],b['y2']), color, 2)
+            label = f"{b['class']}:{b['confidence']:.2f}"
+            cv2.putText(vis, label, (b['x1'],b['y1']-5),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,0), 1)
+        self.vis = vis
+    
+    def get_vis(self):
+        if self.img is None:
+            return np.zeros((IMG_HEIGHT, IMG_WIDTH), dtype=np.uint8)
+        return self.vis
 
     def clear(self):
         self.img = None
@@ -220,7 +238,7 @@ class YOLOHandler:
 
 if __name__ == "__main__":
     # read the images from camera of the computer and display the bounding boxes using the YOLOHandler class inside some loop
-    global CAMERA_INDEX_0, timestep, laser_targets
+    global timestep, laser_targets
     # import fit
     from cameraIO import detectCameras
     from cameraIO import Camera, ImageParse

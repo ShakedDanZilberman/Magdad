@@ -742,8 +742,8 @@ if __name__ == "__main__":
     # hit_cursor_main()
     # just_changes_main()
     # main_using_targets_4()
-    # homography_calibration_main()
-    test_homography()
+    homography_calibration_main()
+    # test_homography()
     # test_camera()
     # homography_targets()1
     

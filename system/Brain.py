@@ -4,10 +4,16 @@ from cameraIO import Camera
 import threading
 from constants import *
 import time
-import cv2
 import numpy as np
 import queue
 # from vis_production import CameraProducer
+
+
+from import_defence import ImportDefence
+
+with ImportDefence():
+    import openvino
+    import cv2
 
 
 class CameraProducer(threading.Thread):
@@ -22,12 +28,10 @@ class CameraProducer(threading.Thread):
     def run(self):
         while True:
             self.timestep+=1
-            print(f"timestep: {self.timestep} camera {self.eye.camera_index}")
+            # print(f"timestep: {self.timestep} camera {self.eye.camera_index}")
             frame = self.eye.camera.read(self.timestep)
             # Run your add_yolo processing (which returns targets)
-            targets = self.eye.add_yolo(frame)  
-            if self.timestep == 60:
-                i = input("press enter to continue")
+            targets = self.eye.add_yolo(frame)
             # Grab the visualized image (after display())
             self.eye.yolo_handler.prepare_to_show()
             vis = self.eye.yolo_handler.get_vis()
@@ -292,7 +296,7 @@ class Brain():
         if closest_target is not None:
             # print("closest target: ", closest_target)
             priority = self.targets.pop(closest_target[0])
-            print(f"targets in brain after pop: {self.targets}")
+            # print(f"targets in brain after pop: {self.targets}")
             gun.target_stack.append((closest_target[0], priority))
 
     def angle_diff(self, location_1: tuple, location_2: tuple, gun_index=0):
@@ -353,7 +357,7 @@ class Brain():
                     gun.shoot()
                     print("shot fired")
                     gun.target_stack.pop(0)
-                    print("gun target stack after pop: ", gun.target_stack)
+                    # print("gun target stack after pop: ", gun.target_stack)
                     time.sleep(0.1)
 
 
@@ -409,7 +413,7 @@ class Brain():
                     gun.shoot()
                     print("shot fired")
                     gun.target_stack.pop(0)
-                    print("gun target stack after pop: ", gun.target_stack)
+                    # print("gun target stack after pop: ", gun.target_stack)
                     time.sleep(0.1)
             # check which gun is free and assign it to the target
             # if there is a target in the list of targets that has priority 8 or higher, assign it to the first gun immediately
@@ -463,7 +467,8 @@ class Brain():
                     # print(f"target stack: {gun.target_stack}")
                     angle = self.calculate_angle_from_gun(target[0], gun_index)
                     # print("angle to shoot: ", angle)
-                    gun.rotate(angle)
+                    if angle - gun.get_angle() > 1:
+                        gun.rotate(angle)
                     gun.shoot()
                     # print("shot fired")
                     gun.target_stack.pop(0)
@@ -518,13 +523,14 @@ class Brain():
         exit(0)
 
 if __name__ == "__main__":
-    gun_info = [((30,48), 0)]  # example
+    gun_info = []  # example
     # cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0]), (CAMERA_INDEX_1, CAMERA_LOCATION_1, homography_matrices[1])]  # (cam_index, CAMERA_LOCATION_0, homography_matrix)
     cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0]), (CAMERA_INDEX_1, CAMERA_LOCATION_1, homography_matrices[1]), (CAMERA_INDEX_2, CAMERA_LOCATION_2, homography_matrices[2])]  # (cam_index, CAMERA_LOCATION_0, homography_matrix)
     # cam_info = [(CAMERA_INDEX_1, CAMERA_LOCATION_0, homography_matrices[0]), (CAMERA_INDEX_0, CAMERA_LOCATION_1, homography_matrices[1])]
     try:
-        # Brain(gun_info, cam_info).game_loop_yolo()
-        Brain(gun_info, cam_info).game_loop_display()
+        Brain(gun_info, cam_info).game_loop_yolo()
+        # Brain(gun_info, cam_info).game_loop_display()
+        # Brain(gun_info, cam_info).game_loop_independent()
     except KeyboardInterrupt:
         for thread in threading.enumerate():
             print(f"Thread {thread.name} is alive: {thread.is_alive()}")

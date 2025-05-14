@@ -64,7 +64,7 @@ SERVO_PIN = 9  # pin for the servo motor
 
 # constatns for the camera homography, positions are when looking at the door from inside the room
 # left camera
-CAMERA_INDEX_0 = 3
+CAMERA_INDEX_0 = 1
 CAMERA_LOCATION_0 = (0, 0)  # Coordinates of the camera in real world
 DEST_POINTS_0 = [[0.0, 0.0], [25.0, 0.0], [50.0, 0.0], [75.0, 0.0], [100.0, 0.0], [125.0, 0.0], 
                  [0.0, 25.0], [25.0, 25.0], [50.0, 25.0], [75.0, 25.0], [100.0, 25.0],
@@ -81,7 +81,7 @@ homography_matrix = np.array([[2.19286198e-01,  3.17183416e-01, -4.51513162e+01]
 
 
 # center camera
-CAMERA_INDEX_1 = 2
+CAMERA_INDEX_1 = 0
 CAMERA_LOCATION_1 = (0, 0)  # Coordinates of the camera in real world
 DEST_POINTS_1 = [[100.0, 0.0], [125.0, 0.0], [150.0, 0.0], [175.0, 0.0], [200.0, 0.0],
                  [100.0, 25.0], [125.0, 25.0], [150.0, 25.0], [175.0, 25.0], [200.0, 25.0],
@@ -103,14 +103,20 @@ homography_matrix_1 =  np.array([[3.47340665e-01,  9.84985803e-01,  3.59704322e+
 # right camera
 CAMERA_INDEX_2 = 1
 CAMERA_LOCATION_2 = (0, 0)  # Coordinates of the camera in real world
-DEST_POINTS_2 = [[0.0, 0.0], [20.0, 0.0], [40.0, 0.0], [60.0, 0.0]]
+DEST_POINTS_2 = [[175.0, 0.0], [200.0, 0.0], [225.0, 0.0], [250.0, 0.0], [275.0, 0.0],
+                 [175.0, 25.0], [200.0, 25.0], [225.0, 25.0], [250.0, 25.0], [275.0, 25.0],
+                    [200.0, 50.0], [225.0, 50.0], [250.0, 50.0], [275.0, 50.0],
+                    [225.0, 75.0], [250.0, 75.0]]
 DEST_ARRAY_2 = np.array(DEST_POINTS_1, dtype=np.float32)
-SRC_POINTS_2 = []
+SRC_POINTS_2 = [[108.0, 37.0], [258.0, 31.0], [417.0, 27.0], [592.0, 15.0], [782.0, 3.0],
+                 [35.0, 95.0], [211.0, 91.0], [402.0, 85.0], [614.0, 75.0], [841.0, 54.0],
+                   [138.0, 183.0], [382.0, 182.0], [661.0, 170.0], [959.0, 151.0],
+                     [346.0, 355.0], [758.0, 350.0]]
 SRC_ARRAY_2 = np.array(SRC_POINTS_1, dtype=np.float32)
 
-homography_matrix_2 =  np.array([[1.60566286e-01,  1.02417265e+00, -7.26217617e+01],
- [-1.38778595e-01,  6.18565415e-01, -2.66880965e+01],
- [1.32018961e-04,  7.61377421e-03,  1.00000000e+00]], dtype=np.float64)
+homography_matrix_2 =  np.array([[3.47340665e-01, 9.84985803e-01,  3.59704322e+01],
+ [1.55899206e-02,  1.11032786e+00, -1.30235758e+02],
+ [2.85124685e-04,  8.30222674e-03,  1.00000000e+00]], dtype=np.float64)
 
 homography_matrices = [homography_matrix, homography_matrix_1, homography_matrix_2]
 
