@@ -5,13 +5,15 @@ from image_processing import Handler
 class MouseCameraHandler(Handler):
     TITLE = "Camera View"
 
-    def __init__(self):
+    def __init__(self, index = 0):
         super().__init__()
         self.mouseX = 0
         self.mouseY = 0
         self.img = None
         self.clicks = []
         self._new_click = False
+        self.index = index
+        self.title = "camera " + str(index) + " view"
 
     def add(self, img):
         self.img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
@@ -24,7 +26,7 @@ class MouseCameraHandler(Handler):
         if self.img is None:
             return
 
-        cv2.imshow("camera " + str(index) + " view", self.img)
+        cv2.imshow(self.title, self.img)
 
     def mouse_callback_2(self, event, x, y, flags, param):
         if event == cv2.EVENT_LBUTTONDOWN:
