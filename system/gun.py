@@ -9,7 +9,7 @@ import re
 from constants import COM
 
 
-STEPS_IN_DEGREE = 2/1.8
+STEPS_IN_DEGREE = 4/1.8
 
 
 class Gun:
@@ -84,6 +84,8 @@ class Gun:
         dθ = angle - self.current_angle
         steps = int(STEPS_IN_DEGREE * dθ)
         command = f"ROTATE:{steps}\n".encode()
+        time.sleep(0.5)  # Give Arduino time to process the command
+        print("in gun rotate: sleep 0.5 secs")
         self.ser.write(command)
         if self.print_flag:
             print(f">>> {command}")
