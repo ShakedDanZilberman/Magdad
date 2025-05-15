@@ -31,7 +31,7 @@ class CameraProducer(threading.Thread):
             # print(f"timestep: {self.timestep} camera {self.eye.camera_index}")
             frame = self.eye.camera.read(self.timestep)
             # Run your add_yolo processing (which returns targets)
-            if self.timestep % 30 == 14:
+            if self.timestep % 15 == 14:
                 print("in add yolo")
                 targets = self.eye.add_yolo(frame)
             else:
@@ -488,7 +488,7 @@ class Brain():
                     target = gun.target_stack[0]            
                     # print(f"Gun {gun.gun_location} is aiming at target {target}")
                     # Calculate the angle to rotate to
-                    print(f"target stack: {gun.target_stack}")
+                    print(f"gun {gun.gun_location} target stack: {gun.target_stack}")
                     angle = self.calculate_angle_from_gun(target[0], gun_index)
                     print("angle to shoot: ", angle)
                     gun.rotate(angle)
@@ -549,29 +549,32 @@ class Brain():
                 # print("history after pop: ", self.history)
         cv2.destroyAllWindows()
         for thread in threading.enumerate():
-            print(f"Thread {thread.name} is alive: {thread.is_alive()}")
+            if thread is not threading.current_thread():
+                thread.join()
+                print(f"Thread {thread.name} is alive: {thread.is_alive()}")
         print("Exiting...")
         exit(0)
 
 
 
-
 if __name__ == "__main__":
 
-    white_gun = Gun(gun_location=(192.0,100.0),
+    white_gun = Gun(gun_location=(195.5,100.0),
                     index=0,
-                    COM="COM11", 
-                    print_flag=True)
+                    COM="COM18", 
+                    print_flag=False)
     
     black_gun = Gun(gun_location=(100.0,95.0),
                     index=1,
-                    COM="COM8", 
-                    print_flag=True)
+                    COM="COM6", 
+                    print_flag=False)
     
     guns = [white_gun, black_gun]
-
+    # guns = []
     # cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0]), (CAMERA_INDEX_1, CAMERA_LOCATION_1, homography_matrices[1])]  # (cam_index, CAMERA_LOCATION_0, homography_matrix)
-    cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0]), (CAMERA_INDEX_1, CAMERA_LOCATION_1, homography_matrices[1]), (CAMERA_INDEX_2, CAMERA_LOCATION_2, homography_matrices[2])]  # (cam_index, CAMERA_LOCATION_0, homography_matrix)
+    cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0]), 
+                (CAMERA_INDEX_1, CAMERA_LOCATION_1, homography_matrices[1]), 
+                (CAMERA_INDEX_2, CAMERA_LOCATION_2, homography_matrices[2])]  # (cam_index, CAMERA_LOCATION_0, homography_matrix)
     # cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0])]
     try:
         brain = Brain(guns, cam_info)

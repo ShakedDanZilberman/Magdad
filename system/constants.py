@@ -22,7 +22,7 @@ HISTORY_DELAY = 10
 
 # constatns for the camera homography, positions are when looking at the door from inside the room
 # left camera
-CAMERA_INDEX_0 = 1
+CAMERA_INDEX_0 = 3
 CAMERA_LOCATION_0 = (0, 0)  # Coordinates of the camera in real world
 DEST_POINTS_0 = [[0.0, 0.0], [25.0, 0.0], [50.0, 0.0], [75.0, 0.0], [100.0, 0.0], 
                  [25.0, 50.0], [50.0, 50.0], [75.0, 50.0]]
@@ -55,7 +55,7 @@ homography_matrix_1 =  np.array([
 
 
 # right camera
-CAMERA_INDEX_2 = 3
+CAMERA_INDEX_2 = 2
 CAMERA_LOCATION_2 = (0, 0)  # Coordinates of the camera in real world
 DEST_POINTS_2 = [[175.0, 0.0], [200.0, 0.0], [225.0, 0.0], [250.0, 0.0], [275.0, 0.0],
                  [175.0, 25.0], [200.0, 25.0], [225.0, 25.0], [250.0, 25.0], [275.0, 25.0],

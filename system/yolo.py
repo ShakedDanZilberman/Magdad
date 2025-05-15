@@ -132,10 +132,10 @@ if __name__ == "__main__":
     from cameraIO import detectCameras
     from cameraIO import Camera, ImageParse
     from mouseCamera import MouseCameraHandler
-    from constants import CAMERA_INDEX_0
+    from constants import CAMERA_INDEX_2
     import undistortion
     detectCameras()
-    cam = Camera(CAMERA_INDEX_0)
+    cam = Camera(3)
     # handler = MouseCameraHandler()
     yoloHandler = YOLOHandler()
     # laser = threading.Thread(target=laser_thread)
