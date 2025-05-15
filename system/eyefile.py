@@ -19,7 +19,7 @@ class Eye():
         self.homography = homography_matrix
         self.camera_location = 0
         self.real_coords_targets = []
-        self.mouse_camera_handler = MouseCameraHandler()
+        self.mouse_camera_handler = MouseCameraHandler(camera_index)
         # uncomment the following lines to add mouse callback to the camera view
         # cv2.namedWindow("camera " + str(self.camera_index) + " View")
         # cv2.setMouseCallback("camera " + str(self.camera_index) + " View", self.mouse_camera_handler.mouse_callback)
@@ -70,10 +70,7 @@ class Eye():
             # print(f"camera {self.camera_index}: Clicked position in pixels:", click_positions)
             pixel_coords = np.array(click_positions, dtype='float32').reshape(-1, 1, 2)
             real_coords_array = cv2.perspectiveTransform(pixel_coords, self.homography)
-            x = real_coords_array[0][0][0]
-            y = real_coords_array[0][0][1]
-            return [(x, y)]
-            # return real_coords_array
+            return [tuple(pt[0]) for pt in real_coords_array]
         return []
         # print(f"coords in reality: {self.real_coords_targets}")
 

@@ -2,7 +2,7 @@ import numpy as np
 
 IMG_WIDTH = 960
 IMG_HEIGHT = 540
-COM = "COM18"  # COM port for the Arduino
+COM = "COM3"  # COM port for the Arduino
 GUN = (0, 0)  # Coordinates of the gun in pixels
 # Constants for the homography transformation
 H1 = None

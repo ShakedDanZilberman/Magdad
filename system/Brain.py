@@ -82,13 +82,13 @@ class Brain():
         for gun in gun_info:
             new_gun = Gun(gun[0], gun[1], False)
             self.guns.append(new_gun)
-        print("finished gun initialization")
+        print("guns initialized")
         self.eyes = []
         for cam in cam_info:
             new_eye = Eye(cam[0], cam[1], cam[2])
             print("eye camera index: ", cam[0])
             self.eyes.append(new_eye)
-        print("finished eye initialization")
+        print("eyes initialized")
         self.targets = {}
         self.history = {}
         self.timestep = 0
@@ -192,7 +192,7 @@ class Brain():
             # print("in calculate angle: gun location: ", gun.gun_location, "target: ", target)
             slope = (gun.gun_location[1]- target[1]) / (target[0] - gun.gun_location[0])
             angle = 90 - np.arctan(slope) * 180 / np.pi
-        return angle* (-1)
+        return angle*(-1)
 
     def calculate_angle(self, location_1: tuple, location_2: tuple):
         """
@@ -247,7 +247,6 @@ class Brain():
         
         for eye in self.eyes:
             targets  = eye.add_independent()
-            print("targets in brain: ", targets)
             if len(targets) > 0:
                 self.add_to_target_list(targets, MIN_DISTANCE)
 
@@ -371,6 +370,7 @@ class Brain():
                     target = gun.target_stack[0]            
                     # print(f"Gun {gun.gun_location} is aiming at target {target}")
                     # Calculate the angle to rotate to
+                    print(f"target stack: {gun.target_stack}")
                     angle = self.calculate_angle_from_gun(target[0], gun_index)
                     # print("angle to shoot: ", angle)
                     gun.rotate(angle)
