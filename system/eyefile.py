@@ -21,8 +21,8 @@ class Eye():
         self.real_coords_targets = []
         self.mouse_camera_handler = MouseCameraHandler(camera_index)
         # uncomment the following lines to add mouse callback to the camera view
-        # cv2.namedWindow("camera " + str(self.camera_index) + " View")
-        # cv2.setMouseCallback("camera " + str(self.camera_index) + " View", self.mouse_camera_handler.mouse_callback)
+        # cv2.namedWindow("camera " + str(self.camera_index) + " view")
+        # cv2.setMouseCallback("camera " + str(self.camera_index) + " view", self.mouse_camera_handler.mouse_callback)
 
     def get_real_coords_targets(self):
         """

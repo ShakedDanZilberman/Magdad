@@ -10,7 +10,7 @@ from ultralytics import YOLO
 # # results = ov_model('path/to/image.jpg')        # high-level Results object works again
 
 
-homogrpahy_matrix, status = cv2.findHomography(constants.SRC_ARRAY_0, constants.DEST_ARRAY_0, 0, 3)
+homogrpahy_matrix, status = cv2.findHomography(constants.SRC_ARRAY_1, constants.DEST_ARRAY_1, 0, 3)
 
 print(homogrpahy_matrix)
 

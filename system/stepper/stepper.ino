@@ -1,9 +1,9 @@
 #include <Servo.h>
 
-const int gunPin = 4;
-const int dirPin = 3;
-const int stepPin = 2;
-const int enablePin = 5;
+const int gunPin = 12;
+const int dirPin = 4;
+const int stepPin = 7;
+const int enablePin = 8;
 const int speed = 1000;
 const int SHOOT_COOLDOWN = 200;  // ms
 Servo myServo;

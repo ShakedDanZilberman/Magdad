@@ -24,7 +24,7 @@ from cameraIO import Camera
 from object_finder import average_of_heatmaps
 # from Trash.gui import LIDARDistancesGraph
 from gun import Gun, DummyGun
-from constants import CAMERA_INDEX_0
+from constants import CAMERA_INDEX_0, CAMERA_INDEX_1, CAMERA_INDEX_2
 from object_finder import Targets #GlobalTargets
 # import homogrpahy
 from constants import IMG_WIDTH, IMG_HEIGHT, homography_matrix, homography_matrices
@@ -675,22 +675,22 @@ def homography_calibration_main():
     An alternative to the main function that uses the mouse cursor as the target for the laser pointer.
     It does not use any image processing to detect targets.
     """
-    global CAMERA_INDEX_0, timestep, laser_targets
+    global CAMERA_INDEX_1, timestep, laser_targets
     detectCameras()
-    cam = Camera(CAMERA_INDEX_0)
-    handler = MouseCameraHandler(CAMERA_INDEX_0)
+    cam = Camera(CAMERA_INDEX_1)
+    handler = MouseCameraHandler(CAMERA_INDEX_1)
     # laser = threading.Thread(target=laser_thread)
     # laser.start()  # comment this line to disable the laser pointer
 
-    cv2.namedWindow("camera " + str(CAMERA_INDEX_0) + " view")
-    cv2.setMouseCallback("camera " + str(CAMERA_INDEX_0) + " view", handler.mouse_callback)
+    cv2.namedWindow("camera " + str(CAMERA_INDEX_1) + " view")
+    cv2.setMouseCallback("camera " + str(CAMERA_INDEX_1) + " view", handler.mouse_callback)
     source_points = []
     frame_num = 0
     while True:
         img = cam.read()
 
         handler.add(img)
-        handler.display(CAMERA_INDEX_0)
+        handler.display(CAMERA_INDEX_1)
         if handler.has_new_clicks(): 
             click_pos = handler.get_clicks()
             print(click_pos)
@@ -705,11 +705,11 @@ def homography_calibration_main():
 
 
 def test_homography():
-    global CAMERA_INDEX_0, timestep, laser_targets
+    global CAMERA_INDEX_1, timestep, laser_targets
     # import Trash.fit as fit
     # detectCameras()
-    cam = Camera(CAMERA_INDEX_0)
-    handler = MouseCameraHandler(CAMERA_INDEX_0)
+    cam = Camera(CAMERA_INDEX_1)
+    handler = MouseCameraHandler(CAMERA_INDEX_1)
     # laser = threading.Thread(target=laser_thread)
     # laser.start()  # comment this line to disable the laser pointer
 
@@ -726,7 +726,7 @@ def test_homography():
             click_pos = handler.get_clicks()[0]
             click_pos_array = np.array([[[click_pos[0], click_pos[1]]]], dtype=np.float32)
             print("click is in pixel: ", click_pos)
-            real_world_pos = cv2.perspectiveTransform(click_pos_array, homography_matrices[0])
+            real_world_pos = cv2.perspectiveTransform(click_pos_array, homography_matrices[1])
             print(real_world_pos)
         frame_num+=1
 

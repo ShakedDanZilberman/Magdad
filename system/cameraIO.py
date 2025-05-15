@@ -86,9 +86,9 @@ class Camera:
         self.cam = cv2.VideoCapture(self.index, cv2.CAP_MSMF)  # this is supposed to be a better mode
         self.cam.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
         self.cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
-        self.cam.set(cv2.CAP_PROP_FPS, 5)
-        actual_fps = self.cam.get(cv2.CAP_PROP_FPS)
-        print(f"Actual FPS set: {actual_fps}")
+        # self.cam.set(cv2.CAP_PROP_FPS, 5)
+        # actual_fps = self.cam.get(cv2.CAP_PROP_FPS)
+        # print(f"Actual FPS set: {actual_fps}")
         ret_val, self.img = self.cam.read()
         self.img = ImageParse.resize_proportionally(self.img, 0.5)
         if not ret_val:
@@ -116,7 +116,7 @@ class Camera:
 
 if __name__ == "__main__":
     # display image from camera index 1
-    cam = Camera(CAMERA_INDEX_1)
+    cam = Camera(0)
     while True:
         img = cam.read()
         cv2.imshow("Camera", img)

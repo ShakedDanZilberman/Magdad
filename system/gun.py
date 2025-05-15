@@ -31,7 +31,7 @@ class Gun:
         self.target_stack = []
         self.ser = self._connect_to_serial(COM)
         print("Connected to serial")
-        time.sleep(2)  # Give Arduino time to reset; setup delay sleep for 2 seconds
+        # time.sleep(2)  # Give Arduino time to reset; setup delay sleep for 2 seconds
         self.print_flag = print_flag
 
         if self.print_flag:
