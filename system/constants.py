@@ -64,24 +64,23 @@ SERVO_PIN = 9  # pin for the servo motor
 
 # constatns for the camera homography, positions are when looking at the door from inside the room
 # left camera
-CAMERA_INDEX_0 = 1
+CAMERA_INDEX_0 = 0
 CAMERA_LOCATION_0 = (0, 0)  # Coordinates of the camera in real world
-DEST_POINTS_0 = [[0.0, 0.0], [25.0, 0.0], [50.0, 0.0], [75.0, 0.0], [100.0, 0.0], [125.0, 0.0], 
-                 [0.0, 25.0], [25.0, 25.0], [50.0, 25.0], [75.0, 25.0], [100.0, 25.0],
-                 [25.0, 50.0], [50.0, 50.0], [75.0, 50.0], [100.0, 50.0],
-                 [25.0, 75.0], [50.0, 75.0]]
+DEST_POINTS_0 = [[0.0, 0.0], [25.0, 0.0], [50.0, 0.0], [75.0, 0.0], [100.0, 0.0], 
+                 [25.0, 50.0], [50.0, 50.0], [75.0, 50.0]]
 
 DEST_ARRAY_0 = np.array(DEST_POINTS_0, dtype=np.float32)
-SRC_POINTS_0 = [[110.0, 65.0], [266.0, 69.0], [431.0, 68.0], [601.0, 67.0], [770.0, 67.0], [938.0, 68.0], [36.0, 120.0], [230.0, 122.0], [428.0, 123.0], [631.0, 123.0], [838.0, 122.0], [158.0, 213.0], [418.0, 220.0], [690.0, 221.0], [957.0, 217.0], [26.0, 386.0], [406.0, 396.0]]
+SRC_POINTS_0 = [[76.0, 68.0], [232.0, 68.0], [397.0, 66.0], [565.0, 62.0], [727.0, 61.0],
+                  [125.0, 212.0], [378.0, 212.0], [656.0, 207.0]]
 SRC_ARRAY_0 = np.array(SRC_POINTS_0, dtype=np.float32)
 
-homography_matrix = np.array([[2.19286198e-01,  3.17183416e-01, -4.51513162e+01],
- [-9.04685486e-04,  7.73905677e-01, -5.12302714e+01],
- [5.51058686e-05,  5.95590152e-03,  1.00000000e+00]], dtype=np.float64)
+homography_matrix = np.array([[0.22884, 0.33274, -39.792],
+ [0.010142, 0.8147, -56.995],
+ [0.0001245, 0.006266, 1]], dtype=np.float64)
 
 
 # center camera
-CAMERA_INDEX_1 = 0
+CAMERA_INDEX_1 = 2
 CAMERA_LOCATION_1 = (0, 0)  # Coordinates of the camera in real world
 DEST_POINTS_1 = [[100.0, 0.0], [125.0, 0.0], [150.0, 0.0], [175.0, 0.0], [200.0, 0.0],
                  [100.0, 25.0], [125.0, 25.0], [150.0, 25.0], [175.0, 25.0], [200.0, 25.0],
@@ -101,7 +100,7 @@ homography_matrix_1 =  np.array([[3.47340665e-01,  9.84985803e-01,  3.59704322e+
 
 
 # right camera
-CAMERA_INDEX_2 = 3
+CAMERA_INDEX_2 = 1
 CAMERA_LOCATION_2 = (0, 0)  # Coordinates of the camera in real world
 DEST_POINTS_2 = [[175.0, 0.0], [200.0, 0.0], [225.0, 0.0], [250.0, 0.0], [275.0, 0.0],
                  [175.0, 25.0], [200.0, 25.0], [225.0, 25.0], [250.0, 25.0], [275.0, 25.0],

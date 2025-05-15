@@ -707,7 +707,7 @@ def homography_calibration_main():
 def test_homography():
     global CAMERA_INDEX_0, timestep, laser_targets
     # import Trash.fit as fit
-    detectCameras()
+    # detectCameras()
     cam = Camera(CAMERA_INDEX_0)
     handler = MouseCameraHandler(CAMERA_INDEX_0)
     # laser = threading.Thread(target=laser_thread)
@@ -726,7 +726,7 @@ def test_homography():
             click_pos = handler.get_clicks()[0]
             click_pos_array = np.array([[[click_pos[0], click_pos[1]]]], dtype=np.float32)
             print("click is in pixel: ", click_pos)
-            real_world_pos = cv2.perspectiveTransform(click_pos_array, homography_matrices[1])
+            real_world_pos = cv2.perspectiveTransform(click_pos_array, homography_matrices[0])
             print(real_world_pos)
         frame_num+=1
 
@@ -742,8 +742,8 @@ if __name__ == "__main__":
     # hit_cursor_main()
     # just_changes_main()
     # main_using_targets_4()
-    homography_calibration_main()
-    # test_homography()
+    # homography_calibration_main()
+    test_homography()
     # test_camera()
     # homography_targets()1
     

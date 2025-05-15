@@ -10,9 +10,9 @@ from ultralytics import YOLO
 # # results = ov_model('path/to/image.jpg')        # high-level Results object works again
 
 
-# homogrpahy_matrix, status = cv2.findHomography(constants.SRC_ARRAY_2, constants.DEST_ARRAY_2, 0, 3)
+homogrpahy_matrix, status = cv2.findHomography(constants.SRC_ARRAY_0, constants.DEST_ARRAY_0, 0, 3)
 
-# print(homogrpahy_matrix)
+print(homogrpahy_matrix)
 
 
 #yolo detect train imgsz=640 data=’data.yaml’ epochs=25 device=’cpu’

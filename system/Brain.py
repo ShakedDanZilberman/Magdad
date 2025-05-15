@@ -31,7 +31,11 @@ class CameraProducer(threading.Thread):
             # print(f"timestep: {self.timestep} camera {self.eye.camera_index}")
             frame = self.eye.camera.read(self.timestep)
             # Run your add_yolo processing (which returns targets)
-            targets = self.eye.add_yolo(frame)
+            if self.timestep % 30 == 14:
+                print("in add yolo")
+                targets = self.eye.add_yolo(frame)
+            else:
+                targets = self.eye.add_yolo(frame, False)
             # Grab the visualized image (after display())
             self.eye.yolo_handler.prepare_to_show()
             vis = self.eye.yolo_handler.get_vis()
@@ -292,6 +296,7 @@ class Brain():
             gun.target_stack.append(target)
             timestep = self.timestep
             self.history[target[0]] = (target[1], timestep)
+            print(f"history is {self.history}")
             return
         for location, priority in self.targets.items():
             if gun.target_stack is not None and len(gun.target_stack) > 0:
@@ -306,6 +311,7 @@ class Brain():
             priority = self.targets.pop(closest_target[0])
             # print(f"targets in brain after pop: {self.targets}")
             gun.target_stack.append((closest_target[0], priority))
+            print(f"assigned target {closest_target} to gun {gun.gun_index}")
 
     def angle_diff(self, location_1: tuple, location_2: tuple, gun_index=0):
         """
@@ -401,7 +407,7 @@ class Brain():
                 if gun.is_free():
                     # assign the target to the gun
                     self.pop_optimized(gun)
-                    # print(f"gun {gun.gun_index} target stack: ", gun.target_stack)
+                    
             # print("timestep: ", self.timestep)
             # Press Escape to exit
             if cv2.waitKey(1) == 27:
@@ -485,16 +491,17 @@ class Brain():
                     target = gun.target_stack[0]            
                     # print(f"Gun {gun.gun_location} is aiming at target {target}")
                     # Calculate the angle to rotate to
-                    # print(f"target stack: {gun.target_stack}")
+                    print(f"target stack: {gun.target_stack}")
                     angle = self.calculate_angle_from_gun(target[0], gun_index)
-                    # print("angle to shoot: ", angle)
-                    if angle - gun.get_angle() > 1:
+                    print("angle to shoot: ", angle)
+                    if angle - gun.current_angle:
                         gun.rotate(angle)
-                    gun.shoot()
-                    # print("shot fired")
-                    gun.target_stack.pop(0)
+                        gun.shoot()
+                        # print("shot fired")
+                        gun.target_stack.pop(0)
                     # print("gun target stack after pop: ", gun.target_stack)
-                    time.sleep(0.1)
+                    print("in gun thread: sleeping for 1 second")
+                    time.sleep(1)
             # check which gun is free and assign it to the target
             # if there is a target in the list of targets that has priority 8 or higher, assign it to the first gun immediately
         
@@ -546,7 +553,7 @@ class Brain():
         exit(0)
 
 if __name__ == "__main__":
-    gun_info = [((97.0, 100.0), 0)]  # example
+    gun_info = [((100.0, 95.0), 0)]  # example
     # cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0]), (CAMERA_INDEX_1, CAMERA_LOCATION_1, homography_matrices[1])]  # (cam_index, CAMERA_LOCATION_0, homography_matrix)
     cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0]), (CAMERA_INDEX_1, CAMERA_LOCATION_1, homography_matrices[1]), (CAMERA_INDEX_2, CAMERA_LOCATION_2, homography_matrices[2])]  # (cam_index, CAMERA_LOCATION_0, homography_matrix)
     # cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0])]
