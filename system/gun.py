@@ -10,9 +10,6 @@ import re
 from constants import COM
 
 
-STEPS_IN_DEGREE = 4/1.8
-
-
 class Gun:
     def __init__(self, gun_location, index: int, print_flag=False):
         """Initialize the Gun class, connect to the Arduino, and set the initial angle.
