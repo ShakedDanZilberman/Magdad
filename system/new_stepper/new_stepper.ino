@@ -20,15 +20,28 @@ const int gunPin = 12;
 const int dirPin = 4;
 const int stepPin = 7;
 const int enablePin = 8;
-const int SHOOT_COOLDOWN = 2;  // ms
+const int SHOOT_COOLDOWN = 4;  // ms
 const int MAX_SPEED = 3000;  // steps per second
 const int ACCELERATION = 10000;  // steps per second^2
-long count = 0;
+float count = 0;
 
 // Stepper setup: DRIVER interface type = 1
 AccelStepper stepper(AccelStepper::DRIVER, stepPin, dirPin);
 
-
+int mistake()
+{
+  if (count>1)
+  { 
+    count-=1;
+    return 1;
+  }
+  else if(count<-1)
+  {   
+    count+=1;
+    return -1;
+  }
+  return 0;
+}
 void setup() {
   Serial.begin(9600);
   pinMode(gunPin, OUTPUT);
@@ -56,7 +69,7 @@ long angle_to_steps(double angle){
   // TODO: understand why different?>??????>?>??DF&^O*HOJP
   // Black gun = *4
   // White gun = *2
-  return int(-4 * angle / 1.8);
+  return long(-4 * angle / 1.8);
 }
 
 void loop() {
@@ -74,9 +87,15 @@ void loop() {
     else if (command.startsWith("ROTATE:")) {
       stepper.enableOutputs();
       long steps = command.substring(7).toInt();
+      float step = command.substring(7).toFloat();
+      count +=step-float(steps);
       Serial.print("Requested steps: ");
       Serial.println(steps);
-      stepper.move(steps); 
+      Serial.println(step);
+      long angle = angle_to_steps(steps);
+      float mis=mistake();
+      Serial.println(mis);
+      stepper.move(angle+mis); 
       Serial.println("Done"); // Critical for communication with Python
     }else if (command.startsWith("ANGLE:")) {
       stepper.enableOutputs();
