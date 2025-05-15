@@ -1,19 +1,15 @@
 import os
 import sys
 import serial
+from serial.tools import list_ports as coms
 from time import sleep
 import time
 import subprocess
 import re
 
-from constants import COM
-
-
-STEPS_IN_DEGREE = 4/1.8
-
 
 class Gun:
-    def __init__(self, gun_location, index: int, print_flag=False):
+    def __init__(self, gun_location, index: int, COM: str, print_flag=False):
         """Initialize the Gun class, connect to the Arduino, and set the initial angle.
         The class communicates with the Arduino via a serial connection.
         The protocol:
@@ -29,13 +25,14 @@ class Gun:
         self.current_angle = 0
         self.gun_location = gun_location
         self.target_stack = []
-        self.ser = self._connect_to_serial(COM)
+        self.COM = COM
+        self.ser = self._connect_to_serial(self.COM)
         print("Connected to serial")
         time.sleep(2)  # Give Arduino time to reset; setup delay sleep for 2 seconds
         self.print_flag = print_flag
 
         if self.print_flag:
-            print(f"Gun initialized and connected at {COM}.")
+            print(f"Gun initialized and connected at {self.COM}.")
 
     def set_next_target(self, target):
         self.next_target = target
@@ -53,6 +50,10 @@ class Gun:
             return serial.Serial(port, 9600, timeout=1)
         except serial.SerialException:
             # Try to auto-detect the port
+            ports = coms.comports()
+            for port in ports:
+                print(port.device, end=": ")
+                print(port.description)
             result = subprocess.run(
                 ["mode"], capture_output=True, text=True, shell=True
             ).stdout
@@ -119,7 +120,7 @@ class Gun:
             if response == "Done":
                 break
             if count > TIMEOUT:
-                raise TimeoutError("Timeout waiting for Arduino response \"Done\" in Gun class.")
+                raise TimeoutError("Timeout waiting for Arduino response \"Done\" in Gun class.\n Close Arduino IDE, disconnect and reconnect the cable and try again.\n Good Luck!")
 
     def exit(self):
         pass
