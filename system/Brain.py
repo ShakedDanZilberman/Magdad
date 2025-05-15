@@ -196,7 +196,7 @@ class Brain():
             # print("in calculate angle: gun location: ", gun.gun_location, "target: ", target)
             slope = (gun.gun_location[1]- target[1]) / (target[0] - gun.gun_location[0])
             angle = 90 - np.arctan(slope) * 180 / np.pi
-        return angle*(-1)
+        return angle 
 
     def calculate_angle(self, location_1: tuple, location_2: tuple):
         """
@@ -252,7 +252,7 @@ class Brain():
         for eye in self.eyes:
             targets  = eye.add_independent()
             if len(targets) > 0:
-                self.add_to_target_list(targets, MIN_DISTANCE)
+                self.add_to_target_list(targets, 0)
 
     def add_yolo(self):
         """
@@ -495,11 +495,10 @@ class Brain():
                     print(f"target stack: {gun.target_stack}")
                     angle = self.calculate_angle_from_gun(target[0], gun_index)
                     print("angle to shoot: ", angle)
-                    if angle - gun.current_angle:
-                        gun.rotate(angle)
-                        gun.shoot()
-                        # print("shot fired")
-                        gun.target_stack.pop(0)
+                    gun.rotate(angle)
+                    gun.shoot()
+                    print("shot fired")
+                    gun.target_stack.pop(0)
                     # print("gun target stack after pop: ", gun.target_stack)
                     print("in gun thread: sleeping for 1 second")
                     time.sleep(1)
@@ -559,14 +558,14 @@ class Brain():
         exit(0)
 
 if __name__ == "__main__":
-    gun_info = [((100.0, 95.0), 0)]  # example
+    gun_info = [((193.5, 101.0), 0)]  # example
     # cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0]), (CAMERA_INDEX_1, CAMERA_LOCATION_1, homography_matrices[1])]  # (cam_index, CAMERA_LOCATION_0, homography_matrix)
-    cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0]), (CAMERA_INDEX_1, CAMERA_LOCATION_1, homography_matrices[1])]  # (cam_index, CAMERA_LOCATION_0, homography_matrix)
+    cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0]), (CAMERA_INDEX_1, CAMERA_LOCATION_1, homography_matrices[1]), (CAMERA_INDEX_2, CAMERA_LOCATION_2, homography_matrices[2])]  # (cam_index, CAMERA_LOCATION_0, homography_matrix)
     # cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0])]
     try:
         brain = Brain(gun_info, cam_info)
-        # brain.game_loop_independent()
-        brain.game_loop_display()
+        brain.game_loop_independent()
+        # brain.game_loop_display()
     except KeyboardInterrupt:
         for thread in threading.enumerate():
             print(f"Thread {thread.name} is alive: {thread.is_alive()}")
