@@ -7,11 +7,9 @@ import time
 import subprocess
 import re
 
-from constants import COM
-
 
 class Gun:
-    def __init__(self, gun_location, index: int, print_flag=False):
+    def __init__(self, gun_location, index: int, COM: str, print_flag=False):
         """Initialize the Gun class, connect to the Arduino, and set the initial angle.
         The class communicates with the Arduino via a serial connection.
         The protocol:
@@ -27,13 +25,14 @@ class Gun:
         self.current_angle = 0
         self.gun_location = gun_location
         self.target_stack = []
-        self.ser = self._connect_to_serial(COM)
+        self.COM = COM
+        self.ser = self._connect_to_serial(self.COM)
         print("Connected to serial")
         time.sleep(2)  # Give Arduino time to reset; setup delay sleep for 2 seconds
         self.print_flag = print_flag
 
         if self.print_flag:
-            print(f"Gun initialized and connected at {COM}.")
+            print(f"Gun initialized and connected at {self.COM}.")
 
     def set_next_target(self, target):
         self.next_target = target

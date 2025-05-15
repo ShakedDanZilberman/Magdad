@@ -77,16 +77,12 @@ class DisplayConsumer(threading.Thread):
                 return
 
 class Brain():
-    def __init__(self, gun_info, cam_info):
+    def __init__(self, guns, cam_info):
         """
         cam info is an array of tuples, for each camera: (cam_index, CAMERA_LOCATION_0)
         gun_locations is an array of tuples, for each gun: its location
         """
-        self.guns = []
-        for gun in gun_info:
-            new_gun = Gun(gun[0], gun[1], False)
-            self.guns.append(new_gun)
-        print("guns initialized")
+        self.guns = guns
         self.eyes = []
         for cam in cam_info:
             new_eye = Eye(cam[0], cam[1], cam[2])
@@ -558,13 +554,28 @@ class Brain():
         print("Exiting...")
         exit(0)
 
+
+
+
 if __name__ == "__main__":
-    gun_info = [((100.0, 95.0), 0)]  # example
+
+    white_gun = Gun(gun_location=(192.0,100.0),
+                    index=0,
+                    COM="COM11", 
+                    print_flag=True)
+    
+    black_gun = Gun(gun_location=(100.0,95.0),
+                    index=1,
+                    COM="COM8", 
+                    print_flag=True)
+    
+    guns = [white_gun, black_gun]
+
     # cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0]), (CAMERA_INDEX_1, CAMERA_LOCATION_1, homography_matrices[1])]  # (cam_index, CAMERA_LOCATION_0, homography_matrix)
     cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0]), (CAMERA_INDEX_1, CAMERA_LOCATION_1, homography_matrices[1])]  # (cam_index, CAMERA_LOCATION_0, homography_matrix)
     # cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0])]
     try:
-        brain = Brain(gun_info, cam_info)
+        brain = Brain(guns, cam_info)
         # brain.game_loop_independent()
         brain.game_loop_display()
     except KeyboardInterrupt:
