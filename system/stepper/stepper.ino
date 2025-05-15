@@ -20,12 +20,13 @@ const int stepPin = 2;
 const int enablePin = 5;
 const int speed = 1000;
 const int SHOOT_COOLDOWN = 200;  // ms
+const float factor = 2/1.9*0.99;
 
 void setup() {
   Serial.begin(9600);  
   
   pinMode(enablePin, OUTPUT);
-  digitalWrite(enablePin, LOW);  // Enable the driver
+  digitalWrite(enablePin, HIGH);  // DISable the driver
 
   pinMode(gunPin, OUTPUT);
   pinMode(dirPin, OUTPUT);
@@ -51,7 +52,7 @@ void loop() {
     }
     else if (command.startsWith("ROTATE:")) {
       digitalWrite(enablePin, LOW);  // Enable the driver
-      long steps = command.substring(7).toInt(); // Read number of steps
+      long steps = factor * command.substring(7).toInt(); // Read number of steps
       Serial.print("Number of steps: ");
       Serial.println(steps);
       if (steps != 0) {
@@ -67,6 +68,7 @@ void loop() {
           delayMicroseconds(speed);
         }
       }
+      delayMicroseconds(10000);
       digitalWrite(enablePin, HIGH);  // Disable the driver
       Serial.println("Done");
     }
