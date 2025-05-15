@@ -82,7 +82,7 @@ class YOLOHandler:
         return mask
 
     def get_centers(self):
-        return [((b['x1']+b['x2'])//2, (b['y1']+b['y2'])//10)
+        return [((b['x1']+b['x2'])//2, (b['y1']+9*b['y2'])//10)
                 for b in self.bounding_boxes]
 
     def display(self):

@@ -87,7 +87,7 @@ class Gun:
         # command = f"ROTATE:{steps}\n".encode()
         command = f"ANGLE:{dθ}\n".encode()
         time.sleep(0.5)  # Give Arduino time to process the command
-        print("in gun rotate: sleep 0.5 secs")
+        # print("in gun rotate: sleep 0.5 secs")
         self.ser.write(command)
         if self.print_flag:
             print(f">>> {command}")
@@ -142,15 +142,39 @@ class DummyGun:
 
 
 if __name__ == "__main__":
-    gun = Gun((3,4), 0, "COM18", print_flag=True)
-    #angle_program = [0, 360, 0, 180, 0, 90, 0, -90, 0, 180, 0, 360, 0, -180, 0, 90, 0, -90, 0, 180, 0, 360, 0, -180, 0, 90, 0, -90, 0, 180, 0, 360, 0, -180, 0, 90, 0, -90, 0, 180, 0, 360]
-    # angle_program = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]
-    angle_program = [30, 0, -30, 0, 60, 0, -60, 0, 90, 0, -90]
-    # angle_program = [0]
-    #angle_program *= 5
-    while True:
-        for angle in angle_program:
-            gun.rotate(angle)
-            sleep(0.5)
-            # gun.shoot()
-            sleep(3.5)
+    white_gun = Gun(gun_location=(195.5,100.0),
+                    index=0,
+                    COM="COM14", 
+                    print_flag=False)
+    gun = white_gun
+    # #angle_program = [0, 360, 0, 180, 0, 90, 0, -90, 0, 180, 0, 360, 0, -180, 0, 90, 0, -90, 0, 180, 0, 360, 0, -180, 0, 90, 0, -90, 0, 180, 0, 360, 0, -180, 0, 90, 0, -90, 0, 180, 0, 360]
+    # # angle_program = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]
+    # angle_program = [30, 0, -30, 0, 60, 0, -60, 0, 90, 0, -90]
+    # # angle_program = [0]
+    # #angle_program *= 5
+    # while True:
+    #     for angle in angle_program:
+    #         gun.rotate(angle)
+    #         sleep(0.5)
+    #         gun.shoot()
+    #         sleep(3.5)
+
+    from Brain import Brain
+    guns = [gun]
+    # guns = []
+    # cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0]), (CAMERA_INDEX_1, CAMERA_LOCATION_1, homography_matrices[1])]  # (cam_index, CAMERA_LOCATION_0, homography_matrix)
+    from constants import *
+    import threading
+    cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0]), 
+                (CAMERA_INDEX_1, CAMERA_LOCATION_1, homography_matrices[1]), 
+                (CAMERA_INDEX_2, CAMERA_LOCATION_2, homography_matrices[2])]  # (cam_index, CAMERA_LOCATION_0, homography_matrix)
+    # cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0])]
+    try:
+        brain = Brain(guns, cam_info)
+        # brain.game_loop_independent()
+        brain.game_loop_display()
+    except KeyboardInterrupt:
+        for thread in threading.enumerate():
+            print(f"Thread {thread.name} is alive: {thread.is_alive()}")
+        print("Exiting...")
+        exit(0)
