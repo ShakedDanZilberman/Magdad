@@ -1,6 +1,7 @@
 import os
 import sys
 import serial
+from serial.tools import list_ports as coms
 from time import sleep
 import time
 import subprocess
@@ -31,7 +32,7 @@ class Gun:
         self.target_stack = []
         self.ser = self._connect_to_serial(COM)
         print("Connected to serial")
-        # time.sleep(2)  # Give Arduino time to reset; setup delay sleep for 2 seconds
+        time.sleep(2)  # Give Arduino time to reset; setup delay sleep for 2 seconds
         self.print_flag = print_flag
 
         if self.print_flag:
@@ -53,6 +54,10 @@ class Gun:
             return serial.Serial(port, 9600, timeout=1)
         except serial.SerialException:
             # Try to auto-detect the port
+            ports = coms.comports()
+            for port in ports:
+                print(port.device, end=": ")
+                print(port.description)
             result = subprocess.run(
                 ["mode"], capture_output=True, text=True, shell=True
             ).stdout
