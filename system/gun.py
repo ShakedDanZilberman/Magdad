@@ -82,8 +82,9 @@ class Gun:
         """
         print(f"Rotating to {angle} degrees")
         dθ = angle - self.current_angle
-        steps = int(STEPS_IN_DEGREE * dθ)
-        command = f"ROTATE:{steps}\n".encode()
+        # steps = int(STEPS_IN_DEGREE * dθ)
+        # command = f"ROTATE:{steps}\n".encode()
+        command = f"ANGLE:{dθ}\n".encode()
         time.sleep(0.5)  # Give Arduino time to process the command
         print("in gun rotate: sleep 0.5 secs")
         self.ser.write(command)
@@ -142,7 +143,7 @@ class DummyGun:
 if __name__ == "__main__":
     gun = Gun((3,4), 0, print_flag=True)
     #angle_program = [0, 360, 0, 180, 0, 90, 0, -90, 0, 180, 0, 360, 0, -180, 0, 90, 0, -90, 0, 180, 0, 360, 0, -180, 0, 90, 0, -90, 0, 180, 0, 360, 0, -180, 0, 90, 0, -90, 0, 180, 0, 360]
-    angle_program = [0,10,-15,25,-20]
+    angle_program = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]
     #angle_program *= 5
     while True:
         for angle in angle_program:
