@@ -12,7 +12,8 @@ class YOLOHandler:
     def __init__(self, model_path: str = 'best_new_training_openvino_model', imgsz: int = 320, conf_thres: float = 0.5):
         # Resolve model path
         base = os.path.dirname(os.path.abspath(__file__))
-        self.model = YOLO(os.path.join(base), model_path)
+        print("Model loaded")
+        self.model = YOLO(os.path.join(base, model_path))
         # self.model.export(format='openvino')
 
         self.imgsz = imgsz

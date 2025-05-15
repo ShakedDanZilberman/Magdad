@@ -22,7 +22,7 @@ BRIGHTNESS_THRESHOLD = 240
 
 MINIMAL_OBJECT_AREA = 30
 MIN_DISTANCE = 3.0
-
+HISTORY_DELAY = 200
 
 # constants for the gun
 SLEEP_DURATION = 0.2  # seconds
@@ -101,7 +101,7 @@ homography_matrix_1 =  np.array([[3.47340665e-01,  9.84985803e-01,  3.59704322e+
 
 
 # right camera
-CAMERA_INDEX_2 = 1
+CAMERA_INDEX_2 = 3
 CAMERA_LOCATION_2 = (0, 0)  # Coordinates of the camera in real world
 DEST_POINTS_2 = [[175.0, 0.0], [200.0, 0.0], [225.0, 0.0], [250.0, 0.0], [275.0, 0.0],
                  [175.0, 25.0], [200.0, 25.0], [225.0, 25.0], [250.0, 25.0], [275.0, 25.0],

@@ -90,6 +90,7 @@ class Brain():
             self.eyes.append(new_eye)
         print("finished eye initialization")
         self.targets = {}
+        self.history = {}
         self.timestep = 0
         self.display_queue = queue.Queue(maxsize=len(self.eyes))
         self.latest = {}
@@ -112,7 +113,9 @@ class Brain():
         # print("tx, ty:", (tx, ty))
         for (ox, oy) in self.targets.keys():
             # print("ox, oy:", (ox, oy))
-
+            if np.linalg.norm((tx - ox, ty - oy)) <= min_dist:
+                return True
+        for (ox, oy) in self.history.keys():
             if np.linalg.norm((tx - ox, ty - oy)) <= min_dist:
                 return True
         return False
@@ -286,7 +289,10 @@ class Brain():
         if len(self.targets) == 0:
             return 
         elif len(gun.target_stack) == 0:
-            gun.target_stack.append(self.targets.popitem())
+            target = self.targets.popitem()
+            gun.target_stack.append(target)
+            timestep = self.timestep
+            self.history[target[0]] = (target[1], timestep)
             return
         for location, priority in self.targets.items():
             if gun.target_stack is not None and len(gun.target_stack) > 0:
@@ -316,6 +322,18 @@ class Brain():
         elif diff < -180:
             diff += 360
         return np.abs(diff)
+
+    def update_history(self):
+        """
+        This function updates the history of targets.
+        It removes targets that are not in the list of targets anymore.
+        """
+        for location, data in self.history.items():
+            if data[1] - self.timestep > HISTORY_DELAY:
+                self.history.pop(location)
+                # print("history: ", self.history)
+                # print("targets: ", self.targets)
+                # print("history after pop: ", self.history)
 
     # def pop_optimized(self, gun_location):
     #     """
@@ -441,6 +459,7 @@ class Brain():
                 if gun.is_free():
                     # assign the target to the gun
                     self.pop_optimized(gun)
+                    self.update_history()
                     # print(f"gun {gun.gun_index} target stack: ", gun.target_stack)
             # print("timestep: ", self.timestep)
             # Press Escape to exit
@@ -490,8 +509,10 @@ class Brain():
         for eye in self.eyes:
             prod = CameraProducer(eye.camera_index, eye, self.display_queue)
             prod.start()
+            print(f"Camera {eye.camera_index} is ready")
             producers.append(prod)
 
+        print("going to loop")
         while True:
             self.timestep += 1
             # 1. Add targets from cameras
@@ -525,14 +546,14 @@ class Brain():
         exit(0)
 
 if __name__ == "__main__":
-    gun_info = [((200.0, 75.0), 0)]  # example
+    gun_info = [((97.0, 100.0), 0)]  # example
     # cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0]), (CAMERA_INDEX_1, CAMERA_LOCATION_1, homography_matrices[1])]  # (cam_index, CAMERA_LOCATION_0, homography_matrix)
-    # cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0]), (CAMERA_INDEX_1, CAMERA_LOCATION_1, homography_matrices[1]), (CAMERA_INDEX_2, CAMERA_LOCATION_2, homography_matrices[2])]  # (cam_index, CAMERA_LOCATION_0, homography_matrix)
-    cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0]), (CAMERA_INDEX_1, CAMERA_LOCATION_1, homography_matrices[1])]
+    cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0]), (CAMERA_INDEX_1, CAMERA_LOCATION_1, homography_matrices[1]), (CAMERA_INDEX_2, CAMERA_LOCATION_2, homography_matrices[2])]  # (cam_index, CAMERA_LOCATION_0, homography_matrix)
+    # cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0])]
     try:
-        brain = Brain(gun_info, cam_info)
-        brain.game_loop_independent()
-        # Brain(gun_info, cam_info).game_loop_display()
+        # brain = Brain(gun_info, cam_info)
+        # brain.game_loop_independent()
+        Brain(gun_info, cam_info).game_loop_display()
     except KeyboardInterrupt:
         for thread in threading.enumerate():
             print(f"Thread {thread.name} is alive: {thread.is_alive()}")

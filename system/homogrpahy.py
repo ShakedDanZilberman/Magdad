@@ -2,10 +2,17 @@ import cv2
 import numpy as np
 import constants
 from mouseCamera import MouseCameraHandler as mouse_camera
+from ultralytics import YOLO
 
-homogrpahy_matrix, status = cv2.findHomography(constants.SRC_ARRAY_2, constants.DEST_ARRAY_2, 0, 3)
+# model = YOLO('best_new_training.pt')
+# model.export(format='openvino', dynamic=True)
+# ov_model = YOLO('best_new_training_openvino_model/')
+# # results = ov_model('path/to/image.jpg')        # high-level Results object works again
 
-print(homogrpahy_matrix)
+
+# homogrpahy_matrix, status = cv2.findHomography(constants.SRC_ARRAY_2, constants.DEST_ARRAY_2, 0, 3)
+
+# print(homogrpahy_matrix)
 
 
 #yolo detect train imgsz=640 data=’data.yaml’ epochs=25 device=’cpu’
