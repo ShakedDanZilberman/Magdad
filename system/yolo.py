@@ -135,7 +135,7 @@ if __name__ == "__main__":
     from constants import CAMERA_INDEX_2
     import undistortion
     detectCameras()
-    cam = Camera(3)
+    cam = Camera(0)
     # handler = MouseCameraHandler()
     yoloHandler = YOLOHandler()
     # laser = threading.Thread(target=laser_thread)

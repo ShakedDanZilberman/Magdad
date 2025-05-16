@@ -69,6 +69,10 @@ class Gun:
     def shoot(self):
         # print(f"Shooting!!! at {self.current_angle} degrees")
         self.ser.write(b"SHOOT\n")
+        time.sleep(0.05)
+        self.ser.write(b"SHOOT\n")
+        time.sleep(0.05)
+        self.ser.write(b"SHOOT\n")
         if self.print_flag:
             print(f">>> SHOOT")
         self._wait_for_done()
@@ -140,7 +144,7 @@ class DummyGun:
     def exit(self):
         pass
 
-def simple_test():
+def simple_test(gun):
     #angle_program = [0, 360, 0, 180, 0, 90, 0, -90, 0, 180, 0, 360, 0, -180, 0, 90, 0, -90, 0, 180, 0, 360, 0, -180, 0, 90, 0, -90, 0, 180, 0, 360, 0, -180, 0, 90, 0, -90, 0, 180, 0, 360]
     # # angle_program = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]
     angle_program = [30, 0, -30, 0, 60, 0, -60, 0, 90, 0, -90]
@@ -153,17 +157,22 @@ def simple_test():
             gun.shoot()
             sleep(3.5)
 
-if __name__ == "__main__":
-    # simple_test()
+if __name__ == "__main__":   
     white_gun = Gun(gun_location=(195.5,100.0),
                     index=0,
                     COM="COM14", 
                     print_flag=False)
-    gun = white_gun
     
+    black_gun = Gun(gun_location=(100.0,95.0),
+                    index=1,
+                    COM="COM18", 
+                    print_flag=False)
+    
+    gun_info = [((195.5,100.0), 0, "COM14", False), ((100.0,95.0), 1, "COM18", False)]
+    guns = [white_gun, black_gun]
+    # guns = []
 
     from Brain import Brain
-    guns = [gun]
     # guns = []
     # cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0]), (CAMERA_INDEX_1, CAMERA_LOCATION_1, homography_matrices[1])]  # (cam_index, CAMERA_LOCATION_0, homography_matrix)
     from constants import *
@@ -171,7 +180,7 @@ if __name__ == "__main__":
     cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0]), 
                 (CAMERA_INDEX_1, CAMERA_LOCATION_1, homography_matrices[1]), 
                 (CAMERA_INDEX_2, CAMERA_LOCATION_2, homography_matrices[2])]  # (cam_index, CAMERA_LOCATION_0, homography_matrix)
-    # cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0])]
+    # cam_info = [(CAMERA_INDEX_1, CAMERA_LOCATION_1, homography_matrices[1])]
     try:
         brain = Brain(guns, cam_info)
         # brain.game_loop_independent()
