@@ -140,24 +140,27 @@ class DummyGun:
     def exit(self):
         pass
 
+def simple_test():
+    #angle_program = [0, 360, 0, 180, 0, 90, 0, -90, 0, 180, 0, 360, 0, -180, 0, 90, 0, -90, 0, 180, 0, 360, 0, -180, 0, 90, 0, -90, 0, 180, 0, 360, 0, -180, 0, 90, 0, -90, 0, 180, 0, 360]
+    # # angle_program = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]
+    angle_program = [30, 0, -30, 0, 60, 0, -60, 0, 90, 0, -90]
+    # angle_program = [0]
+    #angle_program *= 5
+    while True:
+        for angle in angle_program:
+            gun.rotate(angle)
+            sleep(0.5)
+            gun.shoot()
+            sleep(3.5)
 
 if __name__ == "__main__":
+    # simple_test()
     white_gun = Gun(gun_location=(195.5,100.0),
                     index=0,
                     COM="COM14", 
                     print_flag=False)
     gun = white_gun
-    # #angle_program = [0, 360, 0, 180, 0, 90, 0, -90, 0, 180, 0, 360, 0, -180, 0, 90, 0, -90, 0, 180, 0, 360, 0, -180, 0, 90, 0, -90, 0, 180, 0, 360, 0, -180, 0, 90, 0, -90, 0, 180, 0, 360]
-    # # angle_program = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]
-    # angle_program = [30, 0, -30, 0, 60, 0, -60, 0, 90, 0, -90]
-    # # angle_program = [0]
-    # #angle_program *= 5
-    # while True:
-    #     for angle in angle_program:
-    #         gun.rotate(angle)
-    #         sleep(0.5)
-    #         gun.shoot()
-    #         sleep(3.5)
+    
 
     from Brain import Brain
     guns = [gun]

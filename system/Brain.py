@@ -470,6 +470,7 @@ class Brain():
                     angle = self.calculate_angle_from_gun(target[0], gun_index)
                     print(f"gun {gun.gun_location} - angle to shoot: ", angle)
                     gun.rotate(angle)
+                    time.sleep(0.1)
                     gun.shoot()
                     print("shot fired")
                     gun.target_stack.pop(0)
@@ -527,6 +528,12 @@ class Brain():
                 # print("targets: ", self.targets)
                 # print("history after pop: ", self.history)
         cv2.destroyAllWindows()
+        print("Please kill the terminal.")
+        print("just kill it...")
+        print("dont let it suffer")
+        print("there is good pain, and there is meangingless pain")
+        print("this is the latter")
+        print("also, escape to exit")
         for thread in threading.enumerate():
             if thread is not threading.current_thread():
                 thread.join()
