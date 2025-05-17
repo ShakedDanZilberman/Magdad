@@ -78,18 +78,21 @@ class RawHandler(Handler):
         self.text = text
 
     def add(self, img):
+        std = np.std(img)
+        # print("RawHandler: add with std:", std)
         self.img = img
 
     def get(self):
         return self.img
 
-    def display(self):
+    def display(self, index=0):
         if self.img is None:
             return
         if self.text is not None:
             textcolor = (130, 255, 0)
             cv2.putText(self.img, self.text, (7, 17), cv2.FONT_HERSHEY_SIMPLEX, 0.5, textcolor, 1)
-        cv2.imshow(RawHandler.TITLE, self.img)
+        # print(self.img)
+        cv2.imshow(RawHandler.TITLE+str(index), self.img)
 
     def clear(self):
         self.img = None
@@ -193,3 +196,17 @@ class ImageParse:
             np.ndarray: The image with increased contrast
         """
         return cv2.convertScaleAbs(img, factor, 0)
+    
+    @staticmethod
+    def resize_proportionally(img, factor, timestep: int=0):
+        # Get original dimensions
+        if img is None:
+            return
+        (h, w) = img.shape[:2]
+        new_width = int(w*factor)
+        new_height = int(h * factor)
+
+        # Resize the image
+        resized = cv2.resize(img, (new_width, new_height))
+        # print(f"Resized image to {new_width}x{new_height} at timestep {timestep}")
+        return resized

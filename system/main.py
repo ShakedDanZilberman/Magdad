@@ -1,14 +1,11 @@
 import time
 import threading
 
-from import_defence import ImportDefence
-
-with ImportDefence():
-    import cv2
-    import numpy as np
-    from pyfirmata import Arduino, util
-    import matplotlib.pyplot as plt
-    from ultralytics import YOLO
+import cv2
+import numpy as np
+from pyfirmata import Arduino, util
+import matplotlib.pyplot as plt
+# from ultralytics import YOLO
 
 from contours import ContoursHandler
 from changes import ChangesHandler
@@ -17,14 +14,16 @@ from image_processing import RawHandler, ImageParse
 from mouseCamera import MouseCameraHandler
 from object_finder import show_targets, get_targets
 from motion import DifferenceHandler
-from yolo import YOLOHandler
-from laser import LaserPointer
+# from yolo import YOLOHandler
+# from Trash.laser import LaserPointer
 from cameraIO import Camera
 from object_finder import average_of_heatmaps
-from gui import LIDARDistancesGraph
+# from Trash.gui import LIDARDistancesGraph
 from gun import Gun, DummyGun
-from constants import CAMERA_INDEX
-from object_finder import Targets
+from constants import CAMERA_INDEX_0, CAMERA_INDEX_1, CAMERA_INDEX_2
+from object_finder import Targets #GlobalTargets
+# import homogrpahy
+from constants import IMG_WIDTH, IMG_HEIGHT, homography_matrix, homography_matrices
 
 timestep = 0  # Global timestep, used to keep track of the number of frames processed
 laser_targets = [(30, 60)]  # List of targets for the laser pointer, used to share information between threads
@@ -39,6 +38,8 @@ fix = 0
 DIFF_THRESH = 0
 INITIAL_CONTOUR_EXTRACT_FRAME_NUM = 30
 CHECK_FOR_NEW_OBJECTS = 48
+
+
 
 
 def shoot(target):
@@ -81,10 +82,10 @@ def hit_cursor_main():
     An alternative to the main function that uses the mouse cursor as the target for the laser pointer.
     It does not use any image processing to detect targets.
     """
-    global CAMERA_INDEX, timestep, laser_targets
-    import fit
+    global CAMERA_INDEX_0, timestep, laser_targets
+    import Trash.fit as fit
     detectCameras()
-    cam = Camera(CAMERA_INDEX)
+    cam = Camera(CAMERA_INDEX_0)
     handler = MouseCameraHandler()
     # laser = threading.Thread(target=laser_thread)
     # laser.start()  # comment this line to disable the laser pointer
@@ -103,20 +104,19 @@ def hit_cursor_main():
         laser_targets = [mousePos]
         last_thetaX = thetaX
         thetaX, expected_volt = fit.bilerp(*mousePos)
-        # use PID
-        global fix
-        if len(thetaX) == 2:
-            thetaX = thetaX[0]
-        if thetaX != last_thetaX:
-            gun.rotate(thetaX)
-            global last_error, total_error
-            last_error = 0 
-            total_error = 0
-            time.sleep(0.5)
-        else:
-            gun.rotate(thetaX + fix)
-        motor_volt = gun.get_voltage()
-        fix = PID(expected_volt,motor_volt) 
+        
+        # # use PID
+        # global fix
+        # if thetaX != last_thetaX:
+        #     gun.rotate(thetaX)
+        #     global last_error, total_error
+        #     last_error = 0 
+        #     total_error = 0
+        #     time.sleep(0.5)
+        # else:
+        #     gun.rotate(thetaX + fix)
+        # motor_volt = gun.get_voltage()
+        # fix = PID(expected_volt,motor_volt) 
         
         
         if cv2.waitKey(1) == 32:  # Whitespace
@@ -126,11 +126,18 @@ def hit_cursor_main():
             break
     cv2.destroyAllWindows()
 
-def PID(expected_volt, motor_volt):
+
+
+
+
+def PID (expected_volt, motor_volt):
     # use PID      
         global total_error, last_error, error
         last_error = error
-        error = motor_volt - expected_volt
+        if motor_volt is None or expected_volt is None:
+            error = 0
+        else:
+            error = motor_volt - expected_volt
         dif_error = error - last_error
         total_error += error
         print("Motor voltage:", motor_volt, "Expected voltage:", expected_volt, "Error:", error)
@@ -143,9 +150,9 @@ def just_changes_main():
     It does not use contours or YOLO.
     It is a simplified version of the main function.
     """
-    global CAMERA_INDEX, timestep, gun_targets
+    global CAMERA_INDEX_0, timestep, gun_targets
     detectCameras()
-    cam = Camera(CAMERA_INDEX)
+    cam = Camera(CAMERA_INDEX_0)
     rawHandler = RawHandler("Whitespace to clear")
     changesHandler = ChangesHandler()
 
@@ -154,7 +161,7 @@ def just_changes_main():
         Thread that moves the gun to the target and shoots.
         The targets are aquired as an asynchronous input from the main thread.
         """
-        import fit
+        import Trash.fit as fit
         print("Gun thread started.")
         global gun_targets
         gun = Gun()
@@ -220,9 +227,9 @@ def just_changes_main():
 
 
 def main():
-    global CAMERA_INDEX, timestep, laser_targets
+    global CAMERA_INDEX_0, timestep, laser_targets
     detectCameras()
-    cam = Camera(CAMERA_INDEX)
+    cam = Camera(CAMERA_INDEX_0)
     rawHandler = RawHandler()
     changesHandler = ChangesHandler()
     differenceHandler = DifferenceHandler()
@@ -300,48 +307,160 @@ def main():
     cv2.destroyAllWindows()
 
 
-def gun_thread(target_manager):
+def main_using_targets():
+    global CAMERA_INDEX_0, timestep, gun_targets
+    from Trash.gui import GUI
+    detectCameras()
+    cam = Camera(CAMERA_INDEX_0)
+    rawHandler = RawHandler()
+    target_manager = Targets()
+    gui = GUI()
+    def gun_thread():
         """
         Thread that moves the gun to the target and shoots.
         The targets are aquired as an asynchronous input from the main thread.
         """
+        import Trash.fit as fit
         print("Gun thread started.")
         global gun_targets
         gun = Gun(print_flag=True)
+        center = (IMG_WIDTH//2, IMG_HEIGHT//2)
         while True:
+            # TODO: test out pop_closest_to_current_location as an alternative to pop() 
+            # center, to_shoot = target_manager.pop_closest_to_current_location(center)
             center = target_manager.pop()
-            if center is not None:
-                gun.aim_and_fire_target(center)
-                print("Shooting", center)
-                time.sleep(1)
-                target_manager.clear()
+            # Move the laser pointer to the target
+            to_shoot = center is not None
+            if to_shoot:
+                gun.aim_and_fire_target_2(center)
+                print("Shooting (theoretically)", center)
+                time.sleep(1) # this delay is here so we can wait for the objects to fall and then reset the changes image
+                target_manager.clear() # TODO: reduce the number of frames needed for initialization
     
+    gun = threading.Thread(target=gun_thread)
+    gun.start()
+    
+    while True:
+        timestep += 1
+        # the following if is to reduce the FPS to 10:
+        img = cam.read()
+        to_check = timestep % 15 == 7
+        to_init = timestep == 5
+        rawHandler.add(img)
+        rawHandler.display()
+        target_manager.add(img, to_check)
+        # Press Escape to exit
+        if cv2.waitKey(1) == 27:
+            break
+    cv2.destroyAllWindows()
 
-def main_using_targets():
-    global CAMERA_INDEX, timestep, gun_targets
-    from gui import GUI
-    from constants import useJustYOLO
+
+def main_using_targets_and_homography():
+    global CAMERA_INDEX_0, timestep, gun_targets
+    from Trash.gui import GUI
     detectCameras()
-    cam = Camera(CAMERA_INDEX)
+    cam = Camera(CAMERA_INDEX_0)
     rawHandler = RawHandler()
     target_manager = Targets()
     gui = GUI()
+    def gun_thread():
+        """
+        Thread that moves the gun to the target and shoots.
+        The targets are aquired as an asynchronous input from the main thread.
+        """
+        import Trash.fit as fit
+        print("Gun thread started.")
+        global gun_targets
+        gun = Gun(print_flag=True)
+        center = (IMG_WIDTH//2, IMG_HEIGHT//2)
+        while True:
+            # TODO: test out pop_closest_to_current_location as an alternative to pop() 
+            center = target_manager.pop_closest_to_current_location(center)
+            # Move the laser pointer to the target
+            if center is not None:
+                aim_and_fire(gun,center)
+                aim_and_fire(gun,center)
+                print("Shooting (theoretically)", center)
+                time.sleep(1) # this delay is here so we can wait for the objects to fall and then reset the changes image
+                target_manager.clear() # TODO: reduce the number of frames needed for initialization
     
-    gun = threading.Thread(target=gun_thread, args=(target_manager,))
+    def aim_and_fire(gun,center_pixels):
+        import math
+        gun_real_pos = (0,0)
+        real_world_pos = cv2.perspectiveTransform(center_pixels, homography_matrix)
+        theta = math.arctan((real_world_pos[0]-gun_real_pos[0])/(real_world_pos[1]-gun_real_pos[1]))*180/math.pi
+        gun.rotate(theta)
+        time.sleep(0.2)
+        gun.shoot
+        
+    
+    def aim_and_fire(gun,center_pixels):
+        import math
+        gun_real_pos = (0,0)
+        real_world_pos = cv2.perspectiveTransform(center_pixels, homography_matrix)
+        theta = math.arctan((real_world_pos[0]-gun_real_pos[0])/(real_world_pos[1]-gun_real_pos[1]))*180/math.pi
+        gun.rotate(theta)
+        time.sleep(0.2)
+        gun.shoot
+        
+    
+    gun = threading.Thread(target=gun_thread)
     gun.start()
     
     while True:
         timestep += 1
         img = cam.read()
         rawHandler.add(img)
-        if useJustYOLO:
-            target_manager.addJustYOLO(timestep, img)
-        else:
-            target_manager.add(timestep, img)
-        gui.add(img, target_manager.target_queue, target_manager.changes_handler.get(), target_manager.contours_handler.get(),
-                target_manager.low_targets, target_manager.high_targets, target_manager.yolo_handler.get(), target_manager.yolo_centers)
-        gui.display()
+        rawHandler.display()
+        target_manager.add(timestep, img)
+        # Press Escape to exit
+        if cv2.waitKey(1) == 27:
+            break
+    cv2.destroyAllWindows()
 
+
+
+def main_using_targets_3_cameras():
+    global CAMERA_INDEX_0, timestep, gun_targets
+    from Trash.gui import GUI
+    detectCameras()
+    cam = Camera(CAMERA_INDEX_0)
+    rawHandler = RawHandler()
+    target_manager1 = Targets()
+    target_manager2 = Targets()
+    target_manager3 = Targets()
+    global_target_manager = GlobalTargets(target_manager1, target_manager2, target_manager3)
+    gui = GUI()
+    def gun_thread():
+        """
+        Thread that moves the gun to the target and shoots.
+        The targets are aquired as an asynchronous input from the main thread.
+        """
+        import Trash.fit as fit
+        print("Gun thread started.")
+        global gun_targets
+        gun = Gun(print_flag=True)
+        center = (IMG_WIDTH//2, IMG_HEIGHT//2)
+        while True:
+            # TODO: (ayala) write the function pop_closest_to_current_location or regular pop, in the GlobalTargets class
+            # TODO: test out pop_closest_to_current_location as an alternative to pop()
+            center = global_target_manager.pop_closest_to_current_location(center)
+            # Move the laser pointer to the target
+            if center is not None:
+                gun.aim_and_fire_target_2(center)
+                print("Shooting (theoretically)", center)
+                time.sleep(1) # this delay is here so we can wait for the objects to fall and then reset the changes image
+                target_manager1.clear() # TODO: reduce the number of frames needed for initialization
+    
+    gun = threading.Thread(target=gun_thread)
+    gun.start()
+    
+    while True:
+        timestep += 1
+        img = cam.read()
+        rawHandler.add(img)
+        rawHandler.display()
+        target_manager1.add(timestep, img)
         # Press Escape to exit
         if cv2.waitKey(1) == 27:
             break
@@ -349,9 +468,9 @@ def main_using_targets():
 
 
 def test_main():
-    global CAMERA_INDEX, timestep, gun_targets
+    global CAMERA_INDEX_0, timestep, gun_targets
     detectCameras()
-    cam = Camera(CAMERA_INDEX)
+    cam = Camera(CAMERA_INDEX_0)
     rawHandler = RawHandler()
     contours_handler = ChangesHandler()
 
@@ -364,7 +483,7 @@ def test_main():
         contours_handler.display()
         img_contours = contours_handler.get()
         targets_contours = _, _, contours_centers = get_targets(img_contours)
-        show_targets("targets from contours", img_contours, targets_contours)
+        # show_targets("targets from contours", img_contours, targets_contours)
         
         if cv2.waitKey(1) == 27:
             break
@@ -381,8 +500,222 @@ def test():
     print("done")
 
 
+
+
+
+def test_camera():
+    global CAMERA_INDEX_0, timestep
+    detectCameras()
+    cam = Camera(CAMERA_INDEX_0)
+    handler = RawHandler()
+    # laser = threading.Thread(target=laser_thread)
+    # laser.start()  # comment this line to disable the laser pointer
+
+    # cv2.namedWindow(handler.TITLE)
+    frame_num = 0
+    while True:
+        img = cam.read(frame_num)
+        # cv2.imshow("raw image", img)
+        handler.add(img)
+        handler.display()
+        frame_num+=1
+
+        # Press Escape to exit
+        if cv2.waitKey(1) == 27:
+            # print(real_world_pos)
+            break
+    cv2.destroyAllWindows()
+
+
+def main_using_targets():
+    global CAMERA_INDEX_0, timestep, gun_targets
+    from Trash.gui import GUI
+    detectCameras()
+    cam = Camera(CAMERA_INDEX_0)
+    rawHandler = RawHandler()
+    target_manager = Targets()
+    gui = GUI()
+    def gun_thread():
+        """
+        Thread that moves the gun to the target and shoots.
+        The targets are aquired as an asynchronous input from the main thread.
+        """
+        import Trash.fit as fit
+        print("Gun thread started.")
+        global gun_targets
+        gun = Gun(print_flag=True)
+        center = (IMG_WIDTH//2, IMG_HEIGHT//2)
+        while True:
+            # TODO: test out pop_closest_to_current_location as an alternative to pop() 
+            center = target_manager.pop_closest_to_current_location(center)
+            # Move the laser pointer to the target
+            if center is not None:
+                gun.aim_and_fire_target_2(center)
+                print("Shooting (theoretically)", center)
+                time.sleep(1) # this delay is here so we can wait for the objects to fall and then reset the changes image
+                target_manager.clear() # TODO: reduce the number of frames needed for initialization
+    
+    gun = threading.Thread(target=gun_thread)
+    gun.start()
+    
+    while True:
+        timestep += 1
+        img = cam.read()
+        rawHandler.add(img)
+        rawHandler.display()
+        target_manager.add(timestep, img)
+        # Press Escape to exit
+        if cv2.waitKey(1) == 27:
+            break
+    cv2.destroyAllWindows()
+
+def hit_cursor_main_2():
+    """
+    An alternative to the main function that uses the mouse cursor as the target for the laser pointer.
+    It does not use any image processing to detect targets.
+    """
+    global CAMERA_INDEX_0, timestep, laser_targets
+    import Trash.fit as fit
+    detectCameras()
+    cam = Camera(CAMERA_INDEX_0)
+    handler = MouseCameraHandler()
+    # laser = threading.Thread(target=laser_thread)
+    # laser.start()  # comment this line to disable the laser pointer
+    gun = Gun()  # DummyGun() or Gun()
+
+    cv2.namedWindow(handler.TITLE)
+    cv2.setMouseCallback(handler.TITLE, handler.mouse_callback)
+    thetaX = 90.00
+    while True:
+        img = cam.read()
+
+        handler.add(img)
+        handler.display()
+
+        mousePos = handler.getMousePosition()
+        laser_targets = [mousePos]
+        last_thetaX = thetaX
+        thetaX, expected_volt = fit.bilerp(*mousePos)
+        # use PID
+        global fix
+        if thetaX != last_thetaX:
+            gun.rotate(thetaX)
+            global last_error, total_error
+            last_error = 0 
+            total_error = 0
+            time.sleep(0.5)
+        else:
+            gun.rotate(thetaX + fix)
+        motor_volt = gun.get_voltage()
+        fix = PID(expected_volt,motor_volt) 
+        
+        
+        if cv2.waitKey(1) == 32:  # Whitespace
+            gun.shoot()
+        # Press Escape to exit
+        if cv2.waitKey(1) == 27:
+            break
+    cv2.destroyAllWindows() 
+    
+def homography_targets():
+    global CAMERA_INDEX_0, timestep, gun_targets
+    from Trash.gui import GUI
+    detectCameras()
+    cam = Camera(CAMERA_INDEX_0)
+    rawHandler = RawHandler()
+    target_manager = Targets()
+    frame_num = 0
+    while True:
+        timestep += 1
+        img = cam.read(frame_num)
+        rawHandler.add(img)
+        rawHandler.display()
+        target_manager.add(timestep, img)
+        # Press Escape to exit
+        center = target_manager.pop_closest_to_current_location(center)
+        real_world_pos = cv2.perspectiveTransform(center, homography_matrix)
+        print("real world")
+        print(real_world_pos)
+        frame_num+=1
+        
+        if cv2.waitKey(1) == 27:
+            break
+    cv2.destroyAllWindows()
+
+def homography_calibration_main():
+    """
+    An alternative to the main function that uses the mouse cursor as the target for the laser pointer.
+    It does not use any image processing to detect targets.
+    """
+    global CAMERA_INDEX_2, timestep, laser_targets
+    detectCameras()
+    cam = Camera(CAMERA_INDEX_2)
+    handler = MouseCameraHandler(CAMERA_INDEX_2)
+    # laser = threading.Thread(target=laser_thread)
+    # laser.start()  # comment this line to disable the laser pointer
+
+    cv2.namedWindow("camera " + str(CAMERA_INDEX_2) + " view")
+    cv2.setMouseCallback("camera " + str(CAMERA_INDEX_2) + " view", handler.mouse_callback)
+    source_points = []
+    frame_num = 0
+    while True:
+        img = cam.read()
+
+        handler.add(img)
+        handler.display(CAMERA_INDEX_2)
+        if handler.has_new_clicks(): 
+            click_pos = handler.get_clicks()
+            print(click_pos)
+            source_points.append([float(click_pos[0][0]), float(click_pos[0][1])])
+            
+        frame_num+=1
+        # Press Escape to exit
+        if cv2.waitKey(1) == 27:
+            print(source_points)
+            break
+    cv2.destroyAllWindows()
+
+
+def test_homography():
+    global CAMERA_INDEX_0, timestep, laser_targets
+    # import Trash.fit as fit
+    # detectCameras()
+    cam = Camera(CAMERA_INDEX_0)
+    handler = MouseCameraHandler(CAMERA_INDEX_0)
+    # laser = threading.Thread(target=laser_thread)
+    # laser.start()  # comment this line to disable the laser pointer
+
+    cv2.namedWindow(handler.title)
+    cv2.setMouseCallback(handler.title, handler.mouse_callback)
+    source_points = []
+    frame_num = 0
+    while True:
+        img = cam.read()
+
+        handler.add(img)
+        handler.display()
+        if handler.has_new_clicks(): 
+            click_pos = handler.get_clicks()[0]
+            click_pos_array = np.array([[[click_pos[0], click_pos[1]]]], dtype=np.float32)
+            print("click is in pixel: ", click_pos)
+            real_world_pos = cv2.perspectiveTransform(click_pos_array, homography_matrices[0])
+            print(real_world_pos)
+        frame_num+=1
+
+        # Press Escape to exit
+        if cv2.waitKey(1) == 27:
+            # print(real_world_pos)
+            break
+    cv2.destroyAllWindows()
+
+
 if __name__ == "__main__":
-    #test()
-    hit_cursor_main()
-    #just_changes_main()
-    # main_using_targets()
+    # test()
+    # hit_cursor_main()
+    # just_changes_main()
+    # main_using_targets_4()
+    # homography_calibration_main()
+    test_homography()
+    # test_camera()
+    # homography_targets()1
+    

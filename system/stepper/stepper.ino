@@ -1,18 +1,36 @@
-#include <Servo.h>
+/*
+CNC pins Z - 
+const int gunPin = 12;
+const int dirPin = 4;
+const int stepPin = 7;
+const int enablePin = 8;
+
+
+
+bodoboard - 
+const int gunPin = 4;
+const int dirPin = 3;
+const int stepPin = 2;
+const int enablePin = 5;
+*/
 
 const int gunPin = 4;
-const int dirPin = 2;
-const int stepPin = 3;
+const int dirPin = 3;
+const int stepPin = 2;
+const int enablePin = 5;
 const int speed = 1000;
 const int SHOOT_COOLDOWN = 200;  // ms
-Servo myServo;
-int currentAngle = 0;
+const float factor = 2/1.9*0.99;
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(9600);  
+  
+  pinMode(enablePin, OUTPUT);
+  digitalWrite(enablePin, HIGH);  // DISable the driver
+
   pinMode(gunPin, OUTPUT);
+  pinMode(dirPin, OUTPUT);
   pinMode(stepPin, OUTPUT);
-  myServo.write(0);
 }
 
 void loop() {
@@ -27,13 +45,21 @@ void loop() {
       digitalWrite(gunPin, LOW);
       Serial.println("Done");
     }
-
+    else if (command == "FLIP") {
+      digitalWrite(enablePin, !digitalRead(enablePin));
+      Serial.println("Flipped, now the enable pin is: ");
+      Serial.print(digitalRead(enablePin));
+    }
     else if (command.startsWith("ROTATE:")) {
-      long steps = command.substring(7).toInt(); // Read number of steps
-      Serial.println("Number of steps:");
+      digitalWrite(enablePin, LOW);  // Enable the driver
+      long steps = factor * command.substring(7).toInt(); // Read number of steps
+      Serial.print("Number of steps: ");
       Serial.println(steps);
       if (steps != 0) {
-        digitalWrite(dirPin, steps > 0 ? HIGH : LOW);
+        int direction = steps > 0 ? HIGH : LOW;
+        Serial.print("Rotating in direction (0=+, 1=-): ");
+        Serial.println(direction);
+        digitalWrite(dirPin, direction);
         steps = abs(steps);
         for (long i = 0; i < steps; i++) {
           digitalWrite(stepPin, HIGH);
@@ -41,8 +67,9 @@ void loop() {
           digitalWrite(stepPin, LOW);
           delayMicroseconds(speed);
         }
-        Serial.println("Finished the turn loop");
       }
+      delayMicroseconds(10000);
+      digitalWrite(enablePin, HIGH);  // Disable the driver
       Serial.println("Done");
     }
   }

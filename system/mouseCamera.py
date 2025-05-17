@@ -5,11 +5,15 @@ from image_processing import Handler
 class MouseCameraHandler(Handler):
     TITLE = "Camera View"
 
-    def __init__(self):
+    def __init__(self, index = 0):
         super().__init__()
         self.mouseX = 0
         self.mouseY = 0
         self.img = None
+        self.clicks = []
+        self._new_click = False
+        self.index = index
+        self.title = "camera " + str(index) + " view"
 
     def add(self, img):
         self.img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
@@ -18,17 +22,13 @@ class MouseCameraHandler(Handler):
     def get(self):
         return self.img
 
-    def display(self):
+    def display(self, index=0):
         if self.img is None:
             return
-        from fit import display_grid
-        img = display_grid(self.img, False)
-        text = "Press Space to shoot"
-        textcolor = (130, 255, 0)
-        cv2.putText(img, text, (7, 17), cv2.FONT_HERSHEY_SIMPLEX, 0.5, textcolor, 1)
-        cv2.imshow(MouseCameraHandler.TITLE, img)
 
-    def mouse_callback(self, event, x, y, flags, param):
+        cv2.imshow(self.title, self.img)
+
+    def mouse_callback_2(self, event, x, y, flags, param):
         if event == cv2.EVENT_LBUTTONDOWN:
             self.mouseX = x
             self.mouseY = y
@@ -50,3 +50,19 @@ class MouseCameraHandler(Handler):
 
     def getMousePosition(self) -> tuple:
         return self.mouseX, self.mouseY
+
+
+    def mouse_callback(self, event, x, y, flags, param):
+        if event == cv2.EVENT_LBUTTONDOWN:
+            print(f"Clicked position in pixels: ({x}, {y})")
+            self.clicks.append((x, y))
+
+    def has_new_clicks(self):
+        return len(self.clicks) > 0
+
+    def get_clicks(self):
+        clicks = self.clicks.copy()
+        self.clicks.clear()
+        print("clicks", clicks)
+        return clicks
+    

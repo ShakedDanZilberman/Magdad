@@ -1,2 +1,4 @@
-.idea/*
+.idea/
 *.pyc
+.venv/
+new_yolo/datasets/

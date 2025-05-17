@@ -1,157 +1,153 @@
-from ultralytics import YOLO
-import cv2
-import numpy as np
 from image_processing import Handler, ImageParse
 import os
+import sys
+import numpy as np
+import cv2
+from ultralytics import YOLO
+# from openvino import Core
+from ultralytics.data.augment import LetterBox
+from constants import *
 
-class YOLOHandler(Handler):
-    def __init__(self, model_path: str = 'last.pt'):
-        # get absolute path to current folder
-        current_folder = os.path.dirname(os.path.abspath(__file__))
-        model_path = os.path.join(current_folder, model_path)
+class YOLOHandler:
+    def __init__(self, model_path: str = 'best_new_training_openvino_model', imgsz: int = 320, conf_thres: float = 0.5):
+        # Resolve model path
+        base = os.path.dirname(os.path.abspath(__file__))
+        print("Model loaded")
+        self.model = YOLO(os.path.join(base, model_path))
+        # self.model.export(format='openvino')
 
-        self.model = YOLO(model_path)
+        self.imgsz = imgsz
+        self.conf_threshold = conf_thres
         self.img = None
         self.bounding_boxes = []
-        self.conf_threshold = 0.5
+        self.letterbox = LetterBox(new_shape=(imgsz, imgsz))
+        # inside YOLOHandler.__init__:
+        dummy = np.zeros((imgsz, imgsz, 3), dtype=np.uint8)
+        _ = self.model(dummy, imgsz=imgsz)
 
-        print("YOLO model loaded successfully.")
-    
-    
-    def add(self, img):
-        """
-        Add an image to the handler.
-
-        Args:
-            img (np.ndarray): The image to add to the handler.
-
-        Returns:
-            None
-        """
-        self.img = img
-        # convert the image to RGB from grayscale
+    def add(self, img: np.ndarray):
         if img is None:
             return
-        img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
-        # remove printing
-        results = self.model.predict(img, imgsz=640, stream=True, verbose=False)
-        # convert the image back to grayscale
-        img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+
+        self.img = img.copy()
+        ih, iw = img.shape[:2]
+
+        # Compute scaling factor and padding
+        scale = min(self.imgsz / iw, self.imgsz / ih)
+        nw, nh = int(iw * scale), int(ih * scale)
+        dx, dy = (self.imgsz - nw) // 2, (self.imgsz - nh) // 2
+
+        # Resize and pad the image
+        resized = cv2.resize(img, (nw, nh))
+        canvas = np.full((self.imgsz, self.imgsz), 114, dtype=np.uint8)
+        canvas[dy:dy+nh, dx:dx+nw] = resized
+        rgb = cv2.cvtColor(canvas, cv2.COLOR_BGR2RGB)
+
+        # Run inference
+        results = self.model(rgb, imgsz=self.imgsz, conf=self.conf_threshold, verbose=False)
+        res = results[0]
+
         self.bounding_boxes = []
-        for result in results:
-            for box in result.boxes.data:  # Each box contains (x1, y1, x2, y2, confidence, class_id)
-                x1, y1, x2, y2, confidence, class_id = box.cpu().numpy()
-                if confidence >= self.conf_threshold:
-                    self.bounding_boxes.append({
-                        'class': self.model.names[int(class_id)],   # Class name
-                        'confidence': float(confidence),            # Confidence score
-                        'x1': int(x1),                              # Top-left corner x-coordinate
-                        'y1': int(y1),                              # Top-left corner y-coordinate
-                        'x2': int(x2),                              # Bottom-right corner x-coordinate
-                        'y2': int(y2)                               # Bottom-right corner y-coordinate
-                    })
 
+        if res.boxes.shape[0] == 0:
+            return
 
-    def get(self):
-        """
-        Get the image from the handler.
+        for *xyxy, conf, cls in res.boxes.data.cpu().numpy():
+            if conf < self.conf_threshold:
+                continue
+            x1, y1, x2, y2 = map(float, xyxy)
 
-        Returns:
-            np.ndarray: The image from the handler.
-        """
+            # Rescale boxes to original image coordinates
+            x1 = (x1 - dx) / scale
+            y1 = (y1 - dy) / scale
+            x2 = (x2 - dx) / scale
+            y2 = (y2 - dy) / scale
+
+            self.bounding_boxes.append({
+                'class': self.model.names[int(cls)],
+                'confidence': float(conf),
+                'x1': int(max(0, min(iw, x1))),
+                'y1': int(max(0, min(ih, y1))),
+                'x2': int(max(0, min(iw, x2))),
+                'y2': int(max(0, min(ih, y2)))
+            })
+
+    def get(self) -> np.ndarray:
+        """Returns a black mask with white filled bboxes."""
         if self.img is None:
             return None
-        # Create a black image of the same size as the input image
-        black_image = np.zeros_like(self.img)
-        # Draw bounding boxes on the black image as white rectangles
-        white = 255
-        for box in self.bounding_boxes:
-            topleft = (box['x1'], box['y1'])
-            bottomright = (box['x2'], box['y2'])
-            cv2.rectangle(black_image, topleft, bottomright, white, -1)
-
-        return black_image
-    
+        mask = np.zeros_like(self.img)
+        for b in self.bounding_boxes:
+            cv2.rectangle(mask, (b['x1'],b['y1']), (b['x2'],b['y2']), 255, -1)
+        return mask
 
     def get_centers(self):
-        """
-        Get the centers of the bounding boxes.
-
-        Returns:
-            list[tuple]: The centers of the bounding boxes.
-        """
-
-        centers = []
-        for box in self.bounding_boxes:
-            x1, y1, x2, y2 = box['x1'], box['y1'], box['x2'], box['y2']
-            center = ((x1 + x2) // 2, (y1 + y2) // 2)
-            centers.append(center)
-        return centers
-
-
+        return [((b['x1']+b['x2'])//2, (b['y1']+9*b['y2'])//10)
+                for b in self.bounding_boxes]
 
     def display(self):
-        """
-        Display the image stored in the handler.
-        Uses cv2.imshow() to display the image.
-
-        Returns:
-            None
-        """
         if self.img is None:
             return
-        image = self.img.copy()
-        image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
-        black = (0, 0, 0)
-        for box in self.bounding_boxes:
-            topleft = (box['x1'], box['y1'])
-            bottomright = (box['x2'], box['y2'])
-            certainty = int(box['confidence'] * 255)
-            color = (0, certainty, 0)
-            rectangle_thickness = 3
-            cv2.rectangle(image, topleft, bottomright, color, rectangle_thickness)
-            label = f"{box['class']} ({box['confidence']:.2f})"
-            topleft_text = (box['x1'], box['y1'] + 12)
-            # draw a filled rectangle for the label
-            cv2.putText(image, label, topleft_text, cv2.FONT_HERSHEY_SIMPLEX, 0.5, black, 1)
-            
+        vis = cv2.cvtColor(self.img, cv2.COLOR_GRAY2BGR)
+        for b in self.bounding_boxes:
+            color = (0, int(b['confidence']*255), 0)
+            cv2.rectangle(vis, (b['x1'],b['y1']), (b['x2'],b['y2']), color, 2)
+            label = f"{b['class']}:{b['confidence']:.2f}"
+            cv2.putText(vis, label, (b['x1'],b['y1']-5),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,0), 1)
+        cv2.imshow("YOLOv8 Detections", vis)
+        # print(self.get_centers())
+        # cv2.imshow("BBox Mask", self.get())
+        # # press Escape to exit
+        # if cv2.waitKey(1) == 27:
+        #     sys.exit(0)
 
-        cv2.imshow("YOLO Detections", image)
-        # also show the black image with bounding boxes
-        cv2.imshow("YOLO Bounding Boxes", self.get())
+    def prepare_to_show(self):
+        if self.img is None:
+            return
+        vis = cv2.cvtColor(self.img, cv2.COLOR_GRAY2BGR)
+        for b in self.bounding_boxes:
+            color = (0, int(b['confidence']*255), 0)
+            cv2.rectangle(vis, (b['x1'],b['y1']), (b['x2'],b['y2']), color, 2)
+            label = f"{b['class']}:{b['confidence']:.2f}"
+            cv2.putText(vis, label, (b['x1'],b['y1']-5),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,0), 1)
+        self.vis = vis
+    
+    def get_vis(self):
+        if self.img is None:
+            return np.zeros((IMG_HEIGHT, IMG_WIDTH), dtype=np.uint8)
+        return self.vis
 
     def clear(self):
-        """
-        Clear the image and memory stored in the handler.
-        """
         self.img = None
         self.bounding_boxes = []
+
 
 
 if __name__ == "__main__":
     # read the images from camera of the computer and display the bounding boxes using the YOLOHandler class inside some loop
-    global CAMERA_INDEX, timestep, laser_targets
-    import fit
+    global timestep, laser_targets
+    # import fit
     from cameraIO import detectCameras
-    from cameraIO import Camera
+    from cameraIO import Camera, ImageParse
     from mouseCamera import MouseCameraHandler
-    from main import CAMERA_INDEX
-
+    from constants import CAMERA_INDEX_2
+    import undistortion
     detectCameras()
-    cam = Camera(CAMERA_INDEX)
-    handler = MouseCameraHandler()
+    cam = Camera(0)
+    # handler = MouseCameraHandler()
     yoloHandler = YOLOHandler()
     # laser = threading.Thread(target=laser_thread)
     # laser.start()  # comment this line to disable the laser pointer
 
-    cv2.namedWindow(handler.TITLE)
-    cv2.setMouseCallback(handler.TITLE, handler.mouse_callback)
+    # cv2.namedWindow(handler.TITLE)
+    # cv2.setMouseCallback(handler.TITLE, handler.mouse_callback)
 
     while True:
         img = cam.read()
-
-        handler.add(img)
-        handler.display()
+        # handler.add(img)
+        # handler.display()
 
         yoloHandler.add(img)
         yoloHandler.display()
@@ -161,3 +157,7 @@ if __name__ == "__main__":
         if cv2.waitKey(1) == 27:
             break
     cv2.destroyAllWindows()
+
+
+
+

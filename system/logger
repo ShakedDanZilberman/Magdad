@@ -1,0 +1,15 @@
+import logging
+
+# Configure logging to write to a file and still print to console
+logging.basicConfig(
+    filename="output.log",  # Change filename as needed
+    filemode="a",  # Append mode, change to "w" to overwrite
+    format="%(asctime)s - %(message)s",
+    level=logging.INFO
+)
+
+# Function to log and print
+def log_print(*args):
+    message = " ".join(map(str, args))
+    logging.info(message)
+    print(message)  # Still prints to terminal

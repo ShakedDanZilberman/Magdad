@@ -8,7 +8,7 @@ from abc import ABC, abstractmethod
 from pyfirmata import Arduino, util
 import threading
 
-CAMERA_INDEX = 1
+CAMERA_INDEX_0 = 1
 MAX_CAMERAS = 10
 timestep = 0
 centers = [[90, 90]]
@@ -567,12 +567,12 @@ class CameraIO:
     def detectCameras():
         """Detect all connected cameras and display their images in a grid using matplotlib
 
-        If the camera at CAMERA_INDEX is connected, the function will print a message and return.
+        If the camera at CAMERA_INDEX_0 is connected, the function will print a message and return.
         """
-        # first try to connect to CAMERA_INDEX
-        cam = cv2.VideoCapture(CAMERA_INDEX)
+        # first try to connect to CAMERA_INDEX_0
+        cam = cv2.VideoCapture(CAMERA_INDEX_0)
         if cam.isOpened():
-            print(f"Camera @ index {CAMERA_INDEX} is connected")
+            print(f"Camera @ index {CAMERA_INDEX_0} is connected")
             cam.release()
             return
         # Otherwise, try to connect to all cameras
@@ -588,7 +588,7 @@ class CameraIO:
         Rendering.showMultipleFrames(
             imgs,
             [f"Camera {i}" for i in range(MAX_CAMERAS)],
-            f"Failed to connect to camera #{CAMERA_INDEX}\nAll Available Cameras",
+            f"Failed to connect to camera #{CAMERA_INDEX_0}\nAll Available Cameras",
         )
         plt.show()
 
@@ -659,9 +659,9 @@ def show_targets(average):
 
 
 def main():
-    global CAMERA_INDEX, timestep, centers
+    global CAMERA_INDEX_0, timestep, centers
     CameraIO.detectCameras()
-    cam = cv2.VideoCapture(CAMERA_INDEX)
+    cam = cv2.VideoCapture(CAMERA_INDEX_0)
     rawHandler = RawHandler()
     newPixelsHandler = NewPixelsHandler()
     differenceHandler = DifferenceHandler()
@@ -677,10 +677,10 @@ def main():
 
         if not ret_val:
             print("Camera @ index 1 not connected")
-            CAMERA_INDEX = int(
+            CAMERA_INDEX_0 = int(
                 input("Enter the index of the camera you want to connect to: ")
             )
-            cam = cv2.VideoCapture(CAMERA_INDEX)
+            cam = cv2.VideoCapture(CAMERA_INDEX_0)
             ret_val, img = cam.read()
             if not ret_val:
                 print("Failed to connect to camera")

@@ -4,10 +4,10 @@ import math
 import time
 from pyfirmata import Arduino, util
 from time import sleep
-import system.fit as fit
+import Trash.fit as fit
 import system.pid
 
-CAMERA_INDEX = 1 
+CAMERA_INDEX_0 = 1 
 
 WINDOW_NAME = 'Camera Connection'
 
@@ -91,7 +91,7 @@ def main():
 
     #TODO: move to function
     # initilization
-    cam = cv2.VideoCapture(CAMERA_INDEX)
+    cam = cv2.VideoCapture(CAMERA_INDEX_0)
     cv2.namedWindow(WINDOW_NAME)
     ret_val, img = cam.read()
     cv2.setMouseCallback(WINDOW_NAME, click_event)
