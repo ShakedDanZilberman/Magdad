@@ -548,7 +548,7 @@ def measure_for_gun():
     mouseX, mouseY = 0, 0
     from gun import Gun
     from cameraIO import Camera
-    from main import CAMERA_INDEX_0
+    from system.main import CAMERA_INDEX_0
 
     gun = Gun()
     camera = Camera(CAMERA_INDEX_0)
