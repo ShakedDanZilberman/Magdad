@@ -152,5 +152,5 @@ if __name__ == "__main__":
         for angle in angle_program:
             gun.rotate(angle)
             sleep(0.5)
-            # gun.shoot()
+            gun.shoot()
             sleep(3.5)
