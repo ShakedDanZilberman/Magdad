@@ -21,8 +21,8 @@ class Eye():
         self.real_coords_targets = []
         self.mouse_camera_handler = MouseCameraHandler(camera_index)
         # uncomment the following lines to add mouse callback to the camera view
-        # cv2.namedWindow("camera " + str(self.camera_index) + " view")
-        # cv2.setMouseCallback("camera " + str(self.camera_index) + " view", self.mouse_camera_handler.mouse_callback)
+        cv2.namedWindow("camera " + str(self.camera_index) + " view")
+        cv2.setMouseCallback("camera " + str(self.camera_index) + " view", self.mouse_camera_handler.mouse_callback)
 
     def get_real_coords_targets(self):
         """
@@ -92,9 +92,11 @@ class Eye():
         # self.yolo_handler.display()
         if to_check:
             pixel_coords = np.array(self.yolo_handler.get_centers(), dtype='float32').reshape(-1, 1, 2)
+            # print(f"in eye.add_yolo: pixel coords are {pixel_coords}")
             real_coords_array = cv2.perspectiveTransform(pixel_coords, self.homography)
             if real_coords_array is not None:
                 real_coords_targets = [tuple(pt[0]) for pt in real_coords_array]
+                # print(f"real coords targets are {real_coords_targets}")
                 return real_coords_targets
         return []
     

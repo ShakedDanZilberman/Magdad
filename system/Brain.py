@@ -6,12 +6,10 @@ from constants import *
 import time
 import numpy as np
 import queue
+from serial.tools import list_ports as coms
+from image_processing import ImageParse
 # from vis_production import CameraProducer
 
-
-# from import_defence import ImportDefence
-
-#with ImportDefence():
 import openvino
 import cv2
 
@@ -19,7 +17,6 @@ import cv2
 class CameraProducer(threading.Thread):
     def __init__(self, camera_index, eye, output_queue):
         super().__init__(daemon=True)
-        # self.cap = cv2.VideoCapture(camera_index)
         self.eye = eye
         self.output_queue = output_queue
         self.win_name = f"Cam {camera_index}"
@@ -28,18 +25,16 @@ class CameraProducer(threading.Thread):
     def run(self):
         while True:
             self.timestep+=1
-            # print(f"timestep: {self.timestep} camera {self.eye.camera_index}")
             frame = self.eye.camera.read(self.timestep)
             # Run your add_yolo processing (which returns targets)
             if self.timestep % 15 == 14:
-                print("in add yolo")
+                print(f"checking frame for targets")    
                 targets = self.eye.add_yolo(frame)
             else:
                 targets = self.eye.add_yolo(frame, False)
             # Grab the visualized image (after display())
             self.eye.yolo_handler.prepare_to_show()
             vis = self.eye.yolo_handler.get_vis()
-            # print(f"visual is {vis}")
             # Put into queue: window name, image, AND targets
             item = (self.win_name, vis, targets)
             try:
@@ -109,25 +104,40 @@ class Brain():
         Check if `target` (x, y) is within `min_dist` of any existing target.
         Returns True if too close to an existing target.
         """
-        tx, ty = target
+        target_x, target_y = target
         # print("tx, ty:", (tx, ty))
-        for (ox, oy) in self.targets.keys():
+        list_targets = list(self.targets.keys())
+        list_history = list(self.history.keys())
+        if isinstance(target_x, np.ndarray) or isinstance(target_y, list):
+            print(target_x, target_y)
+        try:
+            target_x = float(target_x)
+            target_y = float(target_y)
+        except TypeError:
+            print("tx, ty are not float: ", (target_x, target_y))
+            return True
+        for (other_x, other_y) in list_targets:
             # print("ox, oy:", (ox, oy))
-            if np.linalg.norm((tx - ox, ty - oy)) <= min_dist:
+            if (target_x - other_x)**2 + (target_y - other_y)**2 <= min_dist**2:
+                # print("in too_close: target is too close to existing target")
                 return True
-        for (ox, oy) in self.history.keys():
-            if np.linalg.norm((tx - ox, ty - oy)) <= min_dist:
+        for (other_x, other_y) in list_history:
+            if (target_x - other_x)**2 + (target_y - other_y)**2 <= min_dist**2:
                 return True
+        # print("list targets: ", list_targets)
+        # print("list history: ", list_history)
         return False
 
     def add_to_target_list(self, new_targets, distance: float = MIN_DISTANCE):
         # print("new targets: ", new_targets)
         if len(new_targets) == 0:
             return
-        for targ in new_targets:
-            # print("targ: ", targ, "distance: ", distance)
-            if not self.too_close(targ, distance):
-                self.add_smart(targ)
+        for target in new_targets:
+            # print("target: ", target, "distance: ", distance)
+            is_too_close = self.too_close(target, distance)
+            if not is_too_close:
+                # print("in add_to_target_list: adding target: ", target)
+                self.add_smart(target)
 
     def find_priority(self, target_location):
         # for now the priority is set to be a factor of the distance to the target
@@ -159,28 +169,6 @@ class Brain():
         if to_check or to_init:
             print("targets in brain:", self.targets)
 
-    # def too_close(self, target, distance):
-    #     if all(
-    #         np.linalg.norm(np.array(target) - np.array(old_target)) > distance
-    #         for old_target in self.targets
-    #     ):
-    #         return False
-    #     return True
-
-    # def add_to_target_list(
-    #     self, new_targets: list, camera: Eye, distance: float = MIN_DISTANCE
-    # ):
-    #     if new_targets is None:
-    #         return
-    #     for target in new_targets:
-    #         # real_coords = self.calculate_real_coords(target, camera)
-    #         if not self.too_close(target, distance):
-    #             self.add_smart(target, camera)
-
-    # def add_smart(self, target, cam):
-    #     # this is temporary:
-    #     self.targets.append(target)
-
     def calculate_angle_from_gun(self, target, gun_index=0):
         gun = self.guns[gun_index]
         # print(f"gun location: {gun.gun_location}, target: {target}")
@@ -192,7 +180,7 @@ class Brain():
             # print("in calculate angle: gun location: ", gun.gun_location, "target: ", target)
             slope = (gun.gun_location[1]- target[1]) / (target[0] - gun.gun_location[0])
             angle = 90 - np.arctan(slope) * 180 / np.pi
-        return angle 
+        return angle
 
     def calculate_angle(self, location_1: tuple, location_2: tuple):
         """
@@ -273,7 +261,7 @@ class Brain():
                 emergency_targets.append((location, priority))
         for i, gun in enumerate(self.guns):
             if len(emergency_targets) > 0:
-                target = emergency_targets[i]
+                target = emergency_targets.pop(0)
                 # if there is an emergency target, assign it to the first gun
                 if len(gun.target_stack) > 1:
                     if gun.target_stack[1][1] < target[1]:
@@ -281,7 +269,6 @@ class Brain():
                         self.add_to_target_list([old_next])
                 gun.target_stack.append(target)
                 
-
     def pop_optimized(self, gun):
         min_anglular_distance = float("inf")
         closest_target = None
@@ -292,7 +279,7 @@ class Brain():
             gun.target_stack.append(target)
             timestep = self.timestep
             self.history[target[0]] = (target[1], timestep)
-            print(f"history is {self.history}")
+            print(f"pop_optimized: history is {self.history}")
             return
         for location, priority in self.targets.items():
             if gun.target_stack is not None and len(gun.target_stack) > 0:
@@ -302,12 +289,17 @@ class Brain():
                     closest_target = (location, priority)
                     # print(f"pop_optimized: closest target: {closest_target}, angular distance: {angular_dist}")
                     # print(f"pop_optimized: gun location: {gun.gun_location}, target: {location}, angular distance: {angular_dist}")
+        if len(gun.target_stack) > 2:
+            return
         if closest_target is not None:
             # print("closest target: ", closest_target)
             priority = self.targets.pop(closest_target[0])
             # print(f"targets in brain after pop: {self.targets}")
             gun.target_stack.append((closest_target[0], priority))
             print(f"assigned target {closest_target} to gun {gun.gun_index}")
+            self.history[closest_target[0]] = (priority, self.timestep)
+            print(f"pop_optimized: history is {self.history}")
+        return
 
     def angle_diff(self, location_1: tuple, location_2: tuple, gun_index=0):
         """
@@ -329,31 +321,17 @@ class Brain():
         This function updates the history of targets.
         It removes targets that are not in the list of targets anymore.
         """
+        to_delete = []
         for location, data in self.history.items():
-            if data[1] - self.timestep > HISTORY_DELAY:
-                self.history.pop(location)
+            if np.abs(data[1] - self.timestep) > HISTORY_DELAY:
+                to_delete.append(location)
+        for deleted in to_delete:
+            if deleted in self.history:
+                self.history.pop(deleted)
+                print(f"deleted target {deleted} from history")
                 # print("history: ", self.history)
                 # print("targets: ", self.targets)
                 # print("history after pop: ", self.history)
-
-    # def pop_optimized(self, gun_location):
-    #     """
-    #     This function pops the target from the list of targets that is closest to the gun location.
-    #     It returns the target and removes it from the list of targets.
-    #     If there are no targets, it returns None.
-    #     gun_location is a tuple (x, y) of the gun location.
-    #     """
-    #     if len(self.targets) == 0:
-    #         return None
-    #     closest_target = None
-    #     closest_distance = float("inf")
-    #     for location, priority in self.targets:
-    #         distance = np.linalg.norm(np.array(location) - np.array(gun_location))
-    #         if distance < closest_distance:
-    #             closest_distance = distance
-    #             closest_target = location
-    #     self.targets.pop(closest_target)
-    #     return closest_target
 
     def game_loop_independent(self):
         """
@@ -396,7 +374,7 @@ class Brain():
             self.timestep += 1
             # print("timestep: ", self.timestep)
             self.add_independent()
-            self.check_emergency_targets()
+            # self.check_emergency_targets()
             # print(f"targets in brain: {self.targets}")
             for gun in self.guns:
                 
@@ -480,7 +458,7 @@ class Brain():
         def run_gun(gun_index):
             gun = self.guns[gun_index]
             # This function will run in a separate thread for each gun
-            print(f"Gun {gun.gun_location} is ready to shoot")
+            print(f"in gun thread: Gun {gun.gun_location} is ready to shoot")
             while True:
                 if gun.target_stack is not None and len(gun.target_stack)>0:
                     # print("gun target stack: ", gun.target_stack)
@@ -490,14 +468,22 @@ class Brain():
                     # Calculate the angle to rotate to
                     print(f"gun {gun.gun_location} target stack: {gun.target_stack}")
                     angle = self.calculate_angle_from_gun(target[0], gun_index)
-                    print("angle to shoot: ", angle)
+                    print(f"gun {gun.gun_location} - angle to shoot: ", angle)
                     gun.rotate(angle)
+                    time.sleep(0.1)
                     gun.shoot()
+                    time.sleep(0.3)
+                    if rotate_to_zero:
+                        gun.rotate(0)
+                        print("gun {gun.gun_location} going to zero 1...")
+                        print("gun {gun.gun_location} going to zero 2...")
+                        print("gun {gun.gun_location} going to zero 3...")
+                        time.sleep(6)
                     print("shot fired")
                     gun.target_stack.pop(0)
                     # print("gun target stack after pop: ", gun.target_stack)
                     print("in gun thread: sleeping for 1 second")
-                    time.sleep(1)
+                    time.sleep(0.1)
             # check which gun is free and assign it to the target
             # if there is a target in the list of targets that has priority 8 or higher, assign it to the first gun immediately
         
@@ -525,15 +511,19 @@ class Brain():
                     self.latest[win_name] = (frame, targets)
                 except queue.Empty:
                     break
-
+            frames = []            
             # 2. Display frames and process targets
             for win_name, (frame, targets) in self.latest.items():
-                cv2.imshow(win_name, frame)
-
+                frames.append(ImageParse.resize_proportionally(frame, 0.5))
+                # cv2.imshow(win_name, frame)
                 # Here’s where you can act on the targets:
                 if targets is not None and len(targets) > 0:
-                    # print(f"[{win_name}] detected targets:", targets)
+                    # print(f"in main thread: [{win_name}] detected targets:", targets)
                     self.add_to_target_list(targets, MIN_DISTANCE)
+            if len(frames) > 0:
+                combined_frame = np.hstack(frames)
+                cv2.imshow("Combined", combined_frame)
+                
             
             # 3. Manage gun logic
             self.check_emergency_targets()
@@ -548,6 +538,12 @@ class Brain():
                 # print("targets: ", self.targets)
                 # print("history after pop: ", self.history)
         cv2.destroyAllWindows()
+        print("Please kill the terminal.")
+        print("just kill it...")
+        print("dont let it suffer")
+        print("there is good pain, and there is meangingless pain")
+        print("this is the latter")
+        print("also, escape to exit")
         for thread in threading.enumerate():
             if thread is not threading.current_thread():
                 thread.join()
@@ -558,31 +554,71 @@ class Brain():
 
 
 if __name__ == "__main__":
-
     white_gun = Gun(gun_location=(195.5,100.0),
                     index=0,
-                    COM="COM18", 
+                    COM="COM14", 
                     print_flag=False)
     
     black_gun = Gun(gun_location=(100.0,95.0),
                     index=1,
-                    COM="COM6", 
+                    COM="COM18", 
                     print_flag=False)
     
+    # gun_info = [((195.5,100.0), 0, "COM14", False), ((100.0,95.0), 1, "COM18", False)]
     guns = [white_gun, black_gun]
+    
+
+    from Brain import Brain
     # guns = []
     # cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0]), (CAMERA_INDEX_1, CAMERA_LOCATION_1, homography_matrices[1])]  # (cam_index, CAMERA_LOCATION_0, homography_matrix)
+    from constants import *
+    import threading
     cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0]), 
                 (CAMERA_INDEX_1, CAMERA_LOCATION_1, homography_matrices[1]), 
                 (CAMERA_INDEX_2, CAMERA_LOCATION_2, homography_matrices[2])]  # (cam_index, CAMERA_LOCATION_0, homography_matrix)
-    # cam_info = [(CAMERA_INDEX_0, CAMERA_LOCATION_0, homography_matrices[0])]
+    # cam_info = [(CAMERA_INDEX_1, CAMERA_LOCATION_1, homography_matrices[1])]
     try:
         brain = Brain(guns, cam_info)
-        # brain.game_loop_independent()
-        brain.game_loop_display()
+        brain.game_loop_independent()
+        # brain.game_loop_display()
     except KeyboardInterrupt:
         for thread in threading.enumerate():
             print(f"Thread {thread.name} is alive: {thread.is_alive()}")
         print("Exiting...")
         exit(0)
 
+
+
+
+# in gun thread: sleeping for 1 second
+# assigned target ((np.float32(220.61852), np.float32(6.505526)), 1) to gun 0
+# in gun rotate: sleep 0.5 secs
+# shot fired
+# in gun thread: sleeping for 1 second
+# assigned target ((np.float32(220.76598), np.float32(6.533121)), 1) to gun 1
+# gun (195.5, 100.0) target stack: [((np.float32(220.61852), np.float32(6.505526)), 1), ((np.float32(220.61852), np.float32(6.505526)), 1)]
+# angle to shoot:  15.038155
+# Rotating to 15.038154602050781 degrees
+# in gun rotate: sleep 0.5 secs
+# shot fired
+# in gun thread: sleeping for 1 second
+# assigned target ((np.float32(220.61852), np.float32(6.505526)), 1) to gun 0
+# gun (100.0, 95.0) target stack: [((np.float32(220.61852), np.float32(6.505526)), 1), ((np.float32(220.76598), np.float32(6.533121)), 1)]
+# angle to shoot:  53.733536
+# Rotating to 53.73353576660156 degrees
+# in gun rotate: sleep 0.5 secs
+# shot fired
+# in gun thread: sleeping for 1 second
+# assigned target ((np.float32(220.61852), np.float32(6.505526)), 1) to gun 1
+# gun (195.5, 100.0) target stack: [((np.float32(220.61852), np.float32(6.505526)), 1), ((np.float32(220.61852), np.float32(6.505526)), 1)]
+# angle to shoot:  15.038155
+# Rotating to 15.038154602050781 degrees
+# in gun rotate: sleep 0.5 secs
+# gun (100.0, 95.0) target stack: [((np.float32(220.76598), np.float32(6.533121)), 1), ((np.float32(220.61852), np.float32(6.505526)), 1)]
+# angle to shoot:  53.775433
+# Rotating to 53.77543258666992 degrees
+# shot fired
+# in gun thread: sleeping for 1 second
+# assigned target ((np.float32(220.61852), np.float32(6.505526)), 1) to gun 0
+# in gun rotate: sleep 0.5 secs
+# shot fired

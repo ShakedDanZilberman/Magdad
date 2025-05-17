@@ -82,7 +82,7 @@ class YOLOHandler:
         return mask
 
     def get_centers(self):
-        return [((b['x1']+b['x2'])//2, (b['y1']+b['y2'])//10)
+        return [((b['x1']+b['x2'])//2, (b['y1']+9*b['y2'])//10)
                 for b in self.bounding_boxes]
 
     def display(self):
@@ -135,7 +135,7 @@ if __name__ == "__main__":
     from constants import CAMERA_INDEX_2
     import undistortion
     detectCameras()
-    cam = Camera(3)
+    cam = Camera(0)
     # handler = MouseCameraHandler()
     yoloHandler = YOLOHandler()
     # laser = threading.Thread(target=laser_thread)

@@ -16,13 +16,13 @@ FRAMES_FOR_INITIALISATION = 5
 BRIGHTNESS_THRESHOLD = 240
 
 MINIMAL_OBJECT_AREA = 30
-MIN_DISTANCE = 0.5
-HISTORY_DELAY = 10
+MIN_DISTANCE = 6.0
+HISTORY_DELAY = 200
 
 
 # constatns for the camera homography, positions are when looking at the door from inside the room
 # left camera
-CAMERA_INDEX_0 = 3
+CAMERA_INDEX_0 = 2
 CAMERA_LOCATION_0 = (0, 0)  # Coordinates of the camera in real world
 DEST_POINTS_0 = [[0.0, 0.0], [25.0, 0.0], [50.0, 0.0], [75.0, 0.0], [100.0, 0.0], 
                  [25.0, 50.0], [50.0, 50.0], [75.0, 50.0]]
@@ -38,7 +38,7 @@ homography_matrix = np.array([[0.22884, 0.33274, -39.792],
 
 
 # center camera
-CAMERA_INDEX_1 = 0
+CAMERA_INDEX_1 = 3
 CAMERA_LOCATION_1 = (0, 0)  # Coordinates of the camera in real world
 DEST_POINTS_1 = [[100.0, 0.0], [125.0, 0.0], [150.0, 0.0], [175.0, 0.0], [200.0, 0.0], [125.0, 50.0], [150.0, 50.0], [175.0, 50.0]]
 
@@ -55,7 +55,7 @@ homography_matrix_1 =  np.array([
 
 
 # right camera
-CAMERA_INDEX_2 = 2
+CAMERA_INDEX_2 = 0
 CAMERA_LOCATION_2 = (0, 0)  # Coordinates of the camera in real world
 DEST_POINTS_2 = [[175.0, 0.0], [200.0, 0.0], [225.0, 0.0], [250.0, 0.0], [275.0, 0.0],
                  [175.0, 25.0], [200.0, 25.0], [225.0, 25.0], [250.0, 25.0], [275.0, 25.0],
@@ -73,3 +73,4 @@ homography_matrix_2 =  np.array([[0.34001,1.2854, 137.03],
 homography_matrices = [homography_matrix, homography_matrix_1, homography_matrix_2]
 
 
+rotate_to_zero = False
